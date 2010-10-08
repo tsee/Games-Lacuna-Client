@@ -69,6 +69,15 @@ sub new {
   return $self;
 }
 
+sub build {
+  my $self = shift;
+  # assign id for this object after building
+  my $rv = $self->_build(@_);
+  $self->{building_id} = $rv->{building}{id};
+  return $rv;
+}
+
+
 __PACKAGE__->init();
 
 1;
