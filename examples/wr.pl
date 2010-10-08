@@ -13,25 +13,6 @@ sub output {
   print "[" . localtime() . "] " . $str;
 }
 
-
-# This ought to be part of the module, but I haven't had the time
-# to wrap all buildings. Maybe manually writing all those classes (and
-# factory methods!) isn't such hot idea to start with.
-package Games::Lacuna::Client::WasteRecycling;
-our @ISA = qw(Games::Lacuna::Client::Buildings);
-
-sub api_methods {
-  return {
-    view                => { default_args => [qw(session_id building_id)] },
-    recycle             => { default_args => [qw(session_id building_id)] },
-    subsidize_recycling => { default_args => [qw(session_id building_id)] },
-  };
-}
-
-__PACKAGE__->init();
-
-package main;
-
 my $client = Games::Lacuna::Client->new(
   uri => 'https://us1.lacunaexpanse.com',
   api_key => '...',
@@ -60,7 +41,7 @@ my @waste_ids = grep {$buildings{$_}{name} eq 'Waste Recycling Center'}
 # use the first only for now
 my $wr = Games::Lacuna::Client::WasteRecycling->new(
   client => $client,
-  id => $waste_ids[0]
+  id     => $waste_ids[0]
 );
 
 while (1) {
@@ -100,10 +81,10 @@ while (1) {
   my $water_s  = $pstatus->{water_stored};
   my $energy_s = $pstatus->{energy_stored};
 
-  my $produce_ore = $ore_c > $ore_s+1;
-  my $produce_water = $water_c > $water_s+1;
+  my $produce_ore    = $ore_c > $ore_s+1;
+  my $produce_water  = $water_c > $water_s+1;
   my $produce_energy = $energy_c > $energy_s+1;
-  my $total_s = $ore_s + $water_s + $energy_s;
+  my $total_s        = $ore_s + $water_s + $energy_s;
 
   my ($ore, $water, $energy);
   if (not $produce_ore and not $produce_energy and not $produce_water) {
@@ -116,19 +97,19 @@ while (1) {
     $energy = $rec_waste * 0.5*($water_s+$ore_s)/$total_s;
     if (not $produce_ore) {
       output("Ore storage full! Producing no ore.");
-      $water += $ore/2;
+      $water  += $ore/2;
       $energy += $ore/2;
       $ore = 0;
     }
     if (not $produce_water) {
       output("Water storage full! Producing no water.");
-      $ore += $water/2;
+      $ore    += $water/2;
       $energy += $water/2;
       $water = 0;
     }
     if (not $produce_energy) {
       output("Energy storage full! Producing no energy.");
-      $ore += $energy/2;
+      $ore   += $energy/2;
       $water += $energy/2;
       $energy = 0;
     }
