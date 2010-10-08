@@ -15,9 +15,7 @@ GetOptions(
 $TimePerIteration = int($TimePerIteration * MINUTE);
 
 my $config_file = shift @ARGV;
-if (not defined $config_file or not -e $config_file) {
-  die "Usage: $0 myempire.yml";
-}
+usage() if not defined $config_file or not -e $config_file;
 
 my $client = Games::Lacuna::Client->new(
   cfg_file => $config_file,
@@ -138,3 +136,12 @@ sub output {
   $str .= "\n" if $str !~ /\n$/;
   print "[" . localtime() . "] " . $str;
 }
+
+sub usage {
+  die <<"END_USAGE";
+Usage: $0 myempire.yml
+       --interval MINUTES  (defaults to 10)
+END_USAGE
+
+}
+
