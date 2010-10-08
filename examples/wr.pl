@@ -4,9 +4,16 @@ use Games::Lacuna::Client;
 use List::Util qw(min max sum);
 use Data::Dumper;
 use YAML::Any 'LoadFile';
+use Getopt::Long qw(GetOptions);
 
 use constant MINUTE => 60;
-use constant TIME_PER_ITERATION => 10 * MINUTE;
+
+our $TimePerIteration = 10;
+
+GetOptions(
+  'i|interval=f' => \$TimePerIteration,
+);
+$TimePerIteration = int($TimePerIteration * MINUTE);
 
 my $config_file = shift @ARGV;
 if (not defined $config_file or not -e $config_file) {
@@ -72,7 +79,7 @@ while (1) {
   my $sec_per_waste = $wr_stat->{recycle}{seconds_per_resource};
   die "seconds_per_resource not found" if not $sec_per_waste;
 
-  my $rec_waste = min($waste, TIME_PER_ITERATION / $sec_per_waste, $wr_stat->{recycle}{max_recycle});
+  my $rec_waste = min($waste, $TimePerIteration / $sec_per_waste, $wr_stat->{recycle}{max_recycle});
 
   # yeah, I know this is a bit verbose.
   my $ore_c    = $pstatus->{ore_capacity};
