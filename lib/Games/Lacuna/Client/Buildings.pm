@@ -6,9 +6,10 @@ use Carp 'croak';
 
 use Games::Lacuna::Client;
 use Games::Lacuna::Client::Module;
-require Games::Lacuna::Client::Buildings::Simple;
-
 our @ISA = qw(Games::Lacuna::Client::Module);
+
+require Games::Lacuna::Client::Buildings::Simple;
+require Games::Lacuna::Client::Buildings::WasteRecycling;
 
 use Class::XSAccessor {
   getters => [qw(building_id)],
