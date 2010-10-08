@@ -16,6 +16,11 @@ require Games::Lacuna::Client::Buildings::Embassy;
 require Games::Lacuna::Client::Buildings::Intelligence;
 require Games::Lacuna::Client::Buildings::Mining;
 require Games::Lacuna::Client::Buildings::Network19;
+require Games::Lacuna::Client::Buildings::Observatory;
+require Games::Lacuna::Client::Buildings::Park;
+require Games::Lacuna::Client::Buildings::PlanetaryCommand;
+require Games::Lacuna::Client::Buildings::Security;
+require Games::Lacuna::Client::Buildings::Shipyard;
 require Games::Lacuna::Client::Buildings::WasteRecycling;
 
 use Class::XSAccessor {

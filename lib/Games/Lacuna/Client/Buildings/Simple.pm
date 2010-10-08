@@ -82,6 +82,7 @@ our @BuildingTypes = (qw(
     Wheat
   ),
   'FoodReserve', # extended view method, but same interface as far as we are concerned
+  'OreStorage', # extended view method, but same interface as far as we are concerned
 );
 
 
