@@ -3,21 +3,23 @@ use warnings;
 use Games::Lacuna::Client;
 use List::Util qw(min max sum);
 use Data::Dumper;
+use YAML::Any 'LoadFile';
 
 use constant MINUTE => 60;
 use constant TIME_PER_ITERATION => 10 * MINUTE;
 
-sub output {
-  my $str = join ' ', @_;
-  $str .= "\n" if $str !~ /\n$/;
-  print "[" . localtime() . "] " . $str;
+my $config_file = shift @ARGV;
+if (not defined $config_file or not -e $config_file) {
+  die "Usage: $0 myempire.yml";
 }
 
+my $cfg = LoadFile($config_file);
+
 my $client = Games::Lacuna::Client->new(
-  uri => 'https://us1.lacunaexpanse.com',
-  api_key => '...',
-  name => '...',
-  password => '...',
+  uri      => $cfg->{server_uri},
+  api_key  => $cfg->{api_key},
+  name     => $cfg->{empire_name},
+  password => $cfg->{empire_password},
   #debug => 1,
 );
 
@@ -127,3 +129,8 @@ while (1) {
   sleep int($rec_waste*$sec_per_waste)+3;
 }
 
+sub output {
+  my $str = join ' ', @_;
+  $str .= "\n" if $str !~ /\n$/;
+  print "[" . localtime() . "] " . $str;
+}
