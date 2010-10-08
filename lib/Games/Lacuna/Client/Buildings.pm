@@ -6,6 +6,8 @@ use Carp 'croak';
 
 use Games::Lacuna::Client;
 use Games::Lacuna::Client::Module;
+require Games::Lacuna::Client::Buildings::Simple;
+
 our @ISA = qw(Games::Lacuna::Client::Module);
 
 use Class::XSAccessor {
