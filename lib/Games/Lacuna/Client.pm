@@ -193,6 +193,7 @@ Games::Lacuna::Client - An RPC client for the Lacuna Expanse
     api_key  => 'your api key here',
     name     => 'empire name',
     password => 'sekrit',
+    cfg_file => 'config.yml',
     #debug    => 1,
   );
   
@@ -229,6 +230,33 @@ All methods that take a session id as first argument in the
 JSON-RPC API B<DO NOT REQUIRE> that you pass the session_id
 manually. This is handled internally and the client will
 automatically log in for you as necessary.
+
+=head1 Methods
+
+=head2 new
+
+  Games::Lacuna::Client->new(
+    name      => 'My empire',                # empire_name in config file
+    password  => 'password of the empire',   # empire_password in config file
+    uri       => 'https://us1.lacunaexpanse.com/',   # server_uri in config file
+    api_key   => 'public api key',
+  );
+
+=head1 Configuration file
+
+Some of the parameters of the constructor can also be suplied in a
+configuration file in YAML format.
+
+  empire_name: The name of my Empire
+  empire_password: The password
+  server_uri: https://us1.lacunaexpanse.com/
+
+  uri:        will overwrite the server_uri key (might be a bug)
+  api_key:
+
+  session_start:
+  session_id:
+  session_persistent:
 
 =head1 SEE ALSO
 
