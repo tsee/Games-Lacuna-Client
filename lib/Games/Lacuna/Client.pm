@@ -3,12 +3,14 @@ use 5.010000;
 use strict;
 use warnings;
 use Carp 'croak';
+use Fcntl qw(:flock);
 
 our $VERSION = '0.01';
 use constant DEBUG => 1;
 
 use Games::Lacuna::Client::Module; # base module class
 use Data::Dumper ();
+use YAML::Any ();
 
 #our @ISA = qw(JSON::RPC::Client);
 use Class::XSAccessor {
@@ -21,6 +23,8 @@ use Class::XSAccessor {
     session_id
     session_start
     session_timeout
+    session_persistent
+    cfg_file
   )],
 };
 
@@ -38,6 +42,22 @@ require Games::Lacuna::Client::Stats;
 sub new {
   my $class = shift;
   my %opt = @_;
+  if ($opt{cfg_file}) {
+    open my $fh, '<', $opt{cfg_file}
+      or croak("Could not open config file for reading: $!");
+    flock($fh, LOCK_SH)
+      or croak("Could not lock config file for reading: $!");
+    my $yml = YAML::Any::Load(do { local $/; <$fh> });
+    close $fh;
+    $opt{name}     //= $yml->{empire_name};
+    $opt{password} //= $yml->{empire_password};
+    $opt{uri}      //= $yml->{server_uri};
+    for (qw(uri api_key session_start session_id session_persistent)) {
+      if (exists $yml->{$_}) {
+        $opt{$_} //= $yml->{$_};
+      }
+    }
+  }
   my @req = qw(uri name password api_key);
   croak("Need the following parameters: @req")
     if not exists $opt{uri}
@@ -47,10 +67,12 @@ sub new {
   $opt{uri} =~ s/\/+$//;
   
   my $self = bless {
-    session_start   => 0,
-    session_id      => 0,
-    session_timeout => 3600*1.5, # server says it's 2h, but let's play it safe.
-    debug           => 0,
+    session_start      => 0,
+    session_id         => 0,
+    session_timeout    => 3600*1.8, # server says it's 2h, but let's play it safe.
+    session_persistent => 0,
+    cfg_file           => undef,
+    debug              => 0,
     %opt
   } => $class;
   
@@ -98,8 +120,40 @@ sub stats {
 
 sub DESTROY {
   my $self = shift;
-  $self->assert_session;
-  $self->empire->logout();
+  if (not $self->session_persistent) {
+    $self->empire->logout;
+  }
+  elsif (defined $self->cfg_file) {
+    $self->write_cfg;
+  }
+}
+
+sub write_cfg {
+  my $self = shift;
+  if ($self->debug) {
+    print "DEBUG: Writing configuration to disk";
+  }
+  croak("No config file")
+    if not defined $self->cfg_file;
+    my %cfg = map { ($_ => $self->{$_}) } qw(session_start
+                                             session_id
+                                             session_timeout
+                                             session_persistent
+                                             api_key);
+    $cfg{server_uri}      = $self->{uri};
+    $cfg{empire_name}     = $self->{name};
+    $cfg{empire_password} = $self->{password};
+
+    open my $fh, '+<', $self->{cfg_file}
+      or warn("Can not write Lacuna client configuration: $!"), return();
+    flock($fh, LOCK_EX) 
+      or warn("Can not lock Lacuna client configuration: $!"), return();
+    my $yml = YAML::Any::Dump(\%cfg);
+    truncate($fh, 0);
+    print $fh $yml;
+    close $fh 
+      or warn("Can not write Lacuna client configuration: $!"), return();
+    return 1;
 }
 
 sub assert_session {
@@ -129,7 +183,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client - Perl extension for blah blah blah
+Games::Lacuna::Client - An RPC client for the Lacuna Expanse
 
 =head1 SYNOPSIS
 
@@ -150,7 +204,7 @@ Games::Lacuna::Client - Perl extension for blah blah blah
 
 =head1 DESCRIPTION
 
-This module implements the Lacuna Expanse API as of 6.10.2010.
+This module implements the Lacuna Expanse API as of 8.10.2010.
 
 The different API I<modules> are available by calling the respective
 module name as a method on the client object. The returned object then

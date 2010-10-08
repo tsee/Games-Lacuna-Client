@@ -20,15 +20,16 @@ if (not defined $config_file or not -e $config_file) {
   die "Usage: $0 myempire.yml";
 }
 
-my $cfg = LoadFile($config_file);
-
 my $client = Games::Lacuna::Client->new(
-  uri      => $cfg->{server_uri},
-  api_key  => $cfg->{api_key},
-  name     => $cfg->{empire_name},
-  password => $cfg->{empire_password},
+  cfg_file => $config_file,
   #debug => 1,
 );
+
+$SIG{INT} = sub {
+  undef $client; # for session persistence
+  warn "Interrupted!\n";
+  exit(1);
+};
 
 #my $res = $client->alliance->find("The Understanding");
 #my $id = $res->{alliances}->[0]->{id};
