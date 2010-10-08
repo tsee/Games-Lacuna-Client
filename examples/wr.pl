@@ -41,7 +41,7 @@ my @waste_ids = grep {$buildings{$_}{name} eq 'Waste Recycling Center'}
                 keys %buildings;
 
 # use the first only for now
-my $wr = Games::Lacuna::Client::WasteRecycling->new(
+my $wr = Games::Lacuna::Client::Buildings::WasteRecycling->new(
   client => $client,
   id     => $waste_ids[0]
 );
