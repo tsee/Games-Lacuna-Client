@@ -2,7 +2,6 @@ package Games::Lacuna::Client::Map;
 use 5.010000;
 use strict;
 use warnings;
-use Scalar::Util 'weaken';
 use Carp 'croak';
 
 use Games::Lacuna::Client;

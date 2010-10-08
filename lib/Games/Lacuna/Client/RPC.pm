@@ -3,7 +3,6 @@ use 5.010000;
 use strict;
 use warnings;
 use Carp 'croak';
-#use JSON::RPC::Client;
 use Scalar::Util 'weaken';
 
 use Games::Lacuna::Client;
@@ -42,7 +41,6 @@ sub new {
   } => $class;
   
   weaken($self->{client});
-  
   
   return $self;
 }

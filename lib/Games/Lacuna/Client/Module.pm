@@ -2,7 +2,6 @@ package Games::Lacuna::Client::Module;
 use 5.010000;
 use strict;
 use warnings;
-use Scalar::Util 'weaken';
 use Carp 'croak';
 
 use Class::XSAccessor {
@@ -34,7 +33,6 @@ sub new {
   my $self = bless {
     %opt,
   } => $class;
-  weaken($self->{client});
   $self->{uri} = $self->client->uri . '/' . $self->module_prefix;
   
   return $self;
