@@ -130,7 +130,7 @@ while (1) {
     #warn Dumper $wr->recycle(int($water), int($ore), int($energy), 0);
     $wr->recycle(int($water), int($ore), int($energy), 0);
   };
-  output("Recycling failed: $@") if $@;
+  output("Recycling failed: $@"), next if $@;
  
   output("Waiting for recycling job to finish");
   sleep int($rec_waste*$sec_per_waste)+3;
