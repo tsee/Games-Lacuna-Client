@@ -21,6 +21,9 @@ require Games::Lacuna::Client::Buildings::Park;
 require Games::Lacuna::Client::Buildings::PlanetaryCommand;
 require Games::Lacuna::Client::Buildings::Security;
 require Games::Lacuna::Client::Buildings::Shipyard;
+require Games::Lacuna::Client::Buildings::SpacePort;
+require Games::Lacuna::Client::Buildings::Trade;
+require Games::Lacuna::Client::Buildings::Transporter;
 require Games::Lacuna::Client::Buildings::WasteRecycling;
 
 use Class::XSAccessor {
