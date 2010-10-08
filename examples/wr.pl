@@ -141,6 +141,16 @@ sub usage {
   die <<"END_USAGE";
 Usage: $0 myempire.yml
        --interval MINUTES  (defaults to 10)
+
+Need to generate an API key at https://us1.lacunaexpanse.com/apikey
+and create a configureation YAML file that should look like this
+
+  ---
+  api_key: the_public_key
+  empire_name: Name of empire
+  empire_password: password of empire
+  server_uri: https://us1.lacunaexpanse.com/
+
 END_USAGE
 
 }
