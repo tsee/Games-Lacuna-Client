@@ -3,7 +3,6 @@ use warnings;
 use Games::Lacuna::Client;
 use List::Util qw(min max sum);
 use Data::Dumper;
-use YAML::Any 'LoadFile';
 use Getopt::Long qw(GetOptions);
 
 use constant MINUTE => 60;
