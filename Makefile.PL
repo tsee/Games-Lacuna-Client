@@ -15,6 +15,7 @@ WriteMakefile(
         'Class::XSAccessor' => '1.07',
         'Scalar::Util'      => '0',
         'URI'               => '0',
+        'Class::MOP'        => '0',
     },                                               # e.g., Module::Name => 1.1
     (
         $] >= 5.005
