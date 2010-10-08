@@ -9,6 +9,13 @@ use Games::Lacuna::Client::Module;
 our @ISA = qw(Games::Lacuna::Client::Module);
 
 require Games::Lacuna::Client::Buildings::Simple;
+
+require Games::Lacuna::Client::Buildings::Archeology;
+require Games::Lacuna::Client::Buildings::Development;
+require Games::Lacuna::Client::Buildings::Embassy;
+require Games::Lacuna::Client::Buildings::Intelligence;
+require Games::Lacuna::Client::Buildings::Mining;
+require Games::Lacuna::Client::Buildings::Network19;
 require Games::Lacuna::Client::Buildings::WasteRecycling;
 
 use Class::XSAccessor {
