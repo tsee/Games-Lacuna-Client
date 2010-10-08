@@ -56,8 +56,8 @@ sub new {
   my $class = shift;
   my %opt = @_;
   my $self = $class->SUPER::new(@_);
+  bless $self => $class;
   $self->{empire_id} = $opt{id};
-
   return $self;
 }
 

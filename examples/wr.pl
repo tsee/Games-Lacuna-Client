@@ -48,10 +48,7 @@ my @waste_ids = grep {$buildings{$_}{name} eq 'Waste Recycling Center'}
                 keys %buildings;
 
 # use the first only for now
-my $wr = Games::Lacuna::Client::Buildings::WasteRecycling->new(
-  client => $client,
-  id     => $waste_ids[0]
-);
+my $wr = $client->building(type => 'WasteRecycling', id => $waste_ids[0]);
 
 while (1) {
   output("checking WR stats");

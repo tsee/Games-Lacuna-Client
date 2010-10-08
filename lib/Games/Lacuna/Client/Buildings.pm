@@ -44,14 +44,28 @@ sub api_methods {
 
 sub new {
   my $class = shift;
+  $class = ref($class)||$class; # no cloning
   my %opt = @_;
-  my $self = $class->SUPER::new(@_);
-  $self->{building_id} = $opt{id};
+  my $btype = delete $opt{type};
+  
+  # redispatch in factory mode
+  if (defined $btype) {
+    if ($class ne 'Games::Lacuna::Client::Buildings') {
+      croak("Cannot call ->new on Games::Lacuna::Client::Buildings subclass ($class) and pass the 'type' parameter");
+    }
+    my $realclass = "Games::Lacuna::Client::Buildings::$btype";
+    return $realclass->new(%opt);
+  }
+  my $id = delete $opt{id};
+  my $self = $class->SUPER::new(%opt);
+  $self->{building_id} = $id;
   # We could easily support the body_id as default argument for ->build
   # here, but that would mean you had to specify the body_id at build time
   # or require building construction via $body->building(...)
   # Let's keep it simple for now.
   #$self->{body_id} = $opt{body_id};
+  
+  bless $self => $class;
   return $self;
 }
 
