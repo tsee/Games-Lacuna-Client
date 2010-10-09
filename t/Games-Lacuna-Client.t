@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 BEGIN { use_ok('Games::Lacuna::Client') };
 
 #########################
@@ -28,4 +28,8 @@ my $client = Games::Lacuna::Client->new(
 );
 isa_ok($client, 'Games::Lacuna::Client');
 
+eval {
+	Games::Lacuna::Client::Empire->new;
+};
+like($@, qr/Need Games::Lacuna::Client/, 'needs client to create an Empire object');
 
