@@ -86,8 +86,30 @@ Games::Lacuna::Client::Empire - The empire module
 =head1 SYNOPSIS
 
   use Games::Lacuna::Client;
+  use Games::Lacuna::Client::Empire;
+
+  my $client = Games::Lacuna::Client->new(...);
+  my $empire = Games::Lacuna::Client::Empire->new(client => $client);
+
+  my $status = $empire->get_status;
+
 
 =head1 DESCRIPTION
+
+A subclass of L<Games::Lacuna::Client::Module>.
+
+=head2 new
+
+Creates an object locally, does not connect to the server.
+
+  Games::Lacuna::Client::Empire->new(client => $client, @parameters);
+
+The $client is a Games::Lacuna::Client object.
+
+Optional parameter:
+
+  id => "The id of the empire"
+
 
 =head1 AUTHOR
 
