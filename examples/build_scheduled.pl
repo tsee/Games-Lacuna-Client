@@ -31,7 +31,6 @@ foreach my $k (keys %$to_be_built) {
 	$to_be_built->{$k}{building} = $client->building(type => delete $to_be_built->{$k}{building_type});
 }
 
-
 my @work_order = build_topo_sort(%$to_be_built);
 my $empire = $client->empire;
 my $estatus = $empire->get_status->{empire};
@@ -203,7 +202,10 @@ sub build_topo_sort {
       push @res, \@independent;
     }
     else {
-      push @{$res[0]}, \@independent;
+      my %seen = map {($_ => 1)} @{$res[0]};
+      foreach my $elem (@independent) {
+        push @{$res[0]}, $elem if not $seen{$elem}++;
+      }
     }
 
     return @res;
