@@ -1,0 +1,17 @@
+---
+colony_ship:
+  planet: mehplanet1
+  x: 2
+  y: -1
+  ship_type: short_range_colony_ship
+  building_type: Shipyard
+  dependent_on:
+#    - shipyard
+#shipyard:
+#  planet: 'mehplanet1'
+#  x: 2
+#  y: -1
+#  upgrade: 1
+#  building_type: Shipyard
+#  dependent_on:
+

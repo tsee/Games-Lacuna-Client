@@ -3,46 +3,36 @@ use warnings;
 use Games::Lacuna::Client;
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
+use YAML::Any ();
 
 use constant MINUTE => 60;
 
 our $TimePerIteration = 20;
+my $schedule_file;
 
 GetOptions(
   'i|interval=f' => \$TimePerIteration,
+  'schedule=s'   => \$schedule_file,
 );
 $TimePerIteration = int($TimePerIteration * MINUTE);
 
 my $config_file = shift @ARGV;
 usage() if not defined $config_file or not -e $config_file;
+usage() if not defined $schedule_file or not -e $schedule_file;
 
 my $client = Games::Lacuna::Client->new(
   cfg_file => $config_file,
   #debug => 1,
 );
 
-my %to_be_built = (
-  colony_ship => {
-    planet => 'mehplanet1',
-    x => 2,
-    y => -1,
-    ship_type => 'short_range_colony_ship',
-    building => $client->building(type => 'Shipyard'),
-    dependent_on => [qw()],
-    #dependent_on => [qw(shipyard)],
-  },
-  #shipyard => {
-  #  planet => 'mehplanet1',
-  #  x => 2,
-  #  y => -1,
-  #  upgrade => 1,
-  #  building => $client->building(type => 'Shipyard'),
-  #  dependent_on => [qw()],
-  #},
-);
+my $to_be_built = YAML::Any::LoadFile($schedule_file);
+foreach my $k (keys %$to_be_built) {
+	$to_be_built->{$k}{dependent_on} ||= [];
+	$to_be_built->{$k}{building} = $client->building(type => delete $to_be_built->{$k}{building_type});
+}
 
-my @work_order = build_topo_sort(%to_be_built);
 
+my @work_order = build_topo_sort(%$to_be_built);
 my $empire = $client->empire;
 my $estatus = $empire->get_status->{empire};
 my %planets_by_name = map { ($estatus->{planets}->{$_} => $client->body(id => $_)) }
@@ -61,7 +51,7 @@ while (1) {
 
   foreach (my $ibuild = 0; $ibuild < @$current_work; ++$ibuild) {
     my $name = $current_work->[$ibuild];
-    my $build_order = $to_be_built{$name};
+    my $build_order = $to_be_built->{$name};
     output("Attempting '$name'");
 
     # check for bad dependencies
@@ -236,7 +226,11 @@ sub find_building_id {
 sub usage {
   die <<"END_USAGE";
 Usage: $0 myempire.yml
-  --interval MINUTES    (defaults to 10)
+  --interval MINUTES        (defaults to 10)
+  --schedule schedule.yml   List of things to do
+
+See the examples/build_scheduled.yml for an example.
+
 END_USAGE
 
 }
