@@ -54,12 +54,13 @@ foreach my $planet (values %planets_by_name) {
 }
 
 my @wr_handlers;
+my @wr_timers;
 foreach my $iwr (0..$#wrs) {
   my $wr = $wrs[$iwr];
   push @wr_handlers, sub {
     my $wait_sec = update_wr($wr, $iwr);
     return if not $wait_sec;
-    AnyEvent->timer(
+    $wr_timers[$iwr] = AnyEvent->timer(
       after => $wait_sec,
       cb    => sub {
         output("Waited for $wait_sec on WR $iwr");
