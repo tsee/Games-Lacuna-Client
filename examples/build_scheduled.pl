@@ -25,6 +25,13 @@ my $client = Games::Lacuna::Client->new(
   #debug => 1,
 );
 
+$SIG{INT} = sub {
+  undef $client; # for session persistence
+  warn "Interrupted!\n";
+  exit(1);
+};
+
+
 my $to_be_built = YAML::Any::LoadFile($schedule_file);
 foreach my $k (keys %$to_be_built) {
 	$to_be_built->{$k}{dependent_on} ||= [];
