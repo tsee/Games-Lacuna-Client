@@ -4,10 +4,11 @@ use Games::Lacuna::Client;
 use List::Util qw(min max sum);
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
+#use AnyEvent;
 
 use constant MINUTE => 60;
 
-our $TimePerIteration = 10;
+our $TimePerIteration = 20;
 
 GetOptions(
   'i|interval=f' => \$TimePerIteration,
@@ -33,21 +34,22 @@ $SIG{INT} = sub {
 
 my $empire = $client->empire;
 my $estatus = $empire->get_status->{empire};
-my @planets = map $client->body(id => $_), keys %{$estatus->{planets}};
+my %planets_by_name = map { ($estatus->{planets}->{$_} => $client->body(id => $_)) }
+                      keys %{$estatus->{planets}};
+# Beware. I think these might contain asteroids, too.
+# TODO: The body status has a 'type' field that should be listed as 'habitable planet'
 
-#print Dumper $client->alliance->view_profile( $res->{alliances}->[0]->{id} );
 
-my $first_planet = $planets[0]; # Beware. I think these might contain asteroids, too.
+my @wrs;
+foreach my $planet (values %planets_by_name) {
+  my %buildings = %{ $planet->get_buildings->{buildings} };
 
-# No, we don't generate objects from the big return value structs yet!
-my %buildings = %{ $first_planet->get_buildings->{buildings} };
+  my @waste_ids = grep {$buildings{$_}{name} eq 'Waste Recycling Center'}
+                  keys %buildings;
+  push @wrs, map  { $client->building(type => 'WasteRecycling', id => $_) } @waste_ids;
+}
 
-my @waste_ids = grep {$buildings{$_}{name} eq 'Waste Recycling Center'}
-                keys %buildings;
-
-# use the first only for now
-my $wr = $client->building(type => 'WasteRecycling', id => $waste_ids[0]);
-
+my $wr = $wrs[0]; # TODO implement for many wrs
 while (1) {
   output("checking WR stats");
   my $wr_stat = $wr->view;
@@ -140,7 +142,7 @@ sub output {
 sub usage {
   die <<"END_USAGE";
 Usage: $0 myempire.yml
-       --interval MINUTES  (defaults to 10)
+       --interval MINUTES  (defaults to 20)
 
 Need to generate an API key at https://us1.lacunaexpanse.com/apikey
 and create a configureation YAML file that should look like this
