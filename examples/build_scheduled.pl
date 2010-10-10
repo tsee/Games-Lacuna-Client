@@ -39,6 +39,9 @@ foreach my $k (keys %$to_be_built) {
 }
 
 my @work_order = build_topo_sort(%$to_be_built);
+print "Working in the following order:\n";
+print Dumper(\@work_order);
+print "\n";
 my $empire = $client->empire;
 my $estatus = $empire->get_status->{empire};
 my %planets_by_name = map { ($estatus->{planets}->{$_} => $client->body(id => $_)) }
@@ -134,9 +137,14 @@ while (1) {
         }
       }
       if ($code == 1010) { # no privs
-        output("Not enough priviledges ($err). Removing.");
-        splice(@$current_work, $ibuild, 1);
-        $ibuild--;
+        if ($action eq 'upgrade' && $err =~ /complete the pending build first/i ) {
+          output("Building is currently being upgraded. Skipping for now.");
+        }
+        else {
+          output("Not enough priviledges ($err). Removing.");
+          splice(@$current_work, $ibuild, 1);
+          $ibuild--;
+        }
         next;
       }
       if ($code == 1002) { # no privs
