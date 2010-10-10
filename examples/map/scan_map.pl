@@ -42,7 +42,15 @@ my $int_watcher = AnyEvent->signal(
   }
 );
 
-print "\n\n> ";
+
+# fetch min/max coords
+my $emp_stat = $client->empire->get_status;
+my $map_size = $emp_stat->{server}->{star_map_size};
+my ($minx, $maxx) = @{$map_size->{x}};
+my ($miny, $maxy) = @{$map_size->{y}};
+
+help();
+print "\n> ";
 my $wait_for_input = AnyEvent->io(
   fh => \*STDIN, poll => "r",
   cb => sub {
@@ -53,14 +61,22 @@ my $wait_for_input = AnyEvent->io(
         output("Good bye!");
         $program_exit->send;
       }
+      elsif ($cmd =~ /^\s*help\b/) {
+        help();
+      }
       elsif ($cmd =~ /^\s*scan\b/) {
-        if ($cmd =~ /^\s*scan\s+(-?\d+)\s+(-?\d+)/) {
+        if ($cmd =~ /^\s*scan\s+(-?\d+)\s+(-?\d+)\s+(\d+)\s+(\d+)/) {
+          my ($x, $y, $dx, $dy) = ($1, $2, $3, $4);
+          output("Scanning area around ($x, $y) in range ($dx, $dy) for known bodies");
+          scan($client, $x, $y, $dx, $dy);
+        }
+        elsif ($cmd =~ /^\s*scan\s+(-?\d+)\s+(-?\d+)/) {
           my ($x, $y) = ($1, $2);
           output("Scanning area around ($x, $y) for known bodies");
           scan($client, $x, $y);
         }
         else {
-          output("Invalid scan command. Syntax: scan X Y");
+          output("Invalid scan command. Syntax: scan X Y [DX DY]");
         }
       }
       else {
@@ -73,13 +89,6 @@ my $wait_for_input = AnyEvent->io(
 );
 
 
-#my $empire = $client->empire;
-#my $estatus = $empire->get_status->{empire};
-#my %planets_by_name = map { ($estatus->{planets}->{$_} => $client->body(id => $_)) }
-#                      keys %{$estatus->{planets}};
-# Beware. I think these might contain asteroids, too.
-# TODO: The body status has a 'type' field that should be listed as 'habitable planet'
-
 $program_exit->recv;
 
 
@@ -87,16 +96,47 @@ sub scan {
   my $client = shift;
   my $x = shift;
   my $y = shift;
-  my $map = $client->map;
+  my $xspan = shift||20;
+  my $yspan = shift||20;
+
+  my $scan_minx = $x - int($xspan/2);
+  my $scan_maxx = $x + int($xspan/2);
+  my $scan_miny = $y - int($yspan/2);
+  my $scan_maxy = $y + int($yspan/2);
+  $scan_minx = $minx if $scan_minx < $minx;
+  $scan_maxx = $maxx if $scan_maxx > $maxx;
+  $scan_miny = $miny if $scan_miny < $miny;
+  $scan_maxy = $maxy if $scan_maxy > $maxy;
+
+  $xspan = $scan_maxx-$scan_minx;
+  $yspan = $scan_maxy-$scan_miny;
 
   my $dx = 20;
   my $dy = 20;
+  my $nx = $xspan/$dx;
+  $nx = int($nx)+1 if $nx != int($nx);
+  my $ny = $yspan/$dy;
+  $ny = int($ny)+1 if $ny != int($ny);
 
-  my $x1 = $x-int($dx/2);
-  my $x2 = $x+int($dx/2);
-  my $y1 = $y-int($dy/2);
-  my $y2 = $y+int($dy/2);
+  my $map = $client->map;
+  foreach my $iy (0..$ny-1) {
+    my $y1 = $scan_miny + $iy*$dy;
+    my $y2 = $scan_miny + ($iy+1)*$dy;
+    $y2 = $scan_maxy if $y2 > $scan_maxy;
+    foreach my $ix (0..$nx-1) {
+      my $x1 = $scan_minx + $ix*$dx;
+      my $x2 = $scan_minx + ($ix+1)*$dx;
+      $x2 = $scan_maxx if $x2 > $scan_maxx;
 
+      _run_one_scan($map, $x1, $y1, $x2, $y2);
+    }
+  }
+
+
+}
+
+sub _run_one_scan {
+  my ($map, $x1, $y1, $x2, $y2) = @_; # max 20x20!
   my $stars = $map->get_stars($x1, $y1, $x2, $y2);
 
   $stars = $stars->{stars};
@@ -121,10 +161,22 @@ sub scan {
   LacunaMap::DB->commit;
 }
 
-
-
 sub output {
   my $str = join ' ', @_;
   $str .= "\n" if $str !~ /\n$/;
   print "[" . localtime() . "] " . $str;
+}
+
+sub help {
+  print <<'HERE';
+Interactive interface for scanning star maps. Commands:
+- help
+- exit
+- scan X Y [DX DY]
+  Scans a part of the map at position X/Y and stores the result in the DB.
+  DX/DY is the size of the scanned area and defaults to 20x20. Do not scan
+  the whole map this way as every 20x20 piece of the map will require one
+  RPC API call!
+
+HERE
 }
