@@ -87,12 +87,11 @@ Games::Lacuna::Client::Empire - The empire module
 
   use Games::Lacuna::Client;
   use Games::Lacuna::Client::Empire;
-
+  
   my $client = Games::Lacuna::Client->new(...);
-  my $empire = Games::Lacuna::Client::Empire->new(client => $client);
-
+  my $empire = $client->empire;
+  
   my $status = $empire->get_status;
-
 
 =head1 DESCRIPTION
 
@@ -104,12 +103,16 @@ Creates an object locally, does not connect to the server.
 
   Games::Lacuna::Client::Empire->new(client => $client, @parameters);
 
-The $client is a Games::Lacuna::Client object.
+The $client is a C<Games::Lacuna::Client> object.
 
-Optional parameter:
+Usually, you can just use the C<empire> factory method of the
+client object instead:
+
+  my $empire = $client->empire(@parameters); # client set automatically
+
+Optional parameters:
 
   id => "The id of the empire"
-
 
 =head1 AUTHOR
 
