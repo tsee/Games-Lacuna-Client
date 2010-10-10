@@ -111,8 +111,12 @@ while (1) {
       output(ucfirst($action) . " failed.");
       $err =~ /^RPC Error \((\d+)\)/ or die $err;
       my $code = $1;
-      if ($code == 1009) { # not specified but probably what happens when building on another building
-        if ($action eq 'build') {
+      if ($code == 1009) {
+        if ($err =~ /build queue/) {
+          output("Build queue is full ($err). Skipping for now.");
+          next;
+        }
+        elsif ($action eq 'build') {
           output("Space is (probably) occupied ($err). Removing.");
           splice(@$current_work, $ibuild, 1);
           $ibuild--;
