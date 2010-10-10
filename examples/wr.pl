@@ -4,7 +4,7 @@ use Games::Lacuna::Client;
 use List::Util qw(min max sum);
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
-#use AnyEvent;
+use AnyEvent;
 
 use constant MINUTE => 60;
 
@@ -23,11 +23,15 @@ my $client = Games::Lacuna::Client->new(
   #debug => 1,
 );
 
-$SIG{INT} = sub {
-  undef $client; # for session persistence
-  warn "Interrupted!\n";
-  exit(1);
-};
+my $program_exit = AnyEvent->condvar;
+my $int_watcher = AnyEvent->signal(
+  signal => "INT",
+  cb => sub {
+    output("Interrupted!");
+    undef $client;
+    exit(1);
+  }
+);
 
 #my $res = $client->alliance->find("The Understanding");
 #my $id = $res->{alliances}->[0]->{id};
@@ -49,18 +53,66 @@ foreach my $planet (values %planets_by_name) {
   push @wrs, map  { $client->building(type => 'WasteRecycling', id => $_) } @waste_ids;
 }
 
-my $wr = $wrs[0]; # TODO implement for many wrs
-while (1) {
-  output("checking WR stats");
+my @wr_handlers;
+foreach my $iwr (0..$#wrs) {
+  my $wr = $wrs[$iwr];
+  push @wr_handlers, sub {
+    my $wait_sec = update_wr($wr, $iwr);
+    return if not $wait_sec;
+    AnyEvent->timer(
+      after => $wait_sec,
+      cb    => sub {
+        output("Waited for $wait_sec on WR $iwr");
+        $wr_handlers[$iwr]->()
+      },
+    );
+  };
+}
+
+foreach my $wrh (@wr_handlers) {
+  $wrh->();
+}
+
+output("Done setting up intial jobs. Waiting for events.");
+$program_exit->recv;
+undef $client; # for session persistence
+exit(0);
+
+sub output {
+  my $str = join ' ', @_;
+  $str .= "\n" if $str !~ /\n$/;
+  print "[" . localtime() . "] " . $str;
+}
+
+sub usage {
+  die <<"END_USAGE";
+Usage: $0 myempire.yml
+       --interval MINUTES  (defaults to 20)
+
+Need to generate an API key at https://us1.lacunaexpanse.com/apikey
+and create a configureation YAML file that should look like this
+
+  ---
+  api_key: the_public_key
+  empire_name: Name of empire
+  empire_password: password of empire
+  server_uri: https://us1.lacunaexpanse.com/
+
+END_USAGE
+
+}
+
+sub update_wr {
+  my $wr = shift;
+  my $iwr = shift;
+
+  output("checking WR stats for WR $iwr");
   my $wr_stat = $wr->view;
 
   my $busy_seconds = $wr_stat->{building}{work}{seconds_remaining};
   if ($busy_seconds) {
     output("Still busy for $busy_seconds, waiting");
-    sleep $busy_seconds+3;
-    if ($busy_seconds > 5*MINUTE) {
-      $wr_stat = $wr->view;
-    }
+    return $busy_seconds+3;
   }
   
   output("Checking resource stats");
@@ -69,8 +121,7 @@ while (1) {
   
   if (not $waste or $waste < 100) {
     output("(virtually) no waste has accumulated, waiting");
-    sleep 5*MINUTE;
-    next;
+    return 5*MINUTE;
   }
 
   my $sec_per_waste = $wr_stat->{recycle}{seconds_per_resource};
@@ -130,30 +181,5 @@ while (1) {
   output("Recycling failed: $@"), next if $@;
  
   output("Waiting for recycling job to finish");
-  sleep int($rec_waste*$sec_per_waste)+3;
+  return int($rec_waste*$sec_per_waste)+3;
 }
-
-sub output {
-  my $str = join ' ', @_;
-  $str .= "\n" if $str !~ /\n$/;
-  print "[" . localtime() . "] " . $str;
-}
-
-sub usage {
-  die <<"END_USAGE";
-Usage: $0 myempire.yml
-       --interval MINUTES  (defaults to 20)
-
-Need to generate an API key at https://us1.lacunaexpanse.com/apikey
-and create a configureation YAML file that should look like this
-
-  ---
-  api_key: the_public_key
-  empire_name: Name of empire
-  empire_password: password of empire
-  server_uri: https://us1.lacunaexpanse.com/
-
-END_USAGE
-
-}
-
