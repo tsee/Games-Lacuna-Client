@@ -179,7 +179,7 @@ sub update_wr {
     #warn Dumper $wr->recycle(int($water), int($ore), int($energy), 0);
     $wr->recycle(int($water), int($ore), int($energy), 0);
   };
-  output("Recycling failed: $@"), next if $@;
+  output("Recycling failed: $@"), return(1*MINUTE) if $@;
  
   output("Waiting for recycling job to finish");
   return int($rec_waste*$sec_per_waste)+3;
