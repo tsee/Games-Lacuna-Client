@@ -20,7 +20,12 @@ GetOptions(
 );
 
 my $config_file = shift @ARGV;
-usage() if not defined $config_file or not -e $config_file;
+die if not defined $config_file or not -e $config_file;
+
+LacunaMap::DB->import(
+  $DbFile,
+  cleanup => 'VACUUM',
+);
 
 my $client = Games::Lacuna::Client->new(
   cfg_file => $config_file,
@@ -94,7 +99,26 @@ sub scan {
 
   my $stars = $map->get_stars($x1, $y1, $x2, $y2);
 
-  warn Dumper $stars;
+  $stars = $stars->{stars};
+  #warn Dumper $stars;
+  LacunaMap::DB->begin;
+  output("Found " . scalar(@$stars) . " stars");
+  foreach my $star (@$stars) {
+    if ($star->{bodies} and ref($star->{bodies}) eq 'ARRAY') {
+      foreach my $body (@{$star->{bodies}}) {
+        my @existing = LacunaMap::DB::Bodies->select('where id = ?', $body->{id});
+        $_->delete for @existing;
+        my $dbbody = LacunaMap::DB::Bodies->create(
+          ($body->{empire} ? (empire_id => $body->{empire}{id}) : ()),
+          map {($_ => $body->{$_})} qw(
+            id name x y star_id orbit type size water
+          )
+        );
+      } # end foreach bodies
+      LacunaMap::DB->commit_begin;
+    } # end if have bodies
+  } # end foreach star
+  LacunaMap::DB->commit;
 }
 
 

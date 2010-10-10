@@ -26,8 +26,23 @@ sub import {
           zone TEXT
         );
 HERE
+      $dbh->do(<<'HERE');
+        CREATE TABLE bodies (
+          id INT PRIMARY KEY,
+          name TEXT,
+          x INT NOT NULL,
+          y INT NOT NULL,
+          star_id INT NOT NULL,
+          orbit INT NOT NULL,
+          type TEXT,
+          size INT NOT NULL,
+          water INT,
+          empire_id INT
+        );
+HERE
+    # todo ore-body table
     },
-    tables       => [ qw(stars) ],
+    tables       => [ qw(stars bodies) ],
     #cleanup      => 'VACUUM',
     @_
   });
