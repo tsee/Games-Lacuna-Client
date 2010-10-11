@@ -74,7 +74,7 @@ foreach my $wrh (@wr_handlers) {
   $wrh->();
 }
 
-output("Done setting up intial jobs. Waiting for events.");
+output("Done setting up initial jobs. Waiting for events.");
 $program_exit->recv;
 undef $client; # for session persistence
 exit(0);
@@ -91,7 +91,7 @@ Usage: $0 myempire.yml
        --interval MINUTES  (defaults to 20)
 
 Need to generate an API key at https://us1.lacunaexpanse.com/apikey
-and create a configureation YAML file that should look like this
+and create a configuration YAML file that should look like this
 
   ---
   api_key: the_public_key
