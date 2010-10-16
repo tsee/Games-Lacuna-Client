@@ -118,8 +118,18 @@ sub stats {
 }
 
 
+sub register_destroy_hook {
+  my $self = shift;
+  my $hook = shift;
+  push @{$self->{destroy_hooks}}, $hook;
+}
+
 sub DESTROY {
   my $self = shift;
+  if ($self->{destroy_hooks}) {
+    $_->($self) for @{$self->{destroy_hooks}};
+  }
+
   if (not $self->session_persistent) {
     $self->empire->logout;
   }
