@@ -18,8 +18,10 @@ $| = 1;
 use constant MINUTE => 60;
 
 my $DbFile = 'map.sqlite';
+my @FeedUrls;
 GetOptions(
   'd|dbfile=s' => \$DbFile,
+  'f|feed=s@' => \@FeedUrls,
 );
 
 my $config_file = shift @ARGV;
@@ -40,52 +42,61 @@ my $client = Games::Lacuna::Client->new(
 my $empire = $client->empire->get_status->{empire};
 output("Loading empire $client->{name}...");
 
-my %zone_feed_urls;
-my $planets = $empire->{planets};
-# Scan each planet
-foreach my $planet_id ( sort keys %$planets ) {
-  my $name = $planets->{$planet_id};
-  output("Loading planet $name...");
+if (@FeedUrls) {
+  foreach my $url (@FeedUrls) {
+    output("Importing feed at $url");
+    import_feed($url);
+  }
+}
+else {
+  my %zone_feed_urls;
+  my $planets = $empire->{planets};
+  # Scan each planet
+  foreach my $planet_id ( sort keys %$planets ) {
+    my $name = $planets->{$planet_id};
+    output("Loading planet $name...");
 
-  # Load planet data
-  my $planet    = $client->body( id => $planet_id );
-  my $result    = $planet->get_buildings;
-  my $body      = $result->{status}->{body};
-  my $buildings = $result->{buildings};
+    # Load planet data
+    my $planet    = $client->body( id => $planet_id );
+    my $result    = $planet->get_buildings;
+    my $body      = $result->{status}->{body};
+    my $buildings = $result->{buildings};
 
-  # Find the Network19
-  my $n19_id = List::Util::first {
-    $buildings->{$_}->{name} =~ /network\s*19/i;
-  } keys %$buildings;
+    # Find the Network19
+    my $n19_id = List::Util::first {
+      $buildings->{$_}->{name} =~ /network\s*19/i;
+    } keys %$buildings;
 
-  if (not defined $n19_id) {
-    output("This planet has no Network 19 Affiliate");
-    next;
+    if (not defined $n19_id) {
+      output("This planet has no Network 19 Affiliate");
+      next;
+    }
+
+    my $n19 = $client->building(type => 'Network19', id => $n19_id);
+    my $news_result = $n19->view_news;
+    my $feeds = $news_result->{feeds};
+    $zone_feed_urls{$_} = $feeds->{$_} for keys %$feeds;
   }
 
-  my $n19 = $client->building(type => 'Network19', id => $n19_id);
-  my $news_result = $n19->view_news;
-  my $feeds = $news_result->{feeds};
-  $zone_feed_urls{$_} = $feeds->{$_} for keys %$feeds;
-}
+  foreach my $zone (keys %zone_feed_urls) {
+    output("Importing feed for zone $zone...");
+    import_feed($zone_feed_urls{$zone});
+  }
+} # end if not explicit feed links
 
-foreach my $zone (keys %zone_feed_urls) {
-  output("Importing feed for zone $zone...");
-  import_feed($zone, $zone_feed_urls{$zone});
-}
 
 sub import_feed {
-  my $zone = shift;
   my $feed_url = shift;
   my $text = get($feed_url);
   open my $fh, '<', \$text or die;
   my $p = XML::RSS::Parser->new;
   my $feed = $p->parse_file($fh);
 
-  #my $feed_title = $feed->query('/channel/title');
-  #print $feed_title->text_content;
-  #my $count = $feed->item_count;
-  #print " ($count)\n";
+  my $feed_title = $feed->query('/channel/title')->text_content;
+  $feed_title =~ /Zone (-?\d+\|-?\d+) / or die "Can't parse zone from feed title: '$feed_title'";
+  my $zone = $1;
+  output("Feed is for zone $zone");
+
   my $date_parser = DateTime::Format::Strptime->new(
     pattern => '%a,%t%d%t%b%t%Y%t%H:%M:%S%t%Z',
     locale => 'en_US',
