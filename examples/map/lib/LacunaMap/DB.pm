@@ -29,7 +29,7 @@ HERE
       # NOTE: body doesn't have a primary key because the id isn't necessarily known
       $dbh->do(<<'HERE');
         CREATE TABLE bodies (
-          sql_primary_id INT PRIMARY KEY,
+          sql_primary_id INTEGER PRIMARY KEY AUTOINCREMENT,
           id INT UNIQUE,
           name TEXT,
           x INT,
@@ -44,7 +44,7 @@ HERE
 HERE
       $dbh->do(<<'HERE');
         CREATE TABLE news (
-          id INT PRIMARY KEY,
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
           zone TEXT,
           title TEXT,
           time TIMESTAMP
