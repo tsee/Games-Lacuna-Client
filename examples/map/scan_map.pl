@@ -12,10 +12,8 @@ $| = 1;
 
 use constant MINUTE => 60;
 
-my $InputFile = 'stars.csv';
 my $DbFile = 'map.sqlite';
 GetOptions(
-  's|starsfile=s' => \$InputFile,
   'd|dbfile=s' => \$DbFile,
 );
 
