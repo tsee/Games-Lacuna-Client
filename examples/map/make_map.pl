@@ -37,6 +37,9 @@ LacunaMap::DB::Stars->iterate(sub {
 
 LacunaMap::DB::Bodies->iterate(sub {
   my $body = $_;
+  if (not defined $body->x or not defined $body->y) {
+    return;
+  }
   my $color;
   if ($body->empire_id && $body->empire_id == $my_empire_id) { $color = $green; }
   elsif ($body->empire_id) { $color = $red; }

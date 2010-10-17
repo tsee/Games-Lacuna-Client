@@ -30,12 +30,12 @@ HERE
         CREATE TABLE bodies (
           id INT PRIMARY KEY,
           name TEXT,
-          x INT NOT NULL,
-          y INT NOT NULL,
+          x INT,
+          y INT,
           star_id INT NOT NULL,
-          orbit INT NOT NULL,
+          orbit INT,
           type TEXT,
-          size INT NOT NULL,
+          size INT,
           water INT,
           empire_id INT
         );
