@@ -55,9 +55,11 @@ my $wait_for_input = AnyEvent->io(
     my $cmd = <STDIN>;
     if (defined $cmd and $cmd !~ /^\s*$/s) {
       chomp $cmd;
+      $cmd =~ s/#.*$//;
       if ($cmd =~ /^\s*exit\s*$/i) {
         output("Good bye!");
         $program_exit->send;
+        return;
       }
       elsif ($cmd =~ /^\s*help\b/) {
         help();
@@ -82,6 +84,7 @@ my $wait_for_input = AnyEvent->io(
       }
     } # end if got command
 
+    print "\n" if not defined $cmd;
     print "> ";
   }
 );
