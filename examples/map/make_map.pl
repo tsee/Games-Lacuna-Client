@@ -29,7 +29,7 @@ my $yellow = Imager::Color->new(255, 255, 0);
 my $green  = Imager::Color->new(0, 255, 0);
 my $blue   = Imager::Color->new(0, 0, 255);
 my $white  = Imager::Color->new(255, 255, 255);
-my $grey   = Imager::Color->new(180, 180, 180);
+my $grey   = Imager::Color->new(80, 80, 80);
 $img->box(filled => 1, color => $black);
 
 # stars with known-position bodies or no bodies
