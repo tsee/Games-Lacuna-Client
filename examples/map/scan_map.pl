@@ -53,9 +53,14 @@ my $wait_for_input = AnyEvent->io(
   fh => \*STDIN, poll => "r",
   cb => sub {
     my $cmd = <STDIN>;
-    if (defined $cmd and $cmd !~ /^\s*$/s) {
+    if (not defined $cmd) {
+      output("Good bye!");
+      $program_exit->send;
+      return;
+    }
+    $cmd =~ s/#.*$//;
+    if ($cmd !~ /^\s*$/s) {
       chomp $cmd;
-      $cmd =~ s/#.*$//;
       if ($cmd =~ /^\s*exit\s*$/i) {
         output("Good bye!");
         $program_exit->send;
@@ -145,19 +150,40 @@ sub _run_one_scan {
   LacunaMap::DB->begin;
   output("Found " . scalar(@$stars) . " stars");
   foreach my $star (@$stars) {
-    if ($star->{bodies} and ref($star->{bodies}) eq 'ARRAY') {
+
+    if ($star->{bodies} and ref($star->{bodies}) eq 'ARRAY' and @{$star->{bodies}}) {
+      my @unknown = LacunaMap::DB::Bodies->select('where star_id = ? and x is NULL', $star->{bodies}[0]{star_id});
+      for (@unknown) {
+        #output("Deleting existing unknown-positon body for this star: " . Dumper($_));
+        $_->delete;
+      }
+      LacunaMap::DB->commit_begin if @unknown;
+
       foreach my $body (@{$star->{bodies}}) {
-        my @existing = LacunaMap::DB::Bodies->select('where id = ?', $body->{id});
-        $_->delete for @existing;
-        my $dbbody = LacunaMap::DB::Bodies->create(
-          ($body->{empire} ? (empire_id => $body->{empire}{id}) : ()),
-          map {($_ => $body->{$_})} qw(
-            id name x y star_id orbit type size water
-          )
-        );
+        my @existing = LacunaMap::DB::Bodies->select('where star_id = ? and (id is NULL or id = ?)', $body->{star_id}, $body->{id});
+        for (@existing) {
+          #output("Deleting existing body with same id: " . Dumper($_));
+          $_->delete;
+        }
+        LacunaMap::DB->commit_begin if @existing;
+        
+        eval {
+          my $dbbody = LacunaMap::DB::Bodies->create(
+            ($body->{empire} ? (empire_id => $body->{empire}{id}) : ()),
+            map {($_ => $body->{$_})} qw(
+              id name x y star_id orbit type size water
+            )
+          );
+        };
+        if ($@) {
+          warn $@;
+          die Dumper $body;
+        }
       } # end foreach bodies
+
       LacunaMap::DB->commit_begin;
     } # end if have bodies
+
   } # end foreach star
   LacunaMap::DB->commit;
 }
