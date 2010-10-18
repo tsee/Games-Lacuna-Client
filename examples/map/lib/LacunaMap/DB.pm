@@ -98,7 +98,8 @@ sub update_from_news {
   my $updater = sub {
     my $news = $_;
     my $res = $news->parse_title;
-    if ($res and $res->{type} eq 'new colony') {
+    return if not $res;
+    if ($res->{type} eq 'new colony') {
       warn "NEW COLONY";
         use Data::Dumper;
         warn Dumper $res;
@@ -131,16 +132,28 @@ sub update_from_news {
         )->insert;
       }
       elsif (@$bodies == 1) {
-        $bodies->[0]->delete();
-        $bodies->[0]->name($res->{body_name});
-        $bodies->[0]->empire_id($res->{empire_id});
-        $bodies->[0]->star_id($res->{star_id});
-        $bodies->[0]->insert();
+        for ($bodies->[0]) {
+          $_->delete();
+          $_->name($res->{body_name});
+          $_->empire_id($res->{empire_id});
+          $_->star_id($res->{star_id});
+          $_->insert();
+        }
       }
       else {
         warn "Found multiple bodies for the given new colony";
         return;
       }
+    } # end if new colony
+    elsif ($res->{type} eq 'rename') {
+      my $bodies = LacunaMap::DB::Bodies->select('where name = ?', $res->{old_body_name});
+      if ($bodies and @$bodies == 1) { # only rename if unique
+        my $b = $bodies->[0];
+        $b->delete;
+        $b->name($res->{new_body_name});
+        $b->insert;
+      }
+      # TODO: disambiguate body name by empire id!
     }
   };
 
@@ -174,6 +187,10 @@ sub parse_title {
     my $star = $body;
     $star =~ s/\s+\d+$//;
     $rv = {type => 'new colony', empire_name => $empire, body_name => $body, star_name => $star};
+  }
+  elsif ($title =~ /^In a bold move to show its growing power, (.*) renamed (.*) to (.*)\.$/) { # uh, inefficient
+    my ($empire, $old, $new) = ($1, $2, $3);
+    $rv = {type => 'rename', empire_name => $empire, old_body_name => $old, new_body_name => $new};
   }
   return $rv;
 }
