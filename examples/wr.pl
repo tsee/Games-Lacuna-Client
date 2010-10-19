@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use 5.010000;
 use Games::Lacuna::Client;
 use List::Util qw(min max sum);
 use Data::Dumper;
@@ -10,10 +11,19 @@ use constant MINUTE => 60;
 
 our $TimePerIteration = 20;
 
+my ($water_perc, $energy_perc, $ore_perc) = (0, 0, 0);
 GetOptions(
   'i|interval=f' => \$TimePerIteration,
+  'water=i' => \$water_perc,
+  'ore=i'   => \$ore_perc,
+  'energy=i'  => \$energy_perc,
 );
 $TimePerIteration = int($TimePerIteration * MINUTE);
+
+if ($water_perc or $ore_perc or $energy_perc) {
+	die "Percentages need to add up to 100\n" if $water_perc + $ore_perc + $energy_perc != 100;
+	for ($water_perc, $ore_perc, $energy_perc) { $_ = $_ / 100; }
+}
 
 my $config_file = shift @ARGV;
 usage() if not defined $config_file or not -e $config_file;
@@ -150,9 +160,15 @@ sub update_wr {
     ($ore, $water, $energy) = map {$total_s/3} 1..3;
   }
   else {
-    $ore    = $rec_waste * 0.5*($water_s+$energy_s)/$total_s;
-    $water  = $rec_waste * 0.5*($energy_s+$ore_s)/$total_s;
-    $energy = $rec_waste * 0.5*($water_s+$ore_s)/$total_s;
+    if ($water_perc or $energy_perc or $ore_perc) {
+      $ore    = $rec_waste * $ore_perc;
+      $water  = $rec_waste * $water_perc;
+      $energy = $rec_waste * $energy_perc;
+    } else {
+      $ore    = $rec_waste * 0.5*($water_s+$energy_s)/$total_s;
+      $water  = $rec_waste * 0.5*($energy_s+$ore_s)/$total_s;
+      $energy = $rec_waste * 0.5*($water_s+$ore_s)/$total_s;
+    }
     if (not $produce_ore) {
       output("Ore storage full! Producing no ore.");
       $water  += $ore/2;
