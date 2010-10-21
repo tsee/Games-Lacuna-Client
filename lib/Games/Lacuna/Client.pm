@@ -1,5 +1,5 @@
 package Games::Lacuna::Client;
-use 5.010000;
+use 5.0080000;
 use strict;
 use warnings;
 use Carp 'croak';
@@ -49,12 +49,12 @@ sub new {
       or croak("Could not lock config file for reading: $!");
     my $yml = YAML::Any::Load(do { local $/; <$fh> });
     close $fh;
-    $opt{name}     //= $yml->{empire_name};
-    $opt{password} //= $yml->{empire_password};
-    $opt{uri}      //= $yml->{server_uri};
+    $opt{name}     = defined $opt{name} ? $opt{name} : $yml->{empire_name};
+    $opt{password} = defined $opt{password} ? $opt{password} : $yml->{empire_password};
+    $opt{uri}      = defined $opt{uri} ? $opt{uri} : $yml->{server_uri};
     for (qw(uri api_key session_start session_id session_persistent)) {
       if (exists $yml->{$_}) {
-        $opt{$_} //= $yml->{$_};
+        $opt{$_} = defined $opt{$_} ? $opt{$_} : $yml->{$_};
       }
     }
   }

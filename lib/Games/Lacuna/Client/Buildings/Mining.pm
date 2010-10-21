@@ -1,5 +1,5 @@
 package Games::Lacuna::Client::Buildings::Mining;
-use 5.010000;
+use 5.0080000;
 use strict;
 use warnings;
 use Carp 'croak';
