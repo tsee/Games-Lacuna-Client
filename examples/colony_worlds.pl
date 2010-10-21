@@ -1,4 +1,28 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
+#
+# Script to find worlds known to you (via observatories) which are uninhabited, habitable, and in
+# your range of orbits.  Ranks them and presents a summary view.  The scoring algorithm is very
+# simply and probably needs work.
+#
+# Usage: perl colony_worlds.pl [sort]  
+#  
+# [sort] is 'score' by default, may also be 'distance', 'water', 'size'.  Shows in descending order.
+#
+# Sample output for a planet:
+#
+# ------------------------------------------------------------------------------
+# Somestar 6            [ 123, -116] ( 10)
+# Size: 33                   Colony Ship Travel Time:  1.9 hours
+# Water: 5700    Short Range Colony Ship Travel Time: 83.7 hours
+# ------------------------------------------------------------------------------
+#   anthraci    1   bauxite 1700     beryl 1000  chalcopy 2800  chromite    1
+#   fluorite    1    galena    1  goethite 2400      gold    1    gypsum 2100
+#     halite    1   kerogen    1  magnetit    1   methane    1  monazite    1
+#     rutile    1    sulfur    1     trona    1  uraninit    1    zircon    1
+# ------------------------------------------------------------------------------
+# Score:  18% [Size:  15%, Water:  14%, Ore:  25%]
+# ------------------------------------------------------------------------------
+
 use strict;
 use warnings;
 use Games::Lacuna::Client;
@@ -60,7 +84,7 @@ for my $p (@planets) {
 for my $p (sort { $b->{$sortby} <=> $a->{$sortby} } @planets) {
     my $d = $p->{distance};
     print_bar();
-    printf "%-20s [%4s,%4s] (%3s)\nSize: %2d                   Colony Ship Travel Time:  %3.1f hours\nWater: %4d    Short Range Colony Ship Travel Time: %3.1f hours\n",
+    printf "%-20s [%4s,%4s] (Distance: %3s)\nSize: %2d                   Colony Ship Travel Time:  %3.1f hours\nWater: %4d    Short Range Colony Ship Travel Time: %3.1f hours\n",
         $p->{name},$p->{x},$p->{y},int($d),$p->{size},($d/5.23),$p->{water},($d/.12);
     print_bar();
     for my $ore (sort keys %{$p->{ore}}) {
