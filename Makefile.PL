@@ -17,6 +17,7 @@ WriteMakefile(
         'URI'               => '0',
         'Class::MOP'        => '0',
         'YAML::Any'         => '0',
+        'AnyEvent'          => '0',
     },                                               # e.g., Module::Name => 1.1
     (
         $] >= 5.005

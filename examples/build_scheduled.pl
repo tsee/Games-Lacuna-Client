@@ -3,48 +3,45 @@ use warnings;
 use Games::Lacuna::Client;
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
+use YAML::Any ();
 
 use constant MINUTE => 60;
 
 our $TimePerIteration = 20;
+my $schedule_file;
 
 GetOptions(
   'i|interval=f' => \$TimePerIteration,
+  'schedule=s'   => \$schedule_file,
 );
 $TimePerIteration = int($TimePerIteration * MINUTE);
 
 my $config_file = shift @ARGV;
-if (not defined $config_file or not -e $config_file) {
-  die "Usage: $0 myempire.yml";
-}
+usage() if not defined $config_file or not -e $config_file;
+usage() if not defined $schedule_file or not -e $schedule_file;
 
 my $client = Games::Lacuna::Client->new(
   cfg_file => $config_file,
   #debug => 1,
 );
 
-my %to_be_built = (
-  colony_ship => {
-    planet => 'mehplanet1',
-    x => 2,
-    y => -1,
-    ship_type => 'short_range_colony_ship',
-    building => $client->building(type => 'Shipyard'),
-    dependent_on => [qw()],
-    #dependent_on => [qw(shipyard)],
-  },
-  #shipyard => {
-  #  planet => 'mehplanet1',
-  #  x => 2,
-  #  y => -1,
-  #  upgrade => 1,
-  #  building => $client->building(type => 'Shipyard'),
-  #  dependent_on => [qw()],
-  #},
-);
+$SIG{INT} = sub {
+  undef $client; # for session persistence
+  warn "Interrupted!\n";
+  exit(1);
+};
 
-my @work_order = build_topo_sort(%to_be_built);
 
+my $to_be_built = YAML::Any::LoadFile($schedule_file);
+foreach my $k (keys %$to_be_built) {
+	$to_be_built->{$k}{dependent_on} ||= [];
+	$to_be_built->{$k}{building} = $client->building(type => delete $to_be_built->{$k}{building_type});
+}
+
+my @work_order = build_topo_sort(%$to_be_built);
+print "Working in the following order:\n";
+print Dumper(\@work_order);
+print "\n";
 my $empire = $client->empire;
 my $estatus = $empire->get_status->{empire};
 my %planets_by_name = map { ($estatus->{planets}->{$_} => $client->body(id => $_)) }
@@ -63,7 +60,7 @@ while (1) {
 
   foreach (my $ibuild = 0; $ibuild < @$current_work; ++$ibuild) {
     my $name = $current_work->[$ibuild];
-    my $build_order = $to_be_built{$name};
+    my $build_order = $to_be_built->{$name};
     output("Attempting '$name'");
 
     # check for bad dependencies
@@ -124,8 +121,12 @@ while (1) {
       output(ucfirst($action) . " failed.");
       $err =~ /^RPC Error \((\d+)\)/ or die $err;
       my $code = $1;
-      if ($code == 1009) { # not specified but probably what happens when building on another building
-        if ($action eq 'build') {
+      if ($code == 1009) {
+        if ($err =~ /build queue/) {
+          output("Build queue is full ($err). Skipping for now.");
+          next;
+        }
+        elsif ($action eq 'build') {
           output("Space is (probably) occupied ($err). Removing.");
           splice(@$current_work, $ibuild, 1);
           $ibuild--;
@@ -136,9 +137,14 @@ while (1) {
         }
       }
       if ($code == 1010) { # no privs
-        output("Not enough priviledges ($err). Removing.");
-        splice(@$current_work, $ibuild, 1);
-        $ibuild--;
+        if ($action eq 'upgrade' && $err =~ /complete the pending build first/i ) {
+          output("Building is currently being upgraded. Skipping for now.");
+        }
+        else {
+          output("Not enough priviledges ($err). Removing.");
+          splice(@$current_work, $ibuild, 1);
+          $ibuild--;
+        }
         next;
       }
       if ($code == 1002) { # no privs
@@ -215,7 +221,10 @@ sub build_topo_sort {
       push @res, \@independent;
     }
     else {
-      push @{$res[0]}, \@independent;
+      my %seen = map {($_ => 1)} @{$res[0]};
+      foreach my $elem (@independent) {
+        push @{$res[0]}, $elem if not $seen{$elem}++;
+      }
     }
 
     return @res;
@@ -234,3 +243,17 @@ sub find_building_id {
   }
   return();
 }
+
+sub usage {
+  die <<"END_USAGE";
+Usage: $0 myempire.yml
+  --interval MINUTES        (defaults to 10)
+  --schedule schedule.yml   List of things to do
+
+See the examples/build_scheduled.yml for an example.
+
+END_USAGE
+
+}
+
+

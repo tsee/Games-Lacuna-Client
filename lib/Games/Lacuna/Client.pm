@@ -118,8 +118,18 @@ sub stats {
 }
 
 
+sub register_destroy_hook {
+  my $self = shift;
+  my $hook = shift;
+  push @{$self->{destroy_hooks}}, $hook;
+}
+
 sub DESTROY {
   my $self = shift;
+  if ($self->{destroy_hooks}) {
+    $_->($self) for @{$self->{destroy_hooks}};
+  }
+
   if (not $self->session_persistent) {
     $self->empire->logout;
   }
@@ -188,12 +198,15 @@ Games::Lacuna::Client - An RPC client for the Lacuna Expanse
 =head1 SYNOPSIS
 
   use Games::Lacuna::Client;
+  my $client = Games::Lacuna::Client->new(cfg_file => 'path/to/myempire.yml');
+  
+  # or manually:
   my $client = Games::Lacuna::Client->new(
     uri      => 'https://path/to/server',
     api_key  => 'your api key here',
     name     => 'empire name',
     password => 'sekrit',
-    cfg_file => 'config.yml',
+    #session_peristent => 1, # only makes sense with cfg_file set!
     #debug    => 1,
   );
   
@@ -205,7 +218,12 @@ Games::Lacuna::Client - An RPC client for the Lacuna Expanse
 
 =head1 DESCRIPTION
 
-This module implements the Lacuna Expanse API as of 8.10.2010.
+This module implements the Lacuna Expanse API as of 10.10.2010.
+
+You will need to have a basic familiarity with the Lacuna RPC API
+itself, so check out L<http://gameserver.lacunaexpanse.com/api/>
+where C<gameserver> is the server you intend to use it on. As of this
+writing, the only server is C<us1>.
 
 The different API I<modules> are available by calling the respective
 module name as a method on the client object. The returned object then
@@ -242,10 +260,11 @@ automatically log in for you as necessary.
     api_key   => 'public api key',
   );
 
-=head1 Configuration file
+=head1 CONFIGURATION FILE
 
-Some of the parameters of the constructor can also be suplied in a
-configuration file in YAML format.
+Some of the parameters of the constructor can also be supplied in a
+configuration file in YAML format. You can find a template in the
+F<examples> subdirectory.
 
   empire_name: The name of my Empire
   empire_password: The password
@@ -261,6 +280,9 @@ configuration file in YAML format.
 =head1 SEE ALSO
 
 API docs at L<http://us1.lacunaexpanse.com/api>.
+
+A few ready-to-use tools of varying quality live
+in the F<examples> subdirectory.
 
 =head1 AUTHOR
 
