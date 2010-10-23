@@ -26,11 +26,13 @@
 use strict;
 use warnings;
 use Games::Lacuna::Client;
+use YAML::Any ();
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
 	die "Did not provide a config file";
 }
+my $sortby = shift(@ARGV) || 'score';
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
@@ -39,8 +41,34 @@ my $client = Games::Lacuna::Client->new(
 
 use Data::Dumper;
 
+my %building_prereqs=(
+	'Munitions Lab' => {
+		'Uraninite' => 25,
+		'Monazite' => 25,
+	},
+	'Pilot Training Facility' => {
+		'Gold' => 2,
+	},
+	'Cloaking Lab' => {},
+);
+my $cond_file='colony_conditions.yml';
+my $conditions={};
+my @buildings;
+if (-e $cond_file) {
+    $conditions=YAML::Any::LoadFile($cond_file);
+    if (exists $conditions->{'sort'}) {
+        $sortby=$conditions->{'sort'};
+    }
+    if (exists $conditions->{'buildings'}) {
+        foreach my $building (@{$conditions->{'buildings'}}) {
+            die "Building '$building' not found in list" if !exists $building_prereqs{$building};
+            next if $building_prereqs{$building} eq '' || keys %{$building_prereqs{$building}} == 0;
+            push @buildings, $building;
+        }
+    }
+}
+
 my $data = $client->empire->view_species_stats();
-my $sortby = shift(@ARGV) || 'score';
 
 # Get orbits
 my $min_orbit = $data->{species}->{min_orbit};
@@ -83,7 +111,15 @@ for my $p (@planets) {
 }
 
 # Sort and print results
-for my $p (sort { $b->{$sortby} <=> $a->{$sortby} } @planets) {
+PLANET: for my $p (sort { $b->{$sortby} <=> $a->{$sortby} } @planets) {
+    foreach my $building (@buildings) {
+        my $prereqs=$building_prereqs{$building};
+        my $ore_available=0;
+        while (my ($ore, $quantity) = each %$prereqs) {
+            $ore_available++ if ($p->{ore}{lc $ore} >= $quantity);
+        }
+        next PLANET unless $ore_available;
+    }
     my $d = $p->{distance};
     print_bar();
     printf "%-20s [%4s,%4s] (Distance: %3s)\nSize: %2d                   Colony Ship Travel Time:  %3.1f hours\nWater: %4d    Short Range Colony Ship Travel Time: %3.1f hours\n",
