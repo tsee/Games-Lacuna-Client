@@ -27,18 +27,20 @@ use strict;
 use warnings;
 use Games::Lacuna::Client;
 
+my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+unless ( $cfg_file and -e $cfg_file ) {
+	die "Did not provide a config file";
+}
+
 my $client = Games::Lacuna::Client->new(
-uri      => 'https://us1.lacunaexpanse.com', # Or something...
-api_key  => 'your-api-key',
-name     => 'your-empire-name',
-password => 'your-password',
-#debug    => 1,
+	cfg_file => $cfg_file,
+	# debug    => 1,
 );
 
 use Data::Dumper;
 
 my $data = $client->empire->view_species_stats();
-my $sortby = $ARGV[0] || 'score';
+my $sortby = shift(@ARGV) || 'score';
 
 # Get orbits
 my $min_orbit = $data->{species}->{min_orbit};
