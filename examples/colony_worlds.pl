@@ -51,6 +51,21 @@ my %building_prereqs=(
 	},
 	'Cloaking Lab' => {},
 );
+
+my %food_prereqs = (
+    'Beeldeban Herder' => [5,6],
+    'Algae Cropper' => '', #any
+    'Dairy Farm' => [3,'Trona'], #Trona
+    'Amalgus Bean Plantation' => [4,'food_ore'], #gypsum, sulfur, or monazite
+    'Apple Orchard' => [3,'food_ore'],
+    'Corn Plantation' => [2,3,'food_ore'],
+    'Denton Root Patch' => [5,6,'food_ore'],
+    'Lapis Orchard' => [2,'food_ore'],
+    'Malcud Fungus Farm' => '',
+    'Potato Patch' => [3,4,'food_ore'],
+    'Wheat Farm' => [2,3,4,'food_ore'],
+); #max 7
+
 my $cond_file='colony_conditions.yml';
 my $conditions={};
 my @buildings;
