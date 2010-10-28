@@ -10,7 +10,7 @@ our @ISA = qw(Games::Lacuna::Client::Module);
 
 require Games::Lacuna::Client::Buildings::Simple;
 
-require Games::Lacuna::Client::Buildings::Archeology;
+require Games::Lacuna::Client::Buildings::Archaeology;
 require Games::Lacuna::Client::Buildings::Development;
 require Games::Lacuna::Client::Buildings::Embassy;
 require Games::Lacuna::Client::Buildings::Intelligence;

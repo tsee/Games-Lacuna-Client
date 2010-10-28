@@ -1,4 +1,4 @@
-package Games::Lacuna::Client::Buildings::Archeology;
+package Games::Lacuna::Client::Buildings::Archaeology;
 use 5.0080000;
 use strict;
 use warnings;
