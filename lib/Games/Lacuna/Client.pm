@@ -25,10 +25,12 @@ use Class::XSAccessor {
     session_timeout
     session_persistent
     cfg_file
+    cache
   )],
 };
 
 require Games::Lacuna::Client::RPC;
+require Games::Lacuna::Client::Cache;
 
 require Games::Lacuna::Client::Alliance;
 require Games::Lacuna::Client::Body;
@@ -76,6 +78,10 @@ sub new {
   
   # the actual RPC client
   $self->{rpc} = Games::Lacuna::Client::RPC->new(client => $self);
+
+  # the caching module, if caching is requested
+  $self->cache(Games::Lacuna::Client::Cache->new(filename => $opt{cache}))
+    if $opt{cache};
 
   return $self,
 }
@@ -184,6 +190,9 @@ sub assert_session {
   if (!$self->session_id || $now - $self->session_start > $self->session_timeout) {
     if ($self->debug) {
       print "DEBUG: Logging in since there is no session id or it timed out.\n";
+    }
+    if (my $cache = $self->cache()) {
+      $cache->reset();
     }
     my $res = $self->empire->login($self->{name}, $self->{password}, $self->{api_key});
     $self->{session_id} = $res->{session_id};

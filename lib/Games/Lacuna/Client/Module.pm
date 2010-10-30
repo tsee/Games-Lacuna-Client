@@ -6,6 +6,7 @@ use Carp 'croak';
 
 use Class::XSAccessor {
   getters => [qw(client uri)],
+  accessors => [qw( use_cached cache_results )],
 };
 
 require Games::Lacuna::Client;
@@ -34,6 +35,12 @@ sub new {
     %opt,
   } => $class;
   $self->{uri} = $self->client->uri . '/' . $self->module_prefix;
+
+  # Set caching as default if client sports a cache and not told otherwise
+  if ($client->cache()) {
+    $self->use_cached(1) unless exists $opt{use_cached};
+    $self->cache_results(1) unless exists $opt{cache_results};
+  }
   
   return $self;
 }
@@ -66,17 +73,52 @@ sub _generate_method_per_spec {
   my $sub = sub {
     my $self = shift;
     my $client = $self->client;
+
+    # get optional options if present
+    my $opts = (@_ && ref $_[0]) ? shift : {};
     
     # prepend the default parameters to the arguments
     my $params = [
       (map $self->$_(), @$default_args),
       @_
     ];
-    
+    my @call_params = ($self->uri(), $method_name, $params);
+
     if ($client->debug) {
-      print "DEBUG: " . __PACKAGE__ . " request " . Data::Dumper::Dumper([$self->uri, $method_name, $params]);
+      print "DEBUG: " . __PACKAGE__ . " request " . Data::Dumper::Dumper(\@call_params);
     }
-    my $ret = $client->rpc->call($self->uri, $method_name, $params);
+
+    my $ret;
+    if (my $cache = $client->cache()) {
+      $opts->{use_cached} = $self->use_cached()
+        unless exists $opts->{use_cached};
+      $opts->{cache_result} = $self->cache_results()
+        unless exists $opts->{cache_result};
+
+      if ($client->debug()) {
+        print "DEBUG: " . __PACKAGE__ . " cache usage " .
+          Data::Dumper::Dumper({
+            use_cached => $opts->{use_cached},
+            cache_result => $opts->{cache_result},
+          });
+      }
+
+      $ret = $cache->retrieve(@call_params) if $opts->{use_cached};
+      if (! $ret) {
+         if ($client->debug()) {
+           print "DEBUG: " . __PACKAGE__ . " cache miss\n";
+         }
+         $ret = $client->rpc()->call(@call_params);
+         $cache->store($ret, @call_params) if $opts->{cache_result};
+      }
+      elsif ($client->debug()) {
+        print "DEBUG: " . __PACKAGE__ . " cache hit\n";
+      }
+    }
+    else {
+      $ret = $client->rpc->call(@call_params);
+    }
+
     if ($client->debug) {
       print "DEBUG: " . __PACKAGE__ . " result " . Data::Dumper::Dumper($ret);
     }
