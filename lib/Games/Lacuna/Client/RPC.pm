@@ -36,7 +36,7 @@ sub new {
   
   my $self = bless {
     %opt,
-    ua => LWP::UserAgent->new,
+    ua => LWP::UserAgent->new(env_proxy => 1),
     marshal => JSON::RPC::Common::Marshal::HTTP->new,
   } => $class;
   
