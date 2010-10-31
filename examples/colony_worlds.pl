@@ -28,6 +28,7 @@ use warnings;
 use Games::Lacuna::Client;
 use YAML::Any ();
 use List::Util qw/first sum/;
+my $verbose = 1;
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
@@ -79,22 +80,24 @@ sub food_count {
                 if ($pr =~ /^\d$/) {
                     if ($pr == $planet_orbit) {
                         $orbit_found++;
+                    }
+                } else {
+                    my @ores;
+                    if ($pr eq 'food_ore') {
+                        @ores=@food_ore;
                     } else {
-                        my @ores;
-                        if ($pr eq 'food_ore') {
-                            @ores=@food_ore;
-                        } else {
-                            @ores=($pr);
-                        }
-                        unless (first { $planet->{ore}{lc $_}>1 } @ores) {
-                            next FOOD_BUILDING;
-                        }
+                        @ores=($pr);
+                    }
+                    unless (grep { die "no ore $_ on planet ".$planet->{name} unless exists $planet->{ore}{lc $_}; $planet->{ore}{lc $_} > 1 } @ores) {
+                        next FOOD_BUILDING;
                     }
                 }
             }
             next FOOD_BUILDING unless $orbit_found;
         }
+        $food_count++;
     }
+    return $food_count;
 }
 
 my $cond_file='colony_conditions.yml';
@@ -144,6 +147,17 @@ for my $obs_id (@observatories) {
 # Gather planet data
 my @planets;
 for my $star (@stars) {
+    if ($conditions->{'max_star_distance'}) {
+        die "no distance data for star" unless exists $star->{x};
+        my $dist = distance($hx,$hy,$star->{x},$star->{y});
+        if ( $dist > $conditions->{'max_star_distance'}) {
+            if ($verbose) {
+                print $star->{name}," is too far from home planet - $dist ly\n";
+            }
+            next;
+        }
+    }
+    
     push @planets, grep { (not defined $_->{empire}) && $_->{orbit} >= $min_orbit && $_->{orbit} <= $max_orbit && $_->{type} eq 'habitable planet' } @{$star->{bodies}};
 }
 
@@ -165,8 +179,8 @@ sub calculate_score {
 }
 
 sub distance {
-    my ($x1,y1,$x2,y2) = @_;
-    sqrt(($x1 - x2)**2 + ($y1 - y2)**2);
+    my ($x1,$y1,$x2,$y2) = @_;
+    sqrt(($x1 - $x2)**2 + ($y1 - $y2)**2);
 }
 
 # Calculate some planet metadata
@@ -202,7 +216,7 @@ PLANET: for my $p (sort { $b->{$sortby} <=> $a->{$sortby} } @planets) {
         }
     }
     print_bar();
-    printf "Score: %3d%% [Size: %3d%%, Water: %3d%%, Ore: %3d%%]\n",@{$p}{'score','size_score','water_score','ore_score'};
+    printf "Score: %3d%% [Size: %3d%%, Water: %3d%%, Ore: %3d%%, Food: %3d%%]\n",@{$p}{'score','size_score','water_score','ore_score','food_score'};
     print_bar();
     print "\n"
 }
