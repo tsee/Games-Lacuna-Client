@@ -28,7 +28,7 @@ use warnings;
 use Games::Lacuna::Client;
 use YAML::Any ();
 use List::Util qw/first sum/;
-my $verbose = 1;
+my $verbose = 0;
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
@@ -52,6 +52,18 @@ my %building_prereqs=(
 		'Gold' => 2,
 	},
 	'Cloaking Lab' => {},
+	'Water Reclamation Plant' => {
+		'halite' => 9,
+		'sulfur' => 9,
+	},
+	'Fusion Reactor' => {
+	        'Galena' => 16,
+	        'Halite' => 16,
+	},
+	'Ore Refinery' => {
+	        'Sulfur' => 7,
+	        'Fluorite' => 7,
+	},
 );
 
 my %food_prereqs = (
