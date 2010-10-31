@@ -10,21 +10,26 @@ our @ISA = qw(Games::Lacuna::Client::Module);
 
 require Games::Lacuna::Client::Buildings::Simple;
 
-require Games::Lacuna::Client::Buildings::Archaeology;
-require Games::Lacuna::Client::Buildings::Development;
-require Games::Lacuna::Client::Buildings::Embassy;
-require Games::Lacuna::Client::Buildings::Intelligence;
-require Games::Lacuna::Client::Buildings::Mining;
-require Games::Lacuna::Client::Buildings::Network19;
-require Games::Lacuna::Client::Buildings::Observatory;
-require Games::Lacuna::Client::Buildings::Park;
-require Games::Lacuna::Client::Buildings::PlanetaryCommand;
-require Games::Lacuna::Client::Buildings::Security;
-require Games::Lacuna::Client::Buildings::Shipyard;
-require Games::Lacuna::Client::Buildings::SpacePort;
-require Games::Lacuna::Client::Buildings::Trade;
-require Games::Lacuna::Client::Buildings::Transporter;
-require Games::Lacuna::Client::Buildings::WasteRecycling;
+our @BuildingTypes = (qw(
+    Archaeology
+    Development
+    Embassy
+    Intelligence
+    Mining
+    Network19
+    Observatory
+    Park
+    PlanetaryCommand
+    Security
+    Shipyard
+    SpacePort
+    Trade
+    Transporter
+    WasteRecycling
+  ),
+);
+eval join '',
+   map { "require Games::Lacuna::Client::Buildings::$_;" } @BuildingTypes;
 
 use Class::XSAccessor {
   getters => [qw(building_id)],
@@ -53,7 +58,7 @@ sub new {
     if ($class ne 'Games::Lacuna::Client::Buildings') {
       croak("Cannot call ->new on Games::Lacuna::Client::Buildings subclass ($class) and pass the 'type' parameter");
     }
-    my $realclass = "Games::Lacuna::Client::Buildings::$btype";
+    my $realclass = $class->subclass_for($btype);
     return $realclass->new(%opt);
   }
   my $id = delete $opt{id};
@@ -75,6 +80,22 @@ sub build {
   my $rv = $self->_build(@_);
   $self->{building_id} = $rv->{building}{id};
   return $rv;
+}
+
+{
+  my %CamelCase_for;
+  sub subclass_for {
+    my ($class, $type) = @_;
+
+    if (! keys %CamelCase_for) { # initialise mapping if needed
+      %CamelCase_for = map { lc($_) => $_ }
+        @Games::Lacuna::Client::Buildings::BuildingTypes,
+        @Games::Lacuna::Client::Buildings::Simple::BuildingTypes;
+    }
+
+    $type =~ s{^/}{}mxs;  # Body::get_buildings()' url is like '/lake'...
+    return "Games::Lacuna::Client::Buildings::$CamelCase_for{lc($type)}";
+  }
 }
 
 

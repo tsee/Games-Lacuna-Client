@@ -3,7 +3,7 @@ use 5.0080000;
 use strict;
 use warnings;
 use Carp 'croak';
-use Fcntl qw(:flock);
+use File::Temp qw( tempfile );
 
 our $VERSION = '0.01';
 use constant DEBUG => 1;
@@ -45,8 +45,6 @@ sub new {
   if ($opt{cfg_file}) {
     open my $fh, '<', $opt{cfg_file}
       or croak("Could not open config file for reading: $!");
-    flock($fh, LOCK_SH)
-      or croak("Could not lock config file for reading: $!");
     my $yml = YAML::Any::Load(do { local $/; <$fh> });
     close $fh;
     $opt{name}     = defined $opt{name} ? $opt{name} : $yml->{empire_name};
@@ -145,25 +143,38 @@ sub write_cfg {
   }
   croak("No config file")
     if not defined $self->cfg_file;
-    my %cfg = map { ($_ => $self->{$_}) } qw(session_start
-                                             session_id
-                                             session_timeout
-                                             session_persistent
-                                             api_key);
-    $cfg{server_uri}      = $self->{uri};
-    $cfg{empire_name}     = $self->{name};
-    $cfg{empire_password} = $self->{password};
+  my %cfg = map { ($_ => $self->{$_}) } qw(session_start
+                                           session_id
+                                           session_timeout
+                                           session_persistent
+                                           api_key);
+  $cfg{server_uri}      = $self->{uri};
+  $cfg{empire_name}     = $self->{name};
+  $cfg{empire_password} = $self->{password};
+  my $yml = YAML::Any::Dump(\%cfg);
 
-    open my $fh, '+<', $self->{cfg_file}
-      or warn("Can not write Lacuna client configuration: $!"), return();
-    flock($fh, LOCK_EX) 
-      or warn("Can not lock Lacuna client configuration: $!"), return();
-    my $yml = YAML::Any::Dump(\%cfg);
-    truncate($fh, 0);
-    print $fh $yml;
-    close $fh 
-      or warn("Can not write Lacuna client configuration: $!"), return();
-    return 1;
+  eval {
+    my $target = $self->cfg_file();
+
+    # save data to a temporary, so we don't risk trashing the target
+    my ($tfh, $tempfile) = tempfile("$target.XXXXXXX"); # croaks on err
+    print {$tfh} $yml or die $!;
+    close $tfh or die $!;
+
+    # preserve mode in temporary file
+    my (undef, undef, $mode) = stat $target or die $!;
+    chmod $mode, $tempfile or die $!;
+
+    # rename should be atomic, so there should be no need for flock
+    rename $tempfile, $target or die $!;
+
+    1;
+  } or do {
+    warn("Can not save Lacuna client configuration: $@");
+    return;
+  };
+
+  return 1;
 }
 
 sub assert_session {
