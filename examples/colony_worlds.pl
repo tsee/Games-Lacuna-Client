@@ -27,6 +27,7 @@ use strict;
 use warnings;
 use Games::Lacuna::Client;
 use YAML::Any ();
+use List::Util qw/first/;
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
@@ -55,7 +56,7 @@ my %building_prereqs=(
 my %food_prereqs = (
     'Beeldeban Herder' => [5,6],
     'Algae Cropper' => '', #any
-    'Dairy Farm' => [3,'Trona'], #Trona
+    'Dairy Farm' => [3,'trona','food_ore'], #requires 'Corn Plantation'
     'Amalgus Bean Plantation' => [4,'food_ore'], #gypsum, sulfur, or monazite
     'Apple Orchard' => [3,'food_ore'],
     'Corn Plantation' => [2,3,'food_ore'],
@@ -65,6 +66,35 @@ my %food_prereqs = (
     'Potato Patch' => [3,4,'food_ore'],
     'Wheat Farm' => [2,3,4,'food_ore'],
 ); #max 7
+my @food_ore=qw/gypsum sulfur monazite/;
+sub food_count {
+    my $planet = shift;
+    my $food_count=0;
+    my $planet_orbit = $planet->{orbit};
+    FOOD_BUILDING: while (my ($building, $prereqs) = each %food_prereqs) {
+        if ($prereqs ne '') {
+            my $orbit_found;
+            foreach my $pr (@$prereqs) {
+                if ($pr =~ /^\d$/) {
+                    if ($pr == $planet_orbit) {
+                        $orbit_found++;
+                    } else {
+                        my @ores;
+                        if ($pr eq 'food_ore') {
+                            @ores=@food_ore;
+                        } else {
+                            @ores=($pr);
+                        }
+                        unless (first { $planet->{ore}{lc $_}>1 } @ores) {
+                            next FOOD_BUILDING;
+                        }
+                    }
+                }
+            }
+            next FOOD_BUILDING unless $orbit_found;
+        }
+    }
+}
 
 my $cond_file='colony_conditions.yml';
 my $conditions={};
