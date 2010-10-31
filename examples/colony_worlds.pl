@@ -27,7 +27,7 @@ use strict;
 use warnings;
 use Games::Lacuna::Client;
 use YAML::Any ();
-use List::Util qw/first/;
+use List::Util qw/first sum/;
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
@@ -66,6 +66,7 @@ my %food_prereqs = (
     'Potato Patch' => [3,4,'food_ore'],
     'Wheat Farm' => [2,3,4,'food_ore'],
 ); #max 7
+my $max_basic_food_buildings = 7;
 my @food_ore=qw/gypsum sulfur monazite/;
 sub food_count {
     my $planet = shift;
@@ -146,13 +147,32 @@ for my $star (@stars) {
     push @planets, grep { (not defined $_->{empire}) && $_->{orbit} >= $min_orbit && $_->{orbit} <= $max_orbit && $_->{type} eq 'habitable planet' } @{$star->{bodies}};
 }
 
+my $factors_sum=0;
+
+unless (exists $conditions->{'score_factors'}) {
+    $conditions->{'score_factors'} = {water_score=>1,size_score=>1,ore_score=>1,food_score=>0.5};
+}
+my $factors = $conditions->{'score_factors'};
+$factors_sum = sum(values %$factors);
+
+sub calculate_score {
+    my $planet = shift;
+    my $sum=0;
+    while ( my ($factor,$factor_weight)=each %$factors) {
+        $sum += $planet->{$factor} * $factor_weight;
+    }
+    return $sum / $factors_sum;
+}
+
 # Calculate some planet metadata
 for my $p (@planets) {
     $p->{distance} = sqrt(($hx - $p->{x})**2 + ($hy - $p->{y})**2);
     $p->{water_score} = ($p->{water} - 5000) / 50;
     $p->{size_score}  = (($p->{size} > 50 ? 50 : $p->{size} ) - 30) * 5;
     $p->{ore_score}   = (scalar grep { $p->{ore}->{$_} > 1 } keys %{$p->{ore}}) * 5;
-    $p->{score}       = ($p->{water_score}+$p->{size_score}+$p->{ore_score})/3;
+    $p->{food_score}   = food_count($p)*100/$max_basic_food_buildings;
+    
+    $p->{score}       = calculate_score($p);
 }
 
 # Sort and print results
