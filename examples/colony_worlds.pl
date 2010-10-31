@@ -164,9 +164,14 @@ sub calculate_score {
     return $sum / $factors_sum;
 }
 
+sub distance {
+    my ($x1,y1,$x2,y2) = @_;
+    sqrt(($x1 - x2)**2 + ($y1 - y2)**2);
+}
+
 # Calculate some planet metadata
 for my $p (@planets) {
-    $p->{distance} = sqrt(($hx - $p->{x})**2 + ($hy - $p->{y})**2);
+    $p->{distance} = distance($hx,$hy,$p->{x},$p->{y});
     $p->{water_score} = ($p->{water} - 5000) / 50;
     $p->{size_score}  = (($p->{size} > 50 ? 50 : $p->{size} ) - 30) * 5;
     $p->{ore_score}   = (scalar grep { $p->{ore}->{$_} > 1 } keys %{$p->{ore}}) * 5;
