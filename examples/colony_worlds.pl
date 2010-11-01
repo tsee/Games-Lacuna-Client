@@ -28,11 +28,18 @@ use warnings;
 use Games::Lacuna::Client;
 use YAML::Any ();
 use List::Util qw/first sum/;
-my $verbose = 0;
+my $verbose = 1;
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
 	die "Did not provide a config file";
+}
+my $cond_file;
+if (@ARGV) {
+    $cond_file=shift(@ARGV);
+    die "Conditions file '$cond_file' does not exist" unless -e $cond_file;
+} else {
+    $cond_file='colony_conditions.yml';
 }
 my $sortby = shift(@ARGV) || 'score';
 
@@ -112,7 +119,6 @@ sub food_count {
     return $food_count;
 }
 
-my $cond_file='colony_conditions.yml';
 my $conditions={};
 my @buildings;
 if (-e $cond_file) {
