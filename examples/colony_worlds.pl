@@ -71,6 +71,11 @@ my %building_prereqs=(
 	        'Sulfur' => 7,
 	        'Fluorite' => 7,
 	},
+	'Waste Treatment Center L5' => {
+		'halite' => 39,
+		'sulfur' => 39,
+		'trona' => 39,
+	}
 );
 
 my %food_prereqs = (
