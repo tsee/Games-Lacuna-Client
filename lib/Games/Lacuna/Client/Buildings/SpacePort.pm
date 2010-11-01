@@ -18,7 +18,7 @@ sub api_methods {
     send_ship               => { default_args => [qw(session_id)] },
     name_ship               => { default_args => [qw(session_id building_id)] },
     scuttle_ship            => { default_args => [qw(session_id building_id)] },
-    view_shuips_travelling  => { default_args => [qw(session_id building_id)] },
+    view_ships_travelling  => { default_args => [qw(session_id building_id)] },
     prepare_send_spies      => { default_args => [qw(session_id)] },
     send_spies              => { default_args => [qw(session_id)] },
     prepare_fetch_spies     => { default_args => [qw(session_id)] },
