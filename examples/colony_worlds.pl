@@ -79,7 +79,7 @@ my %building_prereqs=(
 );
 
 my %food_prereqs = (
-    'Beeldeban Herder' => [5,6],
+    'Beeldeban Herder' => [5,6,'food_ore'], #requires 'Denton Root Patch'
     'Algae Cropper' => '', #any
     'Dairy Farm' => [3,'trona','food_ore'], #requires 'Corn Plantation'
     'Amalgus Bean Plantation' => [4,'food_ore'], #gypsum, sulfur, or monazite
