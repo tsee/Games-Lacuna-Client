@@ -63,6 +63,8 @@ sub call {
   my $resp = $self->ua->request($req);
   my $res = $self->marshal->response_to_result($resp);
 
+  $self->{client}->{total_calls}++;
+
   if ($res->error) {
     Carp::croak("RPC Error (" . $res->error->code . "): " . $res->error->message);
   }
