@@ -1,0 +1,47 @@
+---
+cache_dir: /path/to/some/dir/which/must/be/writable
+cache_duration: 86400
+colony:
+  _default_:
+    allow_downgrades: 0
+    crisis_threshhold_hours: 1.05
+    exclude: 0
+    pcc_is_storage: 0
+    priorities:
+    - repairs
+    - production_crisis
+    - storage_crisis
+    - construction
+    - resource_upgrades
+    - other_upgrades
+    - recycling
+    - pushes
+    profile:
+      _default_:
+        build_above: 10000
+        production: 1
+        push_above: 10000
+        want_push_to: 0.8
+      happiness:
+        production: 0.01
+      waste:
+        production: 0.01
+        recycle_above: 1000
+        recycle_reserve: 100
+        recycle_selection: full
+    profile_production_tolerance: 0.1
+    profile_storage_tolerance: 0.1
+    reserve_build_queue: 1
+    upgrade_selection: lowest_level
+keepalive: 3600
+verbosity:
+  action: 1
+  construction: 1
+  message: 1
+  production: 0
+  pushes: 1
+  storage: 0
+  summary: 1
+  trace: 1
+  upgrades: 0
+  warning: 1
