@@ -39,7 +39,7 @@ foreach my $sp (@spaceports) {
   foreach my $ship (@ships) {
     my $from=$ship->{from};
     my $to=$ship->{to};
-    ( my $date_arrives = $ship->{date_arrives} ) =~ s{^(\d+)\s+(\d+)\s+}{$1/$2/};
+    ( my $date_arrives = $ship->{date_arrives} ) =~ s{^(\d+)\s+(\d+)\s+}{$2/$1/};
     my $arrives = time2str('%Y/%m/%d %H:%M', str2time($date_arrives));
     die unless ref($from) eq 'HASH';
     die unless ref($to) eq 'HASH';
