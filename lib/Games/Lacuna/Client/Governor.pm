@@ -78,12 +78,10 @@ sub govern {
     message("Governing ".$status->{name}) if ($self->{config}->{verbosity}->{message});
     Games::Lacuna::Client::PrettyPrint::show_status($status) if ($self->{config}->{verbosity}->{summary});
 
-    if((not defined $self->{building_cache}->{body}->{$pid}) or $status->{needs_surface_refresh}) {
-        my $details = $self->{client}->body( id => $pid )->get_buildings()->{buildings};
-        $self->{building_cache}->{body}->{$pid} = $details; 
-        for my $bid (@{$self->{building_cache}->{body}->{$pid}}) {
-            $self->{building_cache}->{body}->{$pid}->{$bid}->{pretty_type} = type_from_url( $self->{building_cache}->{body}->{$pid}->{$bid}->{url} );
-        }
+    my $details = $self->{client}->body( id => $pid )->get_buildings()->{buildings};
+    $self->{building_cache}->{body}->{$pid} = $details; 
+    for my $bid (keys %{$self->{building_cache}->{body}->{$pid}}) {
+        $self->{building_cache}->{body}->{$pid}->{$bid}->{pretty_type} = type_from_url( $self->{building_cache}->{body}->{$pid}->{$bid}->{url} );
     }
 
     $status->{happiness_capacity} = $cfg->{resource_profile}->{happiness}->{storage_target} || 1;
@@ -187,52 +185,66 @@ sub resource_upgrades {
     my ($status, $cfg) = @{$self->{current}}{qw(status config)};
     my @reslist = qw(food ore water energy waste happiness);
 
-    # Stop without processing if the build queue is full.
-    if((defined $self->{current}->{build_queue_remaining}) &&
-        ($self->{current}->{build_queue_remaining} <= $cfg->{reserve_build_queue})) {
-        warning(sprintf("Aborting, %s slots in build queue <= %s reserve slots specified",
-            $self->{current}->{build_queue_remaining},
-            $cfg->{reserve_build_queue}));
-        return;
-    }
+    for my $type(qw(production storage)) {
+        # Stop without processing if the build queue is full.
+        if((defined $self->{current}->{build_queue_remaining}) &&
+            ($self->{current}->{build_queue_remaining} <= $cfg->{reserve_build_queue})) {
+            warning(sprintf("Aborting, %s slots in build queue <= %s reserve slots specified",
+                $self->{current}->{build_queue_remaining},
+                $cfg->{reserve_build_queue}));
+            return;
+        }
 
-    my $profile = normalized_profile($cfg->{profile},@reslist);
-    my $hourly_total = sum(map { abs($_) } @{$status}{ map { "$_\_hour" } @reslist});
+        my $profile = normalized_profile($cfg->{profile},$type,@reslist);
+        my $selected = select_resource($status,$profile,$type eq 'production' ? 'hour' : 'capacity',@reslist);
+        my $upgrade_succeeded = $self->attempt_upgrade_for($selected, $type ); # 1 for override, this is a crisis.
+
+        if ($upgrade_succeeded) {
+            my $bldg_data = $self->{building_cache}->{body}->{$status->{id}}->{$upgrade_succeeded};
+            action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
+        } else {
+            warning("Could not find any suitable buildings to upgrade");
+        }
+    }
+}
+
+sub normalized_profile {
+    my $prof = shift;
+    my $type = shift;
+    my $nprod = {};
+    my @reslist = @_;
+    my $sum = 0;
+    for my $res (@reslist) {
+        my $val = defined $prof->{$res}->{$type} ? $prof->{$res}->{$type} : $prof->{_default_}->{$type};
+        if (not defined $val) {
+            $val = defined $prof->{$res}->{production} ? $prof->{$res}->{production} : $prof->{_default_}->{production};
+        }
+        $sum += $nprod->{$res} = $val;
+    }
+    if ($sum == 0) {
+        return { map { $_ => 0} @reslist };
+    }
+    return { map { $_ => (abs($nprod->{$_}/$sum)) } @reslist };
+}
+
+sub select_resource {
+    my ($status, $profile, $key_type, @reslist) = @_;
+
+    my $hourly_total = sum(map { abs($_) } @{$status}{ map { "$_\_$key_type" } @reslist});
     my $max_discrepancy;
     my $selected;
 
     for my $res (@reslist) {
-        my $prop = $status->{"$res\_hour"} / $hourly_total;
+        # Can't store happiness
+        next if ($res eq 'happiness' and $key_type eq 'capacity');
+        my $prop = $status->{"$res\_$key_type"} / $hourly_total;
         my $discrepancy = $profile->{$res} - $prop;
         if ($discrepancy > $max_discrepancy) {
             $max_discrepancy = $discrepancy;
             $selected = $res;
         }
     }
-
-    message(sprintf("Discrepancy of %2d%% detected for %s production, selecting for upgrade.",$max_discrepancy*100,$selected));
-    my $upgrade_succeeded = $self->attempt_upgrade_for($selected, 'production' ); # 1 for override, this is a crisis.
-
-    if ($upgrade_succeeded) {
-        my $bldg_data = $self->{building_cache}->{body}->{$status->{id}}->{$upgrade_succeeded};
-        action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
-    } else {
-        warning("Could not find any suitable buildings to upgrade");
-    }
-}
-
-sub normalized_profile {
-    my $prof = shift;
-    my $nprod = {};
-    my @reslist = @_;
-    my $sum = 0;
-    for my $res (@reslist) {
-        $sum += $nprod->{$res} = defined $prof->{$res}->{production} ? $prof->{$res}->{production} : $prof->{_default_}->{production};
-    }
-    if ($sum == 0) {
-        return { map { $_ => 0} @reslist };
-    }
-    return { map { $_ => (abs($nprod->{$_}/$sum)) } @reslist };
+    trace(sprintf("Discrepancy of %2d%% ($key_type) detected for %s, selecting for upgrade.",$max_discrepancy*100,$selected));
 }
 
 sub other_upgrades {
@@ -273,6 +285,8 @@ sub recycling {
         warning("Confusing directives:  Can't recycle if recycle_reserve > recycle_above");
         return;
     }
+    my $max_recycle = $center->view->{recycle}->{max_recycle};
+    $to_recycle = $max_recycle if ($to_recycle > $max_recycle);
 
     my $criteria = $cfg->{profile}->{waste}->{recycle_selection} || 'split';
     my @rr = qw(water ore energy);
@@ -323,7 +337,9 @@ sub building_details {
         not defined $self->{building_cache}->{building}->{$bid}->{pretty_type}) {
         $self->refresh_building_details($self->{building_cache}->{body}->{$pid},$bid);
     }
-    return merge($self->{building_cache}->{building}->{$bid},$self->{building_cache}->{body}->{$pid}->{$bid});
+    delete $self->{building_cache}->{building}->{$bid}->{work};
+    delete $self->{building_cache}->{building}->{$bid}->{pending_build};
+    return merge($self->{building_cache}->{body}->{$pid}->{$bid},$self->{building_cache}->{building}->{$bid});
 }
 
 sub load_building_cache {
@@ -439,6 +455,9 @@ sub attempt_upgrade_for {
         }
         last if $upgrade_succeeded;
     }
+
+    # Decrement remaining build queue if upgrade succeeded.
+    $self->{current}->{build_queue_remaining}-- if ($upgrade_succeeded);
     return $upgrade_succeeded;
 }
 
@@ -786,6 +805,11 @@ marked for a production upgrade.  For example, if all resources were set to prod
 then it would try to make your production of everything per hour (including waste and
 happiness) the same.  If you had all at 1 except for Ore at 3, it would try to produce
 3 times more ore than everything else.  And so forth.
+
+=head2 storage
+
+Like production (above), but for storage.  If this is not present, the production value
+use used instead.
 
 =head2 push_above
 
