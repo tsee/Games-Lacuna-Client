@@ -3,6 +3,9 @@
 use strict;
 use warnings;
 use Games::Lacuna::Client;
+use Date::Parse;
+use Date::Format;
+
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
 	die "Did not provide a config file";
@@ -36,8 +39,10 @@ foreach my $sp (@spaceports) {
   foreach my $ship (@ships) {
     my $from=$ship->{from};
     my $to=$ship->{to};
+    ( my $date_arrives = $ship->{date_arrives} ) =~ s{^(\d+)\s+(\d+)\s+}{$1/$2/};
+    my $arrives = time2str('%Y/%m/%d %H:%M', str2time($date_arrives));
     die unless ref($from) eq 'HASH';
     die unless ref($to) eq 'HASH';
-    print $ship->{type_human},'  from ',$from->{name},' to ',$to->{name},"\n";
+    print $ship->{type_human},' from ',$from->{name},' to ',$to->{name}," arrives $arrives\n";
   }
 }
