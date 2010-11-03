@@ -18,6 +18,8 @@ WriteMakefile(
         'Class::MOP'        => '0',
         'YAML::Any'         => '0',
         'AnyEvent'          => '0',
+        'Date::Parse'       => '0',
+        'Date::Format'      => '0',
     },                                               # e.g., Module::Name => 1.1
     (
         $] >= 5.005
