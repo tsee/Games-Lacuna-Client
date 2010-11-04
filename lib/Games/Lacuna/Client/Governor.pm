@@ -59,6 +59,10 @@ sub run {
         }
         my $next_action_in = min(values %{$self->{next_action}}) - time;
         if (defined $next_action_in && $next_action_in < $config->{keepalive}) {
+            if ($next_action_in == 0) {
+                $do_keepalive=0;
+                last;
+            }
             trace("Expecting to govern again in $next_action_in seconds, sleeping");
             sleep($next_action_in); 
             $do_keepalive = 1;
