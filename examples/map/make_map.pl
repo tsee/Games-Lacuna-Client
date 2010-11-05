@@ -31,6 +31,13 @@ foreach my $hl (@HighlightStars) {
 
 LacunaMap::DB->import($DbFile);
 
+my @allied_empires = qw(
+  118  188  223  229  261
+  269  272  280  289  293
+  299  305  382  424  539
+  550  635  713  759
+);
+my %allied_empires = map {($_ => 1)} @allied_empires;
 my $my_empire_id = 299;
 
 # Let's hardcode these for the sake of a nicer map
@@ -56,6 +63,7 @@ my $green  = Imager::Color->new(0, 255, 0);
 my $blue   = Imager::Color->new(0, 0, 255);
 my $white  = Imager::Color->new(255, 255, 255);
 my $grey   = Imager::Color->new(80, 80, 80);
+my $purple = Imager::Color->new(255, 0, 255);
 $img->box(filled => 1, color => $black);
 
 $img->line(x1 => $map_xsize+1, x2 => $map_xsize+1, y1 => 1, y2 => $map_ysize+1, color => $white);
@@ -137,8 +145,12 @@ LacunaMap::DB::Bodies->iterate(
       return;
     }
     my $color;
-    if ($body->empire_id && $body->empire_id == $my_empire_id) { $color = $green; }
-    elsif ($body->empire_id) { $color = $red; }
+    my $eid = $body->empire_id;
+    if ($eid) {
+      if ($eid == $my_empire_id) { $color = $green; }
+      elsif ($allied_empires{$eid}) { $color = $green; } # FIXME distinguish between "my" colonies and the alliance's
+      else { $color = $red; }
+    }
     elsif ($body->type =~ /habitable/i) { $color = $blue; }
     else { $color = $white; }
     $img->setpixel(x => $body->x - $min_x, y => $map_ysize-($body->y - $min_y), color => $color);
