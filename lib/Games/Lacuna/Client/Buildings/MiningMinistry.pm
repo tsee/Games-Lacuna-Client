@@ -1,4 +1,4 @@
-package Games::Lacuna::Client::Buildings::Mining;
+package Games::Lacuna::Client::Buildings::MiningMinistry;
 use 5.0080000;
 use strict;
 use warnings;
@@ -26,7 +26,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Buildings::Mining - The Mining Ministry building
+Games::Lacuna::Client::Buildings::MiningMinistry - The Mining Ministry building
 
 =head1 SYNOPSIS
 

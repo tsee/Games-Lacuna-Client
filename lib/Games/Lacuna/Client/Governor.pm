@@ -59,13 +59,14 @@ sub run {
         }
         my $next_action_in = min(values %{$self->{next_action}}) - time;
         if (defined $next_action_in && $next_action_in < $config->{keepalive}) {
-            if ($next_action_in == 0) {
+            if ($next_action_in <= 0) {
                 $do_keepalive=0;
-                last;
             }
-            trace("Expecting to govern again in $next_action_in seconds, sleeping");
-            sleep($next_action_in); 
-            $do_keepalive = 1;
+            else {
+                trace("Expecting to govern again in $next_action_in seconds, sleeping");
+                sleep($next_action_in); 
+                $do_keepalive = 1;
+            }
         }
     } while ($do_keepalive); 
 
@@ -249,6 +250,7 @@ sub select_resource {
         }
     }
     trace(sprintf("Discrepancy of %2d%% ($key_type) detected for %s, selecting for upgrade.",$max_discrepancy*100,$selected));
+    return $selected;
 }
 
 sub other_upgrades {
@@ -417,6 +419,14 @@ sub attempt_upgrade_for {
 
     my @all_options = $self->resource_buildings($resource,$type);
 
+    my %build_above = map { $_ => (($cfg->{profile}->{$_}->{build_above} > 0) ?
+                $cfg->{profile}->{$_}->{build_above} :
+                $cfg->{profile}->{_default_}->{build_above})
+        } qw(food ore water energy);
+
+    Games::Lacuna::Client::PrettyPrint::upgrade_report(\%build_above,map { $self->building_details($pid,$_->{building_id}) } @all_options)
+        if ($self->{config}->{verbosity}->{upgrades});
+
     # Abort if an upgrade is in progress.
     for my $opt (@all_options) {
         if (any {$opt->{building_id} == $_->{building_id}} @{$self->{current}->{build_queue}}) {
@@ -429,12 +439,11 @@ sub attempt_upgrade_for {
 
     my @options = part {
         my $bid = $_->{building_id};
-        (not any { ($status->{"$_\_stored"} - 
-        $self->building_details($pid,$bid)->{upgrade}->{cost}->{$_}) <
-            (($cfg->{profile}->{$_}->{build_above} > 0) ?
-                $cfg->{profile}->{$_}->{build_above} :
-                $cfg->{profile}->{_default_}->{build_above})
-        } qw(food ore water energy))+0;
+        (
+            not any { ($status->{"$_\_stored"} - $self->building_details($pid,$bid)->{upgrade}->{cost}->{$_}) 
+                < $build_above{$_} 
+            } qw(food ore water energy)
+        )+0;
     } @all_options;
 
     @options = map { ref $_ ? $_ : [] } @options[0,1];
@@ -537,7 +546,7 @@ sub type_from_url {
     my @types = @Games::Lacuna::Client::Buildings::Simple::BuildingTypes;
 
     push @types,
-        qw(Archaeology Development Embassy Intelligence Mining Network19 Observatory Park PlanetaryCommand Security Shipyard Simple SpacePort Trade Transporter WasteRecycling);
+        qw(Archaeology Development Embassy Intelligence MiningMinistry Network19 Observatory Park PlanetaryCommand Security Shipyard Simple SpacePort Trade Transporter WasteRecycling);
     $url = substr( $url, 1 );
     my ($ret_type) = grep { lc($url) eq lc($_) } @types;
     return $ret_type;
@@ -663,7 +672,7 @@ Outputs detailed information during various activities.
 
 =head3 upgrades
 
-Outputs an available upgrade report when analyzing upgrades (not yet implemented)
+Outputs an available upgrade report when analyzing upgrades.
 
 =head3 warning
 

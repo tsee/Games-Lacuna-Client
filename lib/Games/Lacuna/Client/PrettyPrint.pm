@@ -48,6 +48,28 @@ sub show_status {
     show_bar('-');
 }
 
+sub upgrade_report {
+    my ($build_above,@buildings) = @_;
+
+    show_bar('=');
+    say(_c_('bold yellow'),"Upgrade Options Report",_c_('reset'));
+    show_bar('-');
+               printf "%7s %20s %2s %3s %6s %6s %6s %6s\n","ID","Type","Lv","Can","Food","Ore","Water","Energy";
+    show_bar('-');
+    printf "%s%-35s %6s %6s %6s %6s%s\n",_c_('bold green'),"Build Above",@{$build_above}{qw(food ore water energy)},_c_('reset');
+    show_bar('-');
+    for my $bldg (@buildings) {
+        my $up = $bldg->{upgrade};
+        print _c_('cyan');
+        printf "%7s %20s %2s %3s %6s %6s %6s %6s\n",$bldg->{id},$bldg->{pretty_type},$bldg->{level},$up->{can} ? 'YES' : 'NO',map {$up->{cost}->{$_} } qw(food ore water energy);
+        print _c_('reset');
+    }
+    if (not scalar @buildings) {
+        say(_c_('bold red'),'No pertinent buildings found on this colony.',_c_('reset'));
+    }
+    show_bar('-');
+}
+
 sub message {
     my $message = shift;
     say(_c_('bold blue'),' (*) ',_c_('cyan'),$message,_c_('reset'));
