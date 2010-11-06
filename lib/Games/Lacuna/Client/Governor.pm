@@ -495,7 +495,7 @@ sub resource_buildings {
                 type => $pretty_type,
             ) if $pertinent;
     }
-    return sort { $self->pertinence_sort($res,$cfg->{upgrade_selection},$a,$b) } @pertinent_buildings;
+    return sort { $self->pertinence_sort($res,$cfg->{upgrade_selection},$type,$a,$b) } @pertinent_buildings;
 }
 
 sub find_buildings {
