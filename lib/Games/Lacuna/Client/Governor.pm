@@ -262,6 +262,11 @@ sub recycling {
     my ($pid, $status, $cfg) = @{$self->{current}}{qw(planet_id status config)};
     my @reslist = qw(food ore water energy waste happiness);
 
+    if ($status->{waste_hour} < 0) {
+        trace("Aborting recycling, current waste production is negative.");
+        return;
+    }
+
     my $concurrency = $cfg->{profile}->{waste}->{concurrency} || 1;
 
     my @recycling = $self->find_buildings('WasteRecycling');
