@@ -1,5 +1,8 @@
+#!/usr/bin/perl 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client;
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
@@ -17,7 +20,7 @@ GetOptions(
 );
 $TimePerIteration = int($TimePerIteration * MINUTE);
 
-my $config_file = shift @ARGV;
+my $config_file = shift @ARGV || 'lacuna.yml';
 usage() if not defined $config_file or not -e $config_file;
 usage() if not defined $schedule_file or not -e $schedule_file;
 

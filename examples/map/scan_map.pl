@@ -1,5 +1,7 @@
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../lib";
 use Games::Lacuna::Client;
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
@@ -17,7 +19,7 @@ GetOptions(
   'd|dbfile=s' => \$DbFile,
 );
 
-my $config_file = shift @ARGV;
+my $config_file = shift @ARGV || 'lacuna.yml';
 die if not defined $config_file or not -e $config_file;
 
 LacunaMap::DB->import(

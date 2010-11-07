@@ -1,5 +1,7 @@
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../lib";
 use Imager;
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
