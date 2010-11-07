@@ -288,17 +288,17 @@ sub prepare_building {
   }
   elsif (defined $build_order->{ship_type}) {
     output("No coordinates for this ship build order. Trying to find ship yard.");
-    ($build_order->{x}, $build_order->{y})
-      = find_shipyard($buildings, $build_order->{x}, $build_order->{y});
+    my @coords = find_shipyard($buildings, $build_order->{x}, $build_order->{y});
+    ($build_order->{x}, $build_order->{y}) = @coords if @coords;
     $build_order->{building_type} = 'Shipyard';
   }
   elsif (defined $build_order->{building_type}
          and (not defined $build_order->{x} or not defined $build_order->{y}))
   {
     output("No defined building position for this build order. Trying to guess from building type.");
-    ($build_order->{x}, $build_order->{y})
-      = find_building($buildings, $build_order->{building_type},
-                      $build_order->{x}, $build_order->{y});
+    my @coords = find_building($buildings, $build_order->{building_type},
+                               $build_order->{x}, $build_order->{y});
+    ($build_order->{x}, $build_order->{y}) = @coords if @coords;
     return if not defined $buildings;
   }
 
@@ -356,9 +356,13 @@ sub find_shipyard {
 
 sub find_building {
   my ($buildings, $type, $x, $y) = @_;
-  my $t2 = quotemeta(lc($type));
+  my $t2 = lc($type);
+  $t2 =~ s/\s+//g;
+  $t2 = quotemeta($t2);
   my @found = grep {
-                     lc($_->{name}) =~ $t2
+                     my $n = lc($_->{name});
+                     $n =~ s/\s+//g;
+                     $n =~ $t2
                      and (defined $x ? ($_->{x} == $x) : 1)
                      and (defined $y ? ($_->{y} == $y) : 1)
                    }
