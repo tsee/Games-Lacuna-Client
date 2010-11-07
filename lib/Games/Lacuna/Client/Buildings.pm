@@ -35,6 +35,21 @@ use Class::XSAccessor {
   getters => [qw(building_id)],
 };
 
+sub type_from_url {
+  my $url = shift;
+  $url =~ m{/([^/]+)$} or croak("Bad URL: '$url'");
+  my $url_elem = $1;
+  
+  foreach my $type (@Games::Lacuna::Client::Buildings::BuildingTypes,
+                    @Games::Lacuna::Client::Buildings::Simple::BuildingTypes)
+  {
+    if (lc($type) eq $url_elem) {
+      return $type;
+    }
+  }
+  croak("Bad URL: '$url'");
+}
+
 sub api_methods {
   return {
     build               => { default_args => [qw(session_id)] },
