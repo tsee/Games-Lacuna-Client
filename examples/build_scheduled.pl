@@ -4,6 +4,7 @@ use Games::Lacuna::Client;
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
 use YAML::Any ();
+use List::Util qw(first);
 
 use constant MINUTE => 60;
 
@@ -33,9 +34,10 @@ $SIG{INT} = sub {
 
 
 my $to_be_built = YAML::Any::LoadFile($schedule_file);
-foreach my $k (keys %$to_be_built) {
-	$to_be_built->{$k}{dependent_on} ||= [];
-	$to_be_built->{$k}{building} = $client->building(type => delete $to_be_built->{$k}{building_type});
+foreach my $name (keys %$to_be_built) {
+  my $build_order = $to_be_built->{$name};
+  $build_order->{dependent_on} ||= [];
+  prepare_building($build_order);
 }
 
 my @work_order = build_topo_sort(%$to_be_built);
@@ -92,6 +94,16 @@ while (1) {
       $checked_planets{$planet_name} = $buildings_struct;
     }
 
+    if (not defined $build_order->{building}) {
+      prepare_building($client, $build_order, $checked_planets{$planet_name});
+      if (not defined $build_order->{building}) {
+        output("Can't infer building type or position, skipping this order");
+        $failed_jobs{$name} = 1;
+        splice(@$current_work, $ibuild, 1);
+        $ibuild--;
+        next;
+      }
+    }
     if (not defined $build_order->{building}->building_id) {
       $build_order->{building}->{building_id} = find_building_id($checked_planets{$planet_name}, $build_order->{x}, $build_order->{y});
     }
@@ -256,4 +268,40 @@ END_USAGE
 
 }
 
+
+# Create building object if possible
+# (Tries explicit info first, otherwise lazily infers from the planet's buildings)
+sub prepare_building {
+  my $client      = shift;
+  my $build_order = shift;
+  my $buildings   = shift;
+  return if defined $build_order->{building};
+  if (not defined $build_order->{building_type}) {
+    output("No defined building type for this build order. Trying to guess from position.");
+    return if not defined $buildings;
+    my $at_location = first {
+                             $_->{x} == $build_order->{x}
+                             and $_->{y} == $build_order->{y}
+                           }
+                           values %{ $buildings->{buildings} };
+    return if not $at_location;
+    my $url = $at_location->{url};
+
+    my $type;
+    eval {
+      $type = Games::Lacuna::Client::Buildings::type_from_url($url);
+    };
+    if ($@) {
+      output("Failed to get building type from URL '$url': $@");
+      return;
+    }
+    return if not defined $type;
+    output("Building is of type '$type'!");
+    $build_order->{building_type} = $type;
+  }
+
+  if (defined $build_order->{building_type}) {
+    $build_order->{building} = $client->building(type => $build_order->{building_type});
+  }
+}
 
