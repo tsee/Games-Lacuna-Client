@@ -220,30 +220,37 @@ for my $p (@planets) {
 }
 
 # Sort and print results
+{
+    my $count = 0;
+    my $limit = $conditions->{limit} || 3;
+
+ 
 PLANET: for my $p (sort { $b->{$sortby} <=> $a->{$sortby} } @planets) {
-    foreach my $building (@buildings) {
-        my $prereqs=$building_prereqs{$building};
-        my $ore_available=0;
-        while (my ($ore, $quantity) = each %$prereqs) {
-            $ore_available++ if ($p->{ore}{lc $ore} >= $quantity);
+        foreach my $building (@buildings) {
+            my $prereqs=$building_prereqs{$building};
+            my $ore_available=0;
+            while (my ($ore, $quantity) = each %$prereqs) {
+                $ore_available++ if ($p->{ore}{lc $ore} >= $quantity);
+            }
+            next PLANET unless $ore_available;
         }
-        next PLANET unless $ore_available;
-    }
-    my $d = $p->{distance};
-    print_bar();
-    printf "%-20s [%4s,%4s] (Distance: %3s)\nSize: %2d                   Colony Ship Travel Time:  %3.1f hours\nWater: %4d    Short Range Colony Ship Travel Time: %3.1f hours\n",
-        $p->{name},$p->{x},$p->{y},int($d),$p->{size},($d/5.23),$p->{water},($d/.12);
-    print_bar();
-    for my $ore (sort keys %{$p->{ore}}) {
-        printf "  %8s %4d",substr($ore,0,8),$p->{ore}->{$ore};
-        if ($ore eq 'chromite' or $ore eq 'gypsum' or $ore eq 'monazite' or $ore eq 'zircon') {
-            print "\n";
+        my $d = $p->{distance};
+        print_bar();
+        printf "%-20s [%4s,%4s] (Distance: %3s)\nSize: %2d                   Colony Ship Travel Time:  %3.1f hours\nWater: %4d    Short Range Colony Ship Travel Time: %3.1f hours\n",
+            $p->{name},$p->{x},$p->{y},int($d),$p->{size},($d/5.23),$p->{water},($d/.12);
+        print_bar();
+        for my $ore (sort keys %{$p->{ore}}) {
+            printf "  %8s %4d",substr($ore,0,8),$p->{ore}->{$ore};
+            if ($ore eq 'chromite' or $ore eq 'gypsum' or $ore eq 'monazite' or $ore eq 'zircon') {
+                print "\n";
+            }
         }
+        print_bar();
+        printf "Score: %3d%% [Size: %3d%%, Water: %3d%%, Ore: %3d%%, Food: %3d%%]\n",@{$p}{'score','size_score','water_score','ore_score','food_score'};
+        print_bar();
+        print "\n";
+        last if (++$count >= $limit);
     }
-    print_bar();
-    printf "Score: %3d%% [Size: %3d%%, Water: %3d%%, Ore: %3d%%, Food: %3d%%]\n",@{$p}{'score','size_score','water_score','ore_score','food_score'};
-    print_bar();
-    print "\n"
 }
 
 sub print_bar {
