@@ -1,5 +1,7 @@
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../lib";
 use Getopt::Long qw(GetOptions);
 use Text::CSV;
 use lib 'lib';

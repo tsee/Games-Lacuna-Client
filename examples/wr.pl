@@ -1,6 +1,9 @@
+#!/usr/bin/perl 
 use strict;
 use warnings;
 use 5.010000;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client;
 use List::Util qw(min max sum);
 use Data::Dumper;
@@ -25,7 +28,7 @@ if ($water_perc or $ore_perc or $energy_perc) {
 	for ($water_perc, $ore_perc, $energy_perc) { $_ = $_ / 100; }
 }
 
-my $config_file = shift @ARGV;
+my $config_file = shift @ARGV || 'lacuna.yml';
 usage() if not defined $config_file or not -e $config_file;
 
 my $client = Games::Lacuna::Client->new(
