@@ -1,17 +1,21 @@
 ---
-colony_ship:
-  planet: mehplanet1
-  x: 2
-  y: -1
-  ship_type: short_range_colony_ship
-  building_type: Shipyard
+# position or building type can be guessed
+# For ship building, both can be guessed if there is only one
+# shipyard.
+probe1:
+  planet: mehplanet4
+  ship_type: probe
   dependent_on:
-#    - shipyard
-#shipyard:
-#  planet: 'mehplanet1'
-#  x: 2
-#  y: -1
-#  upgrade: 1
-#  building_type: Shipyard
-#  dependent_on:
-
+devm:
+  planet: mehplanet4
+  upgrade: 1
+  building_type: Development
+  dependent_on:
+    - probe1
+shipyard_up:
+  planet: mehplanet4
+  upgrade: 1
+  x: 1
+  y: -3
+  dependent_on:
+    - devm

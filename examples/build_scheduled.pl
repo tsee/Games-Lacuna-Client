@@ -4,6 +4,7 @@ use Games::Lacuna::Client;
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
 use YAML::Any ();
+use List::Util qw(first);
 
 use constant MINUTE => 60;
 
@@ -33,9 +34,10 @@ $SIG{INT} = sub {
 
 
 my $to_be_built = YAML::Any::LoadFile($schedule_file);
-foreach my $k (keys %$to_be_built) {
-	$to_be_built->{$k}{dependent_on} ||= [];
-	$to_be_built->{$k}{building} = $client->building(type => delete $to_be_built->{$k}{building_type});
+foreach my $name (keys %$to_be_built) {
+  my $build_order = $to_be_built->{$name};
+  $build_order->{dependent_on} ||= [];
+  prepare_building($build_order);
 }
 
 my @work_order = build_topo_sort(%$to_be_built);
@@ -92,8 +94,19 @@ while (1) {
       $checked_planets{$planet_name} = $buildings_struct;
     }
 
+    if (not defined $build_order->{building}) {
+      prepare_building($client, $build_order, $checked_planets{$planet_name});
+      if (not defined $build_order->{building}) {
+        output("Can't infer building type or position, skipping this order");
+        $failed_jobs{$name} = 1;
+        splice(@$current_work, $ibuild, 1);
+        $ibuild--;
+        next;
+      }
+    }
     if (not defined $build_order->{building}->building_id) {
-      $build_order->{building}->{building_id} = find_building_id($checked_planets{$planet_name}, $build_order->{x}, $build_order->{y});
+      $build_order->{building}->{building_id}
+        = find_building_id($checked_planets{$planet_name}, $build_order->{x}, $build_order->{y});
     }
 
     my $err;
@@ -256,4 +269,102 @@ END_USAGE
 
 }
 
+
+# Create building object if possible
+# (Tries explicit info first, otherwise lazily infers from the planet's buildings
+# using either the position or the building type)
+sub prepare_building {
+  my $client      = shift;
+  my $build_order = shift;
+  my $buildings   = shift;
+  return if defined $build_order->{building};
+  if (not defined $build_order->{building_type}
+      and defined $build_order->{x} and defined $build_order->{y})
+  {
+    output("No defined building type for this build order. Trying to guess from position.");
+    return if not defined $buildings;
+    $build_order->{building_type}
+      = building_type_from_coords($buildings, $build_order->{x}, $build_order->{y});
+  }
+  elsif (defined $build_order->{ship_type}) {
+    output("No coordinates for this ship build order. Trying to find ship yard.");
+    ($build_order->{x}, $build_order->{y})
+      = find_shipyard($buildings, $build_order->{x}, $build_order->{y});
+    $build_order->{building_type} = 'Shipyard';
+  }
+  elsif (defined $build_order->{building_type}
+         and (not defined $build_order->{x} or not defined $build_order->{y}))
+  {
+    output("No defined building position for this build order. Trying to guess from building type.");
+    ($build_order->{x}, $build_order->{y})
+      = find_building($buildings, $build_order->{building_type},
+                      $build_order->{x}, $build_order->{y});
+    return if not defined $buildings;
+  }
+
+  if (defined $build_order->{building_type}
+      and defined $build_order->{x}
+      and defined $build_order->{y})
+  {
+    $build_order->{building} = $client->building(type => $build_order->{building_type});
+  }
+}
+
+sub building_type_from_coords {
+  my ($buildings, $x, $y) = @_;
+  my $at_location = first { $_->{x} == $x and $_->{y} == $y }
+                    values %{ $buildings->{buildings} };
+  return() if not $at_location;
+  my $url = $at_location->{url};
+
+  my $type;
+  eval {
+    $type = Games::Lacuna::Client::Buildings::type_from_url($url);
+  };
+  if ($@) {
+    output("Failed to get building type from URL '$url': $@");
+    return;
+  }
+  return() if not defined $type;
+  output("Building is of type '$type'!");
+  return $type;
+}
+
+# This is not just a special case of find_building since
+# here, we fall back to any shipyard if the coords are off.
+# This is for building ships, not upgrading/building shipyards.
+sub find_shipyard {
+  my ($buildings, $x, $y) = @_;
+  my @shipyards = grep { $_->{name} eq 'Shipyard' } 
+                  values %{ $buildings->{buildings} };
+  return() if not @shipyards;
+  return($shipyards[0]{x}, $shipyards[0]{y}) if @shipyards == 1;
+
+  if (defined $x) {
+    @shipyards = grep $_->{x} == $x, @shipyards;
+  }
+  return() if not @shipyards;
+  return($shipyards[0]{x}, $shipyards[0]{y}) if @shipyards == 1;
+
+  if (defined $y) {
+    @shipyards = grep $_->{y} == $y, @shipyards;
+  }
+  return() if not @shipyards;
+  return($shipyards[0]{x}, $shipyards[0]{y});
+}
+
+
+sub find_building {
+  my ($buildings, $type, $x, $y) = @_;
+  my $t2 = quotemeta(lc($type));
+  my @found = grep {
+                     lc($_->{name}) =~ $t2
+                     and (defined $x ? ($_->{x} == $x) : 1)
+                     and (defined $y ? ($_->{y} == $y) : 1)
+                   }
+                   values %{ $buildings->{buildings} };
+
+  return() if not @found == 1;
+  return($found[0]{x}, $found[0]{y});
+}
 
