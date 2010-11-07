@@ -58,7 +58,7 @@ sub run {
             $self->govern();
         }
         my $next_action_in = min(values %{$self->{next_action}}) - time;
-        if (defined $next_action_in && $next_action_in < $config->{keepalive}) {
+        if (defined $next_action_in && ($next_action_in + time) < ($config->{keepalive} + $start_time)) {
             if ($next_action_in <= 0) {
                 $do_keepalive=0;
             }
@@ -517,26 +517,27 @@ sub find_buildings {
 
 sub pertinence_sort {
     my ($self,$res,$preference,$type,$left,$right) = @_;
+    warn(@_);
     $preference = 'most_effective' if not defined ($preference);
     my $cache = $self->{building_cache}->{building};
 
     my $sort_types = {
         'most_effective' => {
-            'storage'     => sub { return $cache->{ $right->{id} }->{"$res\_capacity"} <=> $cache->{ $left->{id} }->{"$res\_capacity"} },
-            'production'  => sub { return $cache->{ $right->{id} }->{"$res\_hour"} <=> $cache->{ $left->{id} }->{"$res\_hour"} },
-            'consumption' => sub { return $cache->{ $left->{id} }->{"$res\_hour"} <=> $cache->{ $right->{id} }->{"$res\_hour"} },
+            'storage'     => sub { return $cache->{ $right->{building_id} }->{"$res\_capacity"} <=> $cache->{ $left->{building_id} }->{"$res\_capacity"} },
+            'production'  => sub { return $cache->{ $right->{building_id} }->{"$res\_hour"} <=> $cache->{ $left->{building_id} }->{"$res\_hour"} },
+            'consumption' => sub { return $cache->{ $left->{building_id} }->{"$res\_hour"} <=> $cache->{ $right->{building_id} }->{"$res\_hour"} },
         },
         'least_effective' => {
-            'storage'     => sub { return $cache->{ $left->{id} }->{"$res\_capacity"} <=> $cache->{ $right->{id} }->{"$res\_capacity"} },
-            'production'  => sub { return $cache->{ $left->{id} }->{"$res\_hour"} <=> $cache->{ $right->{id} }->{"$res\_hour"} },
-            'consumption' => sub { return $cache->{ $left->{id} }->{"$res\_hour"} <=> $cache->{ $right->{id} }->{"$res\_hour"} },
+            'storage'     => sub { return $cache->{ $left->{building_id} }->{"$res\_capacity"} <=> $cache->{ $right->{building_id} }->{"$res\_capacity"} },
+            'production'  => sub { return $cache->{ $left->{building_id} }->{"$res\_hour"} <=> $cache->{ $right->{building_id} }->{"$res\_hour"} },
+            'consumption' => sub { return $cache->{ $left->{building_id} }->{"$res\_hour"} <=> $cache->{ $right->{building_id} }->{"$res\_hour"} },
         },
-        'most_expensive'  => sub { return sum_keys( $cache->{ $right->{id} }->{upgrade}->{cost} ) <=> sum_keys( $cache->{ $left->{id} }->{upgrade}->{cost} ) },
-        'least_expensive' => sub { return sum_keys( $cache->{ $left->{id} }->{upgrade}->{cost} ) <=> sum_keys( $cache->{ $right->{id} }->{upgrade}->{cost} ) },
-        'highest_level'   => sub { return $cache->{ $right->{id} }->{level} <=> $cache->{ $left->{id} }->{level} },
-        'lowest_level'    => sub { return $cache->{ $left->{id} }->{level} <=> $cache->{ $right->{id} }->{level} },
-        'slowest'         => sub { return $cache->{ $right->{id} }->{upgrade}->{cost}->{time} <=> $cache->{ $left->{id} }->{upgrade}->{cost}->{time} },
-        'fastest'         => sub { return $cache->{ $left->{id} }->{upgrade}->{cost}->{time} <=> $cache->{ $right->{id} }->{upgrade}->{cost}->{time} },
+        'most_expensive'  => sub { return sum_keys( $cache->{ $right->{building_id} }->{upgrade}->{cost} ) <=> sum_keys( $cache->{ $left->{building_id} }->{upgrade}->{cost} ) },
+        'least_expensive' => sub { return sum_keys( $cache->{ $left->{building_id} }->{upgrade}->{cost} ) <=> sum_keys( $cache->{ $right->{building_id} }->{upgrade}->{cost} ) },
+        'highest_level'   => sub { return $cache->{ $right->{building_id} }->{level} <=> $cache->{ $left->{building_id} }->{level} },
+        'lowest_level'    => sub { return $cache->{ $left->{building_id} }->{level} <=> $cache->{ $right->{building_id} }->{level} },
+        'slowest'         => sub { return $cache->{ $right->{building_id} }->{upgrade}->{cost}->{time} <=> $cache->{ $left->{building_id} }->{upgrade}->{cost}->{time} },
+        'fastest'         => sub { return $cache->{ $left->{building_id} }->{upgrade}->{cost}->{time} <=> $cache->{ $right->{building_id} }->{upgrade}->{cost}->{time} },
     };
     return (ref $sort_types->{$preference} eq 'HASH') ? $sort_types->{$preference}->{$type}->() : $sort_types->{$preference}->();
 }
