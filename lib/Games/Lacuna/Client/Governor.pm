@@ -86,7 +86,8 @@ sub govern {
     my $details = $self->{client}->body( id => $pid )->get_buildings()->{buildings};
     $self->{building_cache}->{body}->{$pid} = $details; 
     for my $bid (keys %{$self->{building_cache}->{body}->{$pid}}) {
-        $self->{building_cache}->{body}->{$pid}->{$bid}->{pretty_type} = type_from_url( $self->{building_cache}->{body}->{$pid}->{$bid}->{url} );
+        $self->{building_cache}->{body}->{$pid}->{$bid}->{pretty_type} = 
+            Games::Lacuna::Client::Buildings::type_from_url( $self->{building_cache}->{body}->{$pid}->{$bid}->{url} );
     }
 
     $status->{happiness_capacity} = $cfg->{resource_profile}->{happiness}->{storage_target} || 1;
@@ -394,7 +395,8 @@ sub refresh_building_details {
     my $client = $self->{client};
     
     if (not exists $details->{$bldg_id}->{pretty_type}) {
-        $details->{$bldg_id}->{pretty_type} = type_from_url( $details->{$bldg_id}->{url} );
+        $details->{$bldg_id}->{pretty_type} = 
+            Games::Lacuna::Client::Buildings::type_from_url( $details->{$bldg_id}->{url} );
     }
 
     if ( not defined $details->{$bldg_id}->{pretty_type} ) {
@@ -517,7 +519,6 @@ sub find_buildings {
 
 sub pertinence_sort {
     my ($self,$res,$preference,$type,$left,$right) = @_;
-    warn(@_);
     $preference = 'most_effective' if not defined ($preference);
     my $cache = $self->{building_cache}->{building};
 
@@ -545,17 +546,6 @@ sub pertinence_sort {
 sub upgrade_cost {
     my $hash = shift;
     return sum(@{$hash}{qw(food ore water energy waste)});
-}
-
-sub type_from_url {
-    my $url   = shift;
-    my @types = @Games::Lacuna::Client::Buildings::Simple::BuildingTypes;
-
-    push @types,
-        qw(Archaeology Development Embassy Intelligence MiningMinistry Network19 Observatory Park PlanetaryCommand Security Shipyard Simple SpacePort Trade Transporter WasteRecycling);
-    $url = substr( $url, 1 );
-    my ($ret_type) = grep { lc($url) eq lc($_) } @types;
-    return $ret_type;
 }
 
 1;
