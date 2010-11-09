@@ -58,7 +58,7 @@ sub run {
             $self->govern();
         }
         my $next_action_in = min(values %{$self->{next_action}}) - time;
-        if (defined $next_action_in && $next_action_in < $config->{keepalive}) {
+        if (defined $next_action_in && ($next_action_in + time) < ($config->{keepalive} + $start_time)) {
             if ($next_action_in <= 0) {
                 $do_keepalive=0;
             }
@@ -86,7 +86,8 @@ sub govern {
     my $details = $self->{client}->body( id => $pid )->get_buildings()->{buildings};
     $self->{building_cache}->{body}->{$pid} = $details; 
     for my $bid (keys %{$self->{building_cache}->{body}->{$pid}}) {
-        $self->{building_cache}->{body}->{$pid}->{$bid}->{pretty_type} = type_from_url( $self->{building_cache}->{body}->{$pid}->{$bid}->{url} );
+        $self->{building_cache}->{body}->{$pid}->{$bid}->{pretty_type} = 
+            Games::Lacuna::Client::Buildings::type_from_url( $self->{building_cache}->{body}->{$pid}->{$bid}->{url} );
     }
 
     $status->{happiness_capacity} = $cfg->{resource_profile}->{happiness}->{storage_target} || 1;
@@ -262,6 +263,11 @@ sub recycling {
     my ($pid, $status, $cfg) = @{$self->{current}}{qw(planet_id status config)};
     my @reslist = qw(food ore water energy waste happiness);
 
+    if ($status->{waste_hour} < 0) {
+        trace("Aborting recycling, current waste production is negative.");
+        return;
+    }
+
     my $concurrency = $cfg->{profile}->{waste}->{concurrency} || 1;
 
     my @recycling = $self->find_buildings('WasteRecycling');
@@ -389,7 +395,8 @@ sub refresh_building_details {
     my $client = $self->{client};
     
     if (not exists $details->{$bldg_id}->{pretty_type}) {
-        $details->{$bldg_id}->{pretty_type} = type_from_url( $details->{$bldg_id}->{url} );
+        $details->{$bldg_id}->{pretty_type} = 
+            Games::Lacuna::Client::Buildings::type_from_url( $details->{$bldg_id}->{url} );
     }
 
     if ( not defined $details->{$bldg_id}->{pretty_type} ) {
@@ -517,21 +524,21 @@ sub pertinence_sort {
 
     my $sort_types = {
         'most_effective' => {
-            'storage'     => sub { return $cache->{ $right->{id} }->{"$res\_capacity"} <=> $cache->{ $left->{id} }->{"$res\_capacity"} },
-            'production'  => sub { return $cache->{ $right->{id} }->{"$res\_hour"} <=> $cache->{ $left->{id} }->{"$res\_hour"} },
-            'consumption' => sub { return $cache->{ $left->{id} }->{"$res\_hour"} <=> $cache->{ $right->{id} }->{"$res\_hour"} },
+            'storage'     => sub { return $cache->{ $right->{building_id} }->{"$res\_capacity"} <=> $cache->{ $left->{building_id} }->{"$res\_capacity"} },
+            'production'  => sub { return $cache->{ $right->{building_id} }->{"$res\_hour"} <=> $cache->{ $left->{building_id} }->{"$res\_hour"} },
+            'consumption' => sub { return $cache->{ $left->{building_id} }->{"$res\_hour"} <=> $cache->{ $right->{building_id} }->{"$res\_hour"} },
         },
         'least_effective' => {
-            'storage'     => sub { return $cache->{ $left->{id} }->{"$res\_capacity"} <=> $cache->{ $right->{id} }->{"$res\_capacity"} },
-            'production'  => sub { return $cache->{ $left->{id} }->{"$res\_hour"} <=> $cache->{ $right->{id} }->{"$res\_hour"} },
-            'consumption' => sub { return $cache->{ $left->{id} }->{"$res\_hour"} <=> $cache->{ $right->{id} }->{"$res\_hour"} },
+            'storage'     => sub { return $cache->{ $left->{building_id} }->{"$res\_capacity"} <=> $cache->{ $right->{building_id} }->{"$res\_capacity"} },
+            'production'  => sub { return $cache->{ $left->{building_id} }->{"$res\_hour"} <=> $cache->{ $right->{building_id} }->{"$res\_hour"} },
+            'consumption' => sub { return $cache->{ $left->{building_id} }->{"$res\_hour"} <=> $cache->{ $right->{building_id} }->{"$res\_hour"} },
         },
-        'most_expensive'  => sub { return sum_keys( $cache->{ $right->{id} }->{upgrade}->{cost} ) <=> sum_keys( $cache->{ $left->{id} }->{upgrade}->{cost} ) },
-        'least_expensive' => sub { return sum_keys( $cache->{ $left->{id} }->{upgrade}->{cost} ) <=> sum_keys( $cache->{ $right->{id} }->{upgrade}->{cost} ) },
-        'highest_level'   => sub { return $cache->{ $right->{id} }->{level} <=> $cache->{ $left->{id} }->{level} },
-        'lowest_level'    => sub { return $cache->{ $left->{id} }->{level} <=> $cache->{ $right->{id} }->{level} },
-        'slowest'         => sub { return $cache->{ $right->{id} }->{upgrade}->{cost}->{time} <=> $cache->{ $left->{id} }->{upgrade}->{cost}->{time} },
-        'fastest'         => sub { return $cache->{ $left->{id} }->{upgrade}->{cost}->{time} <=> $cache->{ $right->{id} }->{upgrade}->{cost}->{time} },
+        'most_expensive'  => sub { return sum_keys( $cache->{ $right->{building_id} }->{upgrade}->{cost} ) <=> sum_keys( $cache->{ $left->{building_id} }->{upgrade}->{cost} ) },
+        'least_expensive' => sub { return sum_keys( $cache->{ $left->{building_id} }->{upgrade}->{cost} ) <=> sum_keys( $cache->{ $right->{building_id} }->{upgrade}->{cost} ) },
+        'highest_level'   => sub { return $cache->{ $right->{building_id} }->{level} <=> $cache->{ $left->{building_id} }->{level} },
+        'lowest_level'    => sub { return $cache->{ $left->{building_id} }->{level} <=> $cache->{ $right->{building_id} }->{level} },
+        'slowest'         => sub { return $cache->{ $right->{building_id} }->{upgrade}->{cost}->{time} <=> $cache->{ $left->{building_id} }->{upgrade}->{cost}->{time} },
+        'fastest'         => sub { return $cache->{ $left->{building_id} }->{upgrade}->{cost}->{time} <=> $cache->{ $right->{building_id} }->{upgrade}->{cost}->{time} },
     };
     return (ref $sort_types->{$preference} eq 'HASH') ? $sort_types->{$preference}->{$type}->() : $sort_types->{$preference}->();
 }
@@ -539,17 +546,6 @@ sub pertinence_sort {
 sub upgrade_cost {
     my $hash = shift;
     return sum(@{$hash}{qw(food ore water energy waste)});
-}
-
-sub type_from_url {
-    my $url   = shift;
-    my @types = @Games::Lacuna::Client::Buildings::Simple::BuildingTypes;
-
-    push @types,
-        qw(Archaeology Development Embassy Intelligence MiningMinistry Network19 Observatory Park PlanetaryCommand Security Shipyard Simple SpacePort Trade Transporter WasteRecycling);
-    $url = substr( $url, 1 );
-    my ($ret_type) = grep { lc($url) eq lc($_) } @types;
-    return $ret_type;
 }
 
 1;

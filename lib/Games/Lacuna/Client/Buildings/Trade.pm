@@ -22,6 +22,7 @@ sub api_methods {
     view_my_trades        => { default_args => [qw(session_id building_id)] },
     get_stored_resources  => { default_args => [qw(session_id building_id)] },
     push_items            => { default_args => [qw(session_id building_id)] },
+    get_trade_ships       => { default_args => [qw(session_id building_id)] },
   };
 }
 
