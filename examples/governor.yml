@@ -20,11 +20,19 @@ colony:
       _default_:
         build_above: 10000
         production: 1
-        push_above: 10000
-        want_push_to: 0.8
+        request_below:0.25
+        push_above: 0.5
+        requested_level: 0.9
+        overload_above: 0.95
+      food:
+        specifics:
+          _default_:
+            push_above: 500
       happiness:
         production: 0.01
       waste:
+        request_below: 0.05
+        requested_level: 0.5
         production: 0.01
         recycle_above: 1000
         recycle_reserve: 100
@@ -34,6 +42,7 @@ colony:
     reserve_build_queue: 1
     upgrade_selection: lowest_level
 keepalive: 3600
+push_minimum_load: 0.25
 verbosity:
   action: 1
   construction: 1

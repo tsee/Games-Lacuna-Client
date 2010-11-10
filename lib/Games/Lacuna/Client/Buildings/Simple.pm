@@ -23,6 +23,7 @@ our @BuildingTypes = (qw(
     Corn
     CornMeal
     Crater
+    CrashedShipSite
     Dairy
     Denton
     EnergyReserve
