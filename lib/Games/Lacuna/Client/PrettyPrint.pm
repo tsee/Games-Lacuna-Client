@@ -1,11 +1,12 @@
 package Games::Lacuna::Client::PrettyPrint;
+use English qw(-no_match_vars);
 use warnings;
 use Term::ANSIColor;
 
 use Exporter;
 use vars qw(@ISA @EXPORT_OK);
 @ISA = qw(Exporter);
-@EXPORT_OK = qw(trace message warning action);
+@EXPORT_OK = qw(trace message warning action ptime phours);
 our $ansi_color = 0;
 
 use strict;
@@ -105,6 +106,25 @@ sub _c_ {
     }
     return '';
 }
+
+sub phours {
+    return ptime( $ARG[0] * 3_600 );
+}
+
+sub ptime {
+    my $sec = shift;
+    my ($d, $h, $m, $s);
+    $d  = int( $sec / 86_400 );
+    $sec = $sec % 86_400;
+    $h  = int( $sec / 3_600 );
+    $sec = $sec % 3_600;
+    $m  = int( $sec / 60 );
+    $s  = $sec % 60;
+    my $time = sprintf q{%02d:%02d:%02d:%02d}, $d, $h, $m, $s;
+    $time =~ s/^[0:]+//;
+    return $time;
+}
+
 
 
 1;
