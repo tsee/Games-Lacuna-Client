@@ -33,7 +33,8 @@ sub run {
     my $data = $client->empire->view_species_stats();
     $self->{status} = $data->{status};
     my $planets        = $self->{status}->{empire}->{planets};
-    my $home_planet_id = $self->{status}->{empire}->{home_planet_id}; 
+    my $home_planet_id = $self->{status}->{empire}->{home_planet_id};
+    $self->{planet_names} = { map { $_ => $planets->{$_} } keys %$planets };
 
     my $do_keepalive = 1;
     my $start_time = time();
@@ -56,7 +57,9 @@ sub run {
             $self->{current}->{planet_id} = $pid;
             $self->{current}->{config} = $colony_config;
             $self->govern();
+#            print Dumper($self->{push_info});
         }
+        $self->coordinate_pushes();
         my $next_action_in = min(values %{$self->{next_action}}) - time;
         if (defined $next_action_in && ($next_action_in + time) < ($config->{keepalive} + $start_time)) {
             if ($next_action_in <= 0) {
@@ -128,6 +131,89 @@ sub govern {
 
     if ($dev_ministry) {
         $self->{next_action}->{$pid} = max(map { $_->{seconds_remaining} } @{$dev_ministry->view->{build_queue}}) + time();
+    }
+}
+
+sub coordinate_pushes {
+    my $self = shift;
+    my $info = $self->{push_info};
+    my $min  = $self->{config}->{push_minimum_load};
+
+    $Data::Dumper::Sortkeys = 1;
+    #print Dumper $info;
+
+    trace("Requiring minimum load of $min x capacity to make a push");
+    $self->coordinate_push_mode($info,$min,1);  # Overload pushes
+    $self->coordinate_push_mode($info,$min);    # Request pushes
+}
+
+sub coordinate_push_mode {
+    my ( $self, $info, $min, $mode ) = @_;    # $mode is true for overload
+
+    for my $pid ( keys %$info ) {
+        for my $res ( keys %{ $info->{$pid} } ) {
+            next if ( $mode && $info->{$pid}->{$res}->{overload} == 0 );
+            my $reqd = $info->{$pid}->{$res}->{ $mode ? 'overload' : 'requested' };
+            if ( $reqd > 0 ) {
+                trace(sprintf("%s would like to %s %s %s",
+                    $self->{planet_names}->{$pid},
+                    ($mode ? 'get rid of' : 'ask for'),
+                    $reqd,
+                    $res));
+                my $candidate;
+                for my $other ( keys %$info ) {
+                    next if ( $other == $pid );
+                    my $orig = $mode ? $pid   : $other;
+                    my $dest = $mode ? $other : $pid;
+
+                    my $avail = $mode ? min( $info->{$other}->{$res}->{space_left}, $reqd ) : $info->{$other}->{$res}->{available}; 
+                    my @ships = @{ $info->{$orig}->{trade}->get_trade_ships($dest)->{ships} };
+
+                    if ( defined $self->{config}->{push_ships_named} ) {
+                        my $name_match = $self->{config}->{push_ships_named};
+                        @ships = grep { $_->{name} =~ /$name_match/i } @ships;
+                    }
+                    @ships = grep { ( $avail / $_->{hold_size} ) >= $min } @ships;
+                    for my $ship (@ships) {
+                        my $amt_to_ship = $avail > $ship->{hold_size} ? $ship->{hold_size} : $avail;
+
+                        my @items;
+                        if ($res eq 'food' or $res eq 'ore') {
+                            for my $spec ($res eq 'food' ? $self->food_types : $self->ore_types) {
+                                my $has = $mode ? $info->{$pid} : $info->{$other};
+                                push @items, { type => $spec, quantity => int(($has->{$spec}->{available} / $has->{$res}->{available}) * $amt_to_ship) };
+                            }
+                        } else {
+                            push @items, { type => $res, quantity => $amt_to_ship };
+                        }
+                        @items = grep { $_->{quantity} > 0 } @items;
+
+                        my $metric = $amt_to_ship / $ship->{estimated_travel_time};
+                        if ( $metric > $candidate->{metric} ) {    # Candidate metric is cargo amount / time to destination
+                            $candidate->{metric} = $metric;
+                            $candidate->{trade}  = $info->{$orig}->{trade};
+                            $candidate->{orig}   = $orig;
+                            $candidate->{dest}   = $dest;
+                            $candidate->{name}   = $ship->{name};
+                            $candidate->{ship}   = $ship->{id};
+                            $candidate->{items}  = [ @items ];
+                        }
+                    }
+                }
+                if ( defined $candidate ) {
+                    action(
+                        sprintf "Pushing from %s to %s with %s carrying: %s\n",
+                        $self->{planet_names}->{ $candidate->{orig} },
+                        $self->{planet_names}->{ $candidate->{dest} },
+                        $candidate->{name}, join(q{, },map { $_->{quantity}." ".$_->{type} } @{$candidate->{items}})
+                    );
+                    $info->{ $candidate->{orig} }->{trade}->push_items( $candidate->{dest}, $candidate->{items}, { ship_id => $candidate->{ship} } );
+                }
+                else {
+                    trace("No suitable pushes found.");
+                }
+            }
+        }
     }
 }
 
@@ -338,8 +424,68 @@ sub recycling {
     }
 }
 
-sub pushes {
-    # Not yet implemented.
+sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes occur in run().
+    my $self = shift;
+    my ($pid, $status, $cfg) = @{$self->{current}}{qw(planet_id status config)};
+    my @reslist = qw(food ore water energy waste);
+
+    my @trade = $self->find_buildings('Trade');
+    my $stored;
+
+    # Consider Excess
+    if (scalar @trade) {  # Need a Trade Ministry to consider pushing from here.
+        $self->{push_info}->{$pid}->{trade} = $trade[0];
+        $stored = $trade[0]->get_stored_resources->{resources};
+
+        for my $res (@reslist) {
+            my $profile = merge($cfg->{profile}->{$res} || {},$cfg->{profile}->{_default_});
+            my $have = $status->{"$res\_stored"};
+            my $available = $have - ($status->{"$res\_capacity"} * $profile->{push_above});
+            if (($status->{"$res\_stored"} / $status->{"$res\_capacity"}) >= $profile->{overload_above}) {
+                $self->{push_info}->{$pid}->{$res}->{overload} = $available;
+            }
+            if ($available > 0) {
+                if ($res eq 'food' or $res eq 'ore') {
+                   for my $spec ($res eq 'food' ? $self->food_types : $self->ore_types) {
+                        my $spec_profile = merge($cfg->{profile}->{$res}->{specifics}->{$spec} || {},
+                                                    $cfg->{profile}->{$res}->{specifics}->{_default_});
+                        my $spec_available = $stored->{$spec} - $spec_profile->{push_above};
+                        if ($spec_available > 0) {
+                            $self->{push_info}->{$pid}->{$spec}->{available} = $spec_available;
+                        }
+                   } 
+                   $self->{push_info}->{$pid}->{$res}->{available} = sum(map { $_->{available} } @{ $self->{push_info}->{$pid} }{$res eq 'food' ? $self->food_types : $self->ore_types});
+                } else {
+                   $self->{push_info}->{$pid}->{$res}->{available} = $available;
+                }
+            }
+        }
+
+    } else {
+        trace("Can't push from here without a Trade Ministry");
+    }
+
+    # Consider Need
+    for my $res (@reslist) {
+        my $profile = merge($cfg->{profile}->{$res} || {},$cfg->{profile}->{_default_});
+        $self->{push_info}->{$pid}->{$res}->{space_left} = ($status->{"$res\_capacity"} * $profile->{requested_level}) - $status->{"$res\_stored"};
+        if (($status->{"$res\_stored"}/$status->{"$res\_capacity"}) < $profile->{request_below}) {
+            my $amt = int($status->{"$res\_capacity"} * $profile->{requested_level}) - $status->{"$res\_stored"};
+            $self->{push_info}->{$pid}->{$res}->{requested} = $amt;
+        }
+        if (scalar @trade) { # Consider specific needs
+            if (not defined $stored) {
+                $stored = $trade[0]->get_stored_resources->{resources};
+            }
+            for my $spec ($res eq 'food' ? $self->food_types : $self->ore_types) {
+                my $spec_profile = merge($profile->{specifics}->{$spec} || {},
+                                         $profile->{specifics}->{_default_});
+                next if ($spec_profile->{requested_amount} == 0);
+                my $amt = $spec_profile->{requested_amount} - $stored->{$spec};
+                $self->{push_info}->{$pid}->{$spec}->{requested} = $amt;    
+            }
+        } 
+    }
 }
 
 sub building_details {
@@ -548,6 +694,14 @@ sub upgrade_cost {
     return sum(@{$hash}{qw(food ore water energy waste)});
 }
 
+sub food_types {
+    return qw(algae apple bean beetle bread burger chip cider corn fungus lapis meal milk pancake pie potato root shake soup syrup wheat);
+}
+
+sub ore_types {
+    return qw(anthracite bauxite beryl chalcopyrite chromite fluorite galena goethite gold gypsum halite kerogen magnetite methane monazite rutile sulfur trona uraninite zircon);
+}
+
 1;
 
 __END__
@@ -722,11 +876,11 @@ This is a list of identifiers for each of the actions the governor
 will perform.  They are performed in the order specified.  Currently
 implemented values include:
 
-production_crisis, storage_crisis, resource_upgrades, recycling
+production_crisis, storage_crisis, resource_upgrades, recycling, pushes
 
 To be implemented are:
 
-repairs, construction, other_upgrades, pushes
+repairs, construction, other_upgrades
 
 =head2 profile
 
@@ -822,13 +976,53 @@ use used instead.
 
 =head2 push_above
 
-Not yet implemented.  Resources above this level are considered eligible for pushing
-to more needy colonies.
+Resources above this level are considered eligible for pushing
+to more needy colonies.  Also used as the amount to leave behind when pushing
+away due to an overload.  This is a proportion between 0 and 1 interpreted as
+this amount times your capacity.
 
-=head2 want_push_to
+=head2 overload_above
 
-Not yet implemented.  Defines at what level we start asking other colonies for help
-in terms of resources pushes.
+Resources above this level are considered "overloaded" and will be given priority
+for pushes to other colonies where space is available.  The amount to be shipped
+away is everything higher than push_above, see above.  This is a proportion between
+0 and 1 interpreted as this amount times your capacity.
+
+=head2 request_below
+
+Resources below this level trigger a push request from colonies where this resource
+is available.  This is a proportion between 0 and 1 interpreted as
+this amount times your capacity.
+
+=head2 requested_level
+
+When a push is requested, the amount we would like to receive is calculated to be
+enough to bring the amount of resource up to this level. This is a proportion 
+between 0 and 1 interpreted as this amount times your capacity.
+
+=head2 specifics
+
+For ore and food, you can specify additional parameters for pushing.  Keys beneath
+this are specific types of resource, such as 'anthracite' beneath 'ore', and
+'apples' beneath 'food'. You can also use the _default_ key beneath here.  For example:
+
+    food:
+      specifics:
+        _default_:
+          push_above: 500
+
+Would specify that you want to keep at least 500 of each individual type of food on hand.
+
+=head3 requested_amount
+
+If you want to accumulate a specific amount of a specific resource, you can specify that
+using this option.  If you just want to accumulate as much as possible of a specific resource,
+set this to something obscenely high.
+
+=head3 push_above
+
+This functions like the regular push_above, but is a scalar amount, rather than a proportion
+of capacity.  I.e., 500 means 500.
 
 =head2 recycle_above
 
@@ -867,7 +1061,6 @@ Pick whichever we have the least in storage
 =head3 production
 
 Pick whichever we produce least of
-
 
 =head1 SEE ALSO
 
