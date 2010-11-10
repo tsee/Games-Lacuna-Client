@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized'; # Yes, I count on undef to be zero.  Cue admonishments.
 
-use Games::Lacuna::Client::PrettyPrint qw(trace message warning action);
+use Games::Lacuna::Client::PrettyPrint qw(trace message warning action ptime phours);
 use List::Util qw(sum max min);
 use List::MoreUtils qw(any part);
 use Hash::Merge qw(merge);
@@ -66,7 +66,8 @@ sub run {
                 $do_keepalive=0;
             }
             else {
-                trace("Expecting to govern again in $next_action_in seconds, sleeping");
+                my $nat_time = ptime($next_action_in);
+                trace("Expecting to govern again in $nat_time, sleeping");
                 sleep($next_action_in); 
                 $do_keepalive = 1;
             }
@@ -259,8 +260,8 @@ sub resource_crisis {
     for my $res (sort { $status->{$key}->{$a} <=> $status->{$key}->{$b} } keys %{$status->{$key}}) {
         my $time_left = $status->{$key}->{$res};
         if ( $time_left < $cfg->{crisis_threshhold_hours} && $time_left >= 0) {
-            warning(sprintf("%s crisis detected for %s: Only %.1f hours remain until $key, less than %.1f hour threshhold.",
-                ucfirst($type), uc($res), $time_left, $cfg->{crisis_threshhold_hours})) if $self->{config}->{verbosity}->{warning};
+            warning(sprintf("%s crisis detected for %s: Only %s remain until $key, less than %s threshhold.",
+                ucfirst($type), uc($res), phours($time_left), phours($cfg->{crisis_threshhold_hours}))) if $self->{config}->{verbosity}->{warning};
 
             # Attempt to increase production/storage
             my $upgrade_succeeded = $self->attempt_upgrade_for($res, $type, 1 ); # 1 for override, this is a crisis.
