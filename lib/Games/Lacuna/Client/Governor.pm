@@ -294,30 +294,47 @@ sub estimate_travel_time {
     return int(sqrt((($ox-$dx)**2) + (($oy-$dy)**2))*3600);
 }
 
+sub production_upgrades {
+    my $self = shift;
+    $self->_resource_upgrader('production');
+}
+
+sub storage_upgrades {
+    my $self = shift;
+    $self->_resource_upgrader('storage');
+}
+
 sub resource_upgrades {
+    my $self = shift;
+    $self->production_upgrades;
+    $self->storage_upgrades;
+}
+
+sub _resource_upgrader {
     my ($self, $type) =  @_;
     my ($status, $cfg) = @{$self->{current}}{qw(status config)};
     my @reslist = qw(food ore water energy waste happiness);
 
-    for my $type(qw(production storage)) {
-        # Stop without processing if the build queue is full.
-        if((defined $self->{current}->{build_queue_remaining}) &&
-            ($self->{current}->{build_queue_remaining} <= $cfg->{reserve_build_queue})) {
-            warning(sprintf("Aborting, %s slots in build queue <= %s reserve slots specified",
-                $self->{current}->{build_queue_remaining},
-                $cfg->{reserve_build_queue}));
-            return;
-        }
+    # Stop without processing if the build queue is full.
+    if((defined $self->{current}->{build_queue_remaining}) &&
+        ($self->{current}->{build_queue_remaining} <= $cfg->{reserve_build_queue})) {
+        warning(sprintf("Aborting, %s slots in build queue <= %s reserve slots specified",
+            $self->{current}->{build_queue_remaining},
+            $cfg->{reserve_build_queue}));
+        return;
+    }
 
-        my $profile = normalized_profile($cfg->{profile},$type,@reslist);
-        my $selected = select_resource($status,$profile,$type eq 'production' ? 'hour' : 'capacity',@reslist);
+    my $profile = normalized_profile($cfg->{profile},$type,@reslist);
+    my @selected = select_resource($status,$profile,$type eq 'production' ? 'hour' : 'capacity',@reslist);
+    for my $selected ( @selected ){
         my $upgrade_succeeded = $self->attempt_upgrade_for($selected, $type ); # 1 for override, this is a crisis.
 
         if ($upgrade_succeeded) {
             my $bldg_data = $self->{building_cache}->{body}->{$status->{id}}->{$upgrade_succeeded};
             action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
+            last;
         } else {
-            warning("Could not find any suitable buildings to upgrade");
+            warning("Could not find any suitable buildings for $selected to upgrade");
         }
     }
 }
@@ -348,18 +365,23 @@ sub select_resource {
     my $max_discrepancy;
     my $selected;
 
+    my %discrepancy;
     for my $res (@reslist) {
         # Can't store happiness
         next if ($res eq 'happiness' and $key_type eq 'capacity');
         my $prop = $status->{"$res\_$key_type"} / $hourly_total;
-        my $discrepancy = $profile->{$res} - $prop;
-        if ($discrepancy > $max_discrepancy) {
-            $max_discrepancy = $discrepancy;
-            $selected = $res;
-        }
+        $discrepancy{$res} = $profile->{$res} - $prop;
     }
-    trace(sprintf("Discrepancy of %2d%% ($key_type) detected for %s, selecting for upgrade.",$max_discrepancy*100,$selected));
-    return $selected;
+    my @selected = reverse sort { $discrepancy{$a} <=> $discrepancy{$b} } keys %discrepancy;
+    for my $selected (@selected){
+        trace(
+            sprintf(
+                "Discrepancy of %2d%% ($key_type) detected for %s.",
+                $discrepancy{$selected}*100, $selected
+            )
+        );
+    }
+    return @selected;
 }
 
 sub other_upgrades {
@@ -935,7 +957,10 @@ This is a list of identifiers for each of the actions the governor
 will perform.  They are performed in the order specified.  Currently
 implemented values include:
 
-production_crisis, storage_crisis, resource_upgrades, recycling, pushes
+production_crisis, storage_crisis, resource_upgrades, production_upgrades,
+storage_upgrades, recycling, pushes
+
+Note: resource_upgrades performs both a production_upgrades and storage_upgrades priority.
 
 To be implemented are:
 
