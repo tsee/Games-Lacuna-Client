@@ -131,7 +131,10 @@ sub govern {
     }
 
     if ($dev_ministry) {
-        $self->{next_action}->{$pid} = max(map { $_->{seconds_remaining} } @{$dev_ministry->view->{build_queue}}) + time();
+        ### If we have a build queue, sleep till the waste queue empties or the building
+        ### queue empties, whichever is first.
+        my $next_build = max(map { $_->{seconds_remaining} } @{$dev_ministry->view->{build_queue}});
+        $self->set_next_action_if_sooner( $next_build + time() );
     }
 }
 
@@ -372,6 +375,15 @@ sub recycling {
     my $jobs_running = (scalar @recycling - scalar @available);
     trace("$jobs_running recycling jobs running on ".$status->{name});
 
+    do {
+        ### If a job will finish before our next run, lets set ourselves up to run again.
+        my @working = grep { defined $self->building_details($pid, $_->{building_id})->{work} } @recycling;
+        my @recycle_times = map {
+            $self->building_details($pid, $_->{building_id})->{work}->{seconds_remaining}
+        } @working;
+        $self->set_next_action_if_sooner( $_ + time() ) for @recycle_times;
+    };
+
     if ($jobs_running >= $concurrency) {
         warning("Maximum (or more) concurrent recycling jobs ($concurrency) are running, aborting.");
         return;
@@ -416,13 +428,27 @@ sub recycling {
         $recycle_res{$res} = $to_recycle;
     }
     eval {
-        $center->recycle(@recycle_res{@rr});
+        my $center_view = $center->recycle(@recycle_res{@rr});
+        $self->set_next_action_if_sooner(
+            $center_view->{recycle}{seconds_remaining}
+        );
     };
     if ($@) {
         warning("Problem recycling: $@");
     } else {
         action(sprintf("Recycling Initiated: %d water, %d ore, %d energy",@recycle_res{@rr}));
     }
+}
+
+sub set_next_action_if_sooner {
+    my $self = shift;
+    my $time = shift;
+    my $pid = $self->{current}{planet_id};
+    my $ctime= $self->{next_action}->{$pid};
+    return if not defined $time;
+    $self->{next_action}->{$pid} =
+        (defined $ctime and $ctime < $time) ? $ctime : $time;
+    return $self->{next_action}->{$pid};
 }
 
 sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes occur in run().
