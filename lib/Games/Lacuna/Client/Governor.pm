@@ -101,6 +101,7 @@ sub govern {
             "$res\_capacity", 
             "$res\_hour"
         };
+        $rate += 0.00001;
         my $remaining            = $capacity - $amount;
         $status->{full}->{$res}  = $remaining / $rate;
         $status->{empty}->{$res} = $amount / ( -1 * $rate );
@@ -782,6 +783,19 @@ queue will be empty before the keepalive window expires, the script will
 not terminate, but will instead sleep and wait for that build queue to empty
 before once again governing that colony.  Setting this to 0 will
 effective disable this behavior.
+
+=head2 push_minimum_load
+
+This is a proportion, i.e. 0.5 for 50%.  It indicates the minimum amount
+of used cargo space to require before a ship will be sent on a push.  
+E.g., if set to 0.25, a ship must be at least 25% full of its maximum
+cargo capacity or it will not be considered eligible for a push.
+
+=head push_ships_named
+
+If defined, ship names must match this substring (case-insensitive) to
+be eligible to be used for pushes.  This is an easy to to tell the governor
+which ships it can utilize.
 
 =head2 verbosity
 

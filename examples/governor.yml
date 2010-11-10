@@ -42,6 +42,7 @@ colony:
     reserve_build_queue: 1
     upgrade_selection: lowest_level
 keepalive: 3600
+push_minimum_load: 0.25
 verbosity:
   action: 1
   construction: 1
