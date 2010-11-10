@@ -60,15 +60,15 @@ sub run {
 #            print Dumper($self->{push_info});
         }
         $self->coordinate_pushes();
-        my $next_action_in = min(values %{$self->{next_action}}) - time;
+        my $next_action_in = min(grep { $_ > time } values %{$self->{next_action}}) - time;
         if (defined $next_action_in && ($next_action_in + time) < ($config->{keepalive} + $start_time)) {
             if ($next_action_in <= 0) {
                 $do_keepalive=0;
             }
             else {
                 my $nat_time = ptime($next_action_in);
-                trace("Expecting to govern again in $nat_time, sleeping");
-                sleep($next_action_in); 
+                trace("Expecting to govern again in $nat_time or so, sleeping...");
+                sleep($next_action_in + 5);
                 $do_keepalive = 1;
             }
         }
