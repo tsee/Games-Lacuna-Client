@@ -6,17 +6,21 @@ use List::Util            (qw(first));
 use Games::Lacuna::Client ();
 use Getopt::Long          (qw(GetOptions));
 
-@ARGV = ('../lacuna.yml');
+if ($ARGV[0] !~ /^--/) {
+	$cfg_file = shift @ARGV;
+}
+else {
+	$cfg_file = 'lacuna.yml';
+}
 
-my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
 	die "Did not provide a config file";
 }
 
 my @ship_names = ('Scanner 10');
-my $from = 'Conflag';
+my $from;
 my $star;
-my $planet = 'Ember';
+my $planet;
 
 GetOptions(
     'ship=s@'  => \@ship_names,
