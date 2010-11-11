@@ -20,7 +20,7 @@ my $client = Games::Lacuna::Client->new(
 my $inbox = $client->inbox;
 
 my $headers = $inbox->view_inbox()->{messages};
-my @scan_msg_ids = grep { $_->{subject} eq 'Scan Results' } @$headers;
+my @scan_msg_ids = grep { $_->{subject} =~ /Scan Results$/ } @$headers;
 
 foreach my $id (@scan_msg_ids) {
      my $msg = $inbox->read_message($id)->{message};
