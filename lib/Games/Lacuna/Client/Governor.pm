@@ -288,8 +288,8 @@ sub construction {
 sub estimate_travel_time {
     my ($self, $orig, $dest, $speed);
 
-    my ($ox, $oy) = $self->{status}->{$orig}->{x}, $self->{status}->{$orig}->{y};
-    my ($dx, $dy) = $self->{status}->{$dest}->{x}, $self->{status}->{$dest}->{y};
+    my ($ox, $oy) = ($self->{status}->{$orig}->{x}, $self->{status}->{$orig}->{y});
+    my ($dx, $dy) = ($self->{status}->{$dest}->{x}, $self->{status}->{$dest}->{y});
 
     return int(sqrt((($ox-$dx)**2) + (($oy-$dy)**2))*3600);
 }
