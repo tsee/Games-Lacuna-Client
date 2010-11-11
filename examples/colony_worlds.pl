@@ -30,27 +30,43 @@ use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client;
 use YAML::Any ();
 use List::Util qw/first sum/;
-my $verbose = 1;
+use Data::Dumper;
+use Getopt::Long;
 
-my $cfg_file = shift(@ARGV) || 'lacuna.yml';
-unless ( $cfg_file and -e $cfg_file ) {
-	die "Did not provide a config file";
-}
-my $cond_file;
-if (@ARGV) {
-    $cond_file=shift(@ARGV);
-    die "Conditions file '$cond_file' does not exist" unless -e $cond_file;
-} else {
-    $cond_file='colony_conditions.yml';
-}
+my $verbose   = 1;
+my $help      = 0;
+my $cfg_file  = 'lacuna.yml';
+my $cond_file = 'colony_conditions.yml';
+
+GetOptions(
+    'cfg=s'       => \$cfg_file,
+    'cond_file=s' => \$cond_file,
+    "verbose!"    => \$verbose,
+    "help"        => \$help,
+) or usage();
+
+usage() if $help;
+
 my $sortby = shift(@ARGV) || 'score';
+die usage("Did not provide a config file") unless ( $cfg_file and -e $cfg_file );
+warn "Conditions file '$cond_file' does not exist" unless -e $cond_file;
+
+sub usage
+{
+    my ($msg) = @_;
+    print $msg ? "$0 - $msg\n" : "$0\n";
+    print "Options:\n";
+    print "\t--cfg=<filename>         Lacuna Config File, see examples/myaccount.yml\n";
+    print "\t--cond_file=<filename>   Colony Conditions File\n";
+    print "\t--verbose/--no-verbose   Enable/Disables verbose mode\n";
+    print "\n";
+    exit(1);
+}
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
 	# debug    => 1,
 );
-
-use Data::Dumper;
 
 my %building_prereqs=(
 	'Munitions Lab' => {
@@ -222,7 +238,7 @@ for my $p (@planets) {
 # Sort and print results
 {
     my $count = 0;
-    my $limit = $conditions->{limit} || 3;
+    my $limit = $conditions->{limit} || 255;
 
  
 PLANET: for my $p (sort { $b->{$sortby} <=> $a->{$sortby} } @planets) {
