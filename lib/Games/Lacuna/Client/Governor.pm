@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized'; # Yes, I count on undef to be zero.  Cue admonishments.
 
-use Games::Lacuna::Client::PrettyPrint qw(trace message warning action);
+use Games::Lacuna::Client::PrettyPrint qw(trace message warning action ptime phours);
 use List::Util qw(sum max min);
 use List::MoreUtils qw(any part);
 use Hash::Merge qw(merge);
@@ -60,14 +60,15 @@ sub run {
 #            print Dumper($self->{push_info});
         }
         $self->coordinate_pushes();
-        my $next_action_in = min(values %{$self->{next_action}}) - time;
+        my $next_action_in = min(grep { $_ > time } values %{$self->{next_action}}) - time;
         if (defined $next_action_in && ($next_action_in + time) < ($config->{keepalive} + $start_time)) {
             if ($next_action_in <= 0) {
                 $do_keepalive=0;
             }
             else {
-                trace("Expecting to govern again in $next_action_in seconds, sleeping");
-                sleep($next_action_in); 
+                my $nat_time = ptime($next_action_in);
+                trace("Expecting to govern again in $nat_time or so, sleeping...");
+                sleep($next_action_in + 5);
                 $do_keepalive = 1;
             }
         }
@@ -128,6 +129,13 @@ sub govern {
     for my $priority (@{$cfg->{priorities}}) {
         trace("Priority: $priority") if ($self->{config}->{verbosity}->{trace});
         $self->$priority();
+    }
+
+    if ($dev_ministry) {
+        ### If we have a build queue, sleep till the waste queue empties or the building
+        ### queue empties, whichever is first.
+        my $next_build = max(map { $_->{seconds_remaining} } @{$dev_ministry->view->{build_queue}});
+        $self->set_next_action_if_sooner( $next_build + time() );
     }
 }
 
@@ -252,8 +260,8 @@ sub resource_crisis {
     for my $res (sort { $status->{$key}->{$a} <=> $status->{$key}->{$b} } keys %{$status->{$key}}) {
         my $time_left = $status->{$key}->{$res};
         if ( $time_left < $cfg->{crisis_threshhold_hours} && $time_left >= 0) {
-            warning(sprintf("%s crisis detected for %s: Only %.1f hours remain until $key, less than %.1f hour threshhold.",
-                ucfirst($type), uc($res), $time_left, $cfg->{crisis_threshhold_hours})) if $self->{config}->{verbosity}->{warning};
+            warning(sprintf("%s crisis detected for %s: Only %s remain until $key, less than %s threshhold.",
+                ucfirst($type), uc($res), phours($time_left), phours($cfg->{crisis_threshhold_hours}))) if $self->{config}->{verbosity}->{warning};
 
             # Attempt to increase production/storage
             my $upgrade_succeeded = $self->attempt_upgrade_for($res, $type, 1 ); # 1 for override, this is a crisis.
@@ -280,36 +288,53 @@ sub construction {
 sub estimate_travel_time {
     my ($self, $orig, $dest, $speed);
 
-    my ($ox, $oy) = $self->{status}->{$orig}->{x}, $self->{status}->{$orig}->{y};
-    my ($dx, $dy) = $self->{status}->{$dest}->{x}, $self->{status}->{$dest}->{y};
+    my ($ox, $oy) = ($self->{status}->{$orig}->{x}, $self->{status}->{$orig}->{y});
+    my ($dx, $dy) = ($self->{status}->{$dest}->{x}, $self->{status}->{$dest}->{y});
 
     return int(sqrt((($ox-$dx)**2) + (($oy-$dy)**2))*3600);
 }
 
+sub production_upgrades {
+    my $self = shift;
+    $self->_resource_upgrader('production');
+}
+
+sub storage_upgrades {
+    my $self = shift;
+    $self->_resource_upgrader('storage');
+}
+
 sub resource_upgrades {
+    my $self = shift;
+    $self->production_upgrades;
+    $self->storage_upgrades;
+}
+
+sub _resource_upgrader {
     my ($self, $type) =  @_;
     my ($status, $cfg) = @{$self->{current}}{qw(status config)};
     my @reslist = qw(food ore water energy waste happiness);
 
-    for my $type(qw(production storage)) {
-        # Stop without processing if the build queue is full.
-        if((defined $self->{current}->{build_queue_remaining}) &&
-            ($self->{current}->{build_queue_remaining} <= $cfg->{reserve_build_queue})) {
-            warning(sprintf("Aborting, %s slots in build queue <= %s reserve slots specified",
-                $self->{current}->{build_queue_remaining},
-                $cfg->{reserve_build_queue}));
-            return;
-        }
+    # Stop without processing if the build queue is full.
+    if((defined $self->{current}->{build_queue_remaining}) &&
+        ($self->{current}->{build_queue_remaining} <= $cfg->{reserve_build_queue})) {
+        warning(sprintf("Aborting, %s slots in build queue <= %s reserve slots specified",
+            $self->{current}->{build_queue_remaining},
+            $cfg->{reserve_build_queue}));
+        return;
+    }
 
-        my $profile = normalized_profile($cfg->{profile},$type,@reslist);
-        my $selected = select_resource($status,$profile,$type eq 'production' ? 'hour' : 'capacity',@reslist);
+    my $profile = normalized_profile($cfg->{profile},$type,@reslist);
+    my @selected = select_resource($status,$profile,$type eq 'production' ? 'hour' : 'capacity',@reslist);
+    for my $selected ( @selected ){
         my $upgrade_succeeded = $self->attempt_upgrade_for($selected, $type ); # 1 for override, this is a crisis.
 
         if ($upgrade_succeeded) {
             my $bldg_data = $self->{building_cache}->{body}->{$status->{id}}->{$upgrade_succeeded};
             action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
+            last;
         } else {
-            warning("Could not find any suitable buildings to upgrade");
+            warning("Could not find any suitable buildings for $selected to upgrade");
         }
     }
 }
@@ -340,18 +365,23 @@ sub select_resource {
     my $max_discrepancy;
     my $selected;
 
+    my %discrepancy;
     for my $res (@reslist) {
         # Can't store happiness
         next if ($res eq 'happiness' and $key_type eq 'capacity');
         my $prop = $status->{"$res\_$key_type"} / $hourly_total;
-        my $discrepancy = $profile->{$res} - $prop;
-        if ($discrepancy > $max_discrepancy) {
-            $max_discrepancy = $discrepancy;
-            $selected = $res;
-        }
+        $discrepancy{$res} = $profile->{$res} - $prop;
     }
-    trace(sprintf("Discrepancy of %2d%% ($key_type) detected for %s, selecting for upgrade.",$max_discrepancy*100,$selected));
-    return $selected;
+    my @selected = reverse sort { $discrepancy{$a} <=> $discrepancy{$b} } keys %discrepancy;
+    for my $selected (@selected){
+        trace(
+            sprintf(
+                "Discrepancy of %2d%% ($key_type) detected for %s.",
+                $discrepancy{$selected}*100, $selected
+            )
+        );
+    }
+    return @selected;
 }
 
 sub other_upgrades {
@@ -384,6 +414,15 @@ sub recycling {
     my @available = grep { not exists $self->building_details($pid,$_->{building_id})->{work} } @recycling;
     my $jobs_running = (scalar @recycling - scalar @available);
     trace("$jobs_running recycling jobs running on ".$status->{name});
+
+    do {
+        ### If a job will finish before our next run, lets set ourselves up to run again.
+        my @working = grep { defined $self->building_details($pid, $_->{building_id})->{work} } @recycling;
+        my @recycle_times = map {
+            $self->building_details($pid, $_->{building_id})->{work}->{seconds_remaining}
+        } @working;
+        $self->set_next_action_if_sooner( $_ + time() ) for @recycle_times;
+    };
 
     if ($jobs_running >= $concurrency) {
         warning("Maximum (or more) concurrent recycling jobs ($concurrency) are running, aborting.");
@@ -429,13 +468,27 @@ sub recycling {
         $recycle_res{$res} = $to_recycle;
     }
     eval {
-        $center->recycle(@recycle_res{@rr});
+        my $center_view = $center->recycle(@recycle_res{@rr});
+        $self->set_next_action_if_sooner(
+            $center_view->{recycle}{seconds_remaining}
+        );
     };
     if ($@) {
         warning("Problem recycling: $@");
     } else {
         action(sprintf("Recycling Initiated: %d water, %d ore, %d energy",@recycle_res{@rr}));
     }
+}
+
+sub set_next_action_if_sooner {
+    my $self = shift;
+    my $time = shift;
+    my $pid = $self->{current}{planet_id};
+    my $ctime= $self->{next_action}->{$pid};
+    return if not defined $time;
+    $self->{next_action}->{$pid} =
+        (defined $ctime and $ctime < $time) ? $ctime : $time;
+    return $self->{next_action}->{$pid};
 }
 
 sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes occur in run().
@@ -904,7 +957,10 @@ This is a list of identifiers for each of the actions the governor
 will perform.  They are performed in the order specified.  Currently
 implemented values include:
 
-production_crisis, storage_crisis, resource_upgrades, recycling, pushes
+production_crisis, storage_crisis, resource_upgrades, production_upgrades,
+storage_upgrades, recycling, pushes
+
+Note: resource_upgrades performs both a production_upgrades and storage_upgrades priority.
 
 To be implemented are:
 
