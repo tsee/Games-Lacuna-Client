@@ -81,12 +81,14 @@ sub govern {
     my ($pid, $cfg) = @{$self->{current}}{qw(planet_id config)};
     my $client = $self->{client};
 
-    my $status = $client->body( id => $pid )->get_status()->{body};
+    my $result  = $self->{client}->body( id => $pid )->get_buildings();
+    my $details = $result->{buildings};
+    my $status  = $result->{status}->{body};
+    $self->{status}->{$pid} = $status;
 
     message("Governing ".$status->{name}) if ($self->{config}->{verbosity}->{message});
     Games::Lacuna::Client::PrettyPrint::show_status($status) if ($self->{config}->{verbosity}->{summary});
 
-    my $details = $self->{client}->body( id => $pid )->get_buildings()->{buildings};
     $self->{building_cache}->{body}->{$pid} = $details; 
     for my $bid (keys %{$self->{building_cache}->{body}->{$pid}}) {
         $self->{building_cache}->{body}->{$pid}->{$bid}->{pretty_type} = 
@@ -110,28 +112,22 @@ sub govern {
     $self->{current}->{status} = $status;
 
     # Check the size of the build queue
+    my $max_queue = 1;
     my ($dev_ministry) = $self->find_buildings('Development');
     if ($dev_ministry) {
-        my $dev_min_details = $dev_ministry->view;
-        my $current_queue = scalar @{$dev_min_details->{build_queue}};
-        my $max_queue = $dev_min_details->{building}->{level} + 1;
-        $self->{current}->{build_queue} = $dev_min_details->{build_queue};
-        $self->{current}->{build_queue_remaining} = $max_queue - $current_queue;
-        if ($current_queue == $max_queue) {
-            warning("Build queue is full on ".$self->{current}->{status}->{name});
-        } 
-    } else {
-        delete $self->{current}->{build_queue};
-        delete $self->{current}->{build_queue_remaining};
+        $max_queue = $self->building_details($pid,$dev_ministry->{building_id})->{level} + 1;
     }
+
+    my $current_queue = scalar grep { exists $_->{pending_build} } values %$details;
+    $self->{current}->{build_queue_remaining} = $max_queue - $current_queue;
+    $self->{next_action}->{$pid} = max(map { $_->{pending_build}->{seconds_remaining} + time } values %$details);
+    if ($current_queue == $max_queue) {
+        warning("Build queue is full on ".$self->{current}->{status}->{name});
+    } 
 
     for my $priority (@{$cfg->{priorities}}) {
         trace("Priority: $priority") if ($self->{config}->{verbosity}->{trace});
         $self->$priority();
-    }
-
-    if ($dev_ministry) {
-        $self->{next_action}->{$pid} = max(map { $_->{seconds_remaining} } @{$dev_ministry->view->{build_queue}}) + time();
     }
 }
 
@@ -143,6 +139,8 @@ sub coordinate_pushes {
     $Data::Dumper::Sortkeys = 1;
     #print Dumper $info;
 
+    delete $self->{trade_ships};
+    $self->{sent_ships} = [];
     trace("Requiring minimum load of $min x capacity to make a push");
     $self->coordinate_push_mode($info,$min,1);  # Overload pushes
     $self->coordinate_push_mode($info,$min);    # Request pushes
@@ -167,8 +165,11 @@ sub coordinate_push_mode {
                     my $orig = $mode ? $pid   : $other;
                     my $dest = $mode ? $other : $pid;
 
-                    my $avail = $mode ? min( $info->{$other}->{$res}->{space_left}, $reqd ) : $info->{$other}->{$res}->{available}; 
-                    my @ships = @{ $info->{$orig}->{trade}->get_trade_ships($dest)->{ships} };
+                    my $avail = $mode ? min( $info->{$other}->{$res}->{space_left}, $reqd ) : min( $info->{$other}->{$res}->{available} , $reqd ); 
+                    my @ships = defined $self->{trade_ships}->{$orig} 
+                        ? (grep { my $s=$_; not any { $s->{id} == $_ } @{$self->{sent_ships}} } @{$self->{trade_ships}->{$orig}})
+                        : @{ $info->{$orig}->{trade}->get_trade_ships()->{ships} };
+                    $self->{trade_ships}->{$orig} = [@ships];
 
                     if ( defined $self->{config}->{push_ships_named} ) {
                         my $name_match = $self->{config}->{push_ships_named};
@@ -185,9 +186,11 @@ sub coordinate_push_mode {
                                 push @items, { type => $spec, quantity => int(($has->{$spec}->{available} / $has->{$res}->{available}) * $amt_to_ship) };
                             }
                         } else {
-                            push @items, { type => $res, quantity => $amt_to_ship };
+                            push @items, { type => $res, quantity => int($amt_to_ship) };
                         }
                         @items = grep { $_->{quantity} > 0 } @items;
+
+                        $ship->{estimated_travel_time} = estimate_travel_time($orig,$dest,$ship->{speed});
 
                         my $metric = $amt_to_ship / $ship->{estimated_travel_time};
                         if ( $metric > $candidate->{metric} ) {    # Candidate metric is cargo amount / time to destination
@@ -209,6 +212,7 @@ sub coordinate_push_mode {
                         $candidate->{name}, join(q{, },map { $_->{quantity}." ".$_->{type} } @{$candidate->{items}})
                     );
                     $info->{ $candidate->{orig} }->{trade}->push_items( $candidate->{dest}, $candidate->{items}, { ship_id => $candidate->{ship} } );
+                    push @{$self->{sent_ships}}, $candidate->{ship};
                 }
                 else {
                     trace("No suitable pushes found.");
@@ -271,6 +275,15 @@ sub resource_crisis {
 
 sub construction {
     # Not yet implemented.
+}
+
+sub estimate_travel_time {
+    my ($self, $orig, $dest, $speed);
+
+    my ($ox, $oy) = $self->{status}->{$orig}->{x}, $self->{status}->{$orig}->{y};
+    my ($dx, $dy) = $self->{status}->{$dest}->{x}, $self->{status}->{$dest}->{y};
+
+    return int(sqrt((($ox-$dx)**2) + (($oy-$dy)**2))*3600);
 }
 
 sub resource_upgrades {
@@ -442,7 +455,8 @@ sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes 
             my $profile = merge($cfg->{profile}->{$res} || {},$cfg->{profile}->{_default_});
             my $have = $status->{"$res\_stored"};
             my $available = $have - ($status->{"$res\_capacity"} * $profile->{push_above});
-            if (($status->{"$res\_stored"} / $status->{"$res\_capacity"}) >= $profile->{overload_above}) {
+            if (defined $profile->{overload_above} and
+                (($status->{"$res\_stored"} / $status->{"$res\_capacity"}) >= $profile->{overload_above})) {
                 $self->{push_info}->{$pid}->{$res}->{overload} = $available;
             }
             if ($available > 0) {
@@ -791,7 +805,7 @@ of used cargo space to require before a ship will be sent on a push.
 E.g., if set to 0.25, a ship must be at least 25% full of its maximum
 cargo capacity or it will not be considered eligible for a push.
 
-=head push_ships_named
+=head2 push_ships_named
 
 If defined, ship names must match this substring (case-insensitive) to
 be eligible to be used for pushes.  This is an easy to to tell the governor
