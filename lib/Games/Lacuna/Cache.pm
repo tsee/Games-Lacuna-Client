@@ -326,6 +326,18 @@ I think that's about it.
 
 =head1 CAVEATS
 
-Yeah, don't talk to me about scripts stomping on your data on disk. There's a reason it only writes after a full refresh. You could change that, but then you'd have bits of data out of sync, and still have to do a full refresh every 25 minutes. But the Cache instance should be extended to grab every piece of data that goes through it for a script. Mostly I want to update building info more often.
+It may stomp on disk data, but scripts should play friendly with each other. See how it goes.
+
+head1 AUTHOR
+
+Jai Cornes, E<lt>solitaire@tygger.netE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2010 by Jai Cornes
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.10.0 or,
+at your option, any later version of Perl 5 you may have available.
 
 
