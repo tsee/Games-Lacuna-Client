@@ -58,7 +58,13 @@ sub body_data{
 
 sub building_data{
     my ($self, $building_id, $refresh) = @_;
-    $self->refresh_data("buildings", $building_id);
+    # What really kills a client is fetching full data when we can live with
+    # the data from $planet
+    # Let the client tell us if it really needs full data 
+    if ($refresh){
+        $self->refresh_data("buildings", $building_id);
+    }
+    #
     return $self->{'DATA'}->{'buildings'}->{$building_id};
 
 }
@@ -103,26 +109,29 @@ sub list_buildings_on_planet{
     # Pass me an arrayref of buildings to filter for. Empty arrayref, get every building
     # Returns a list of building IDs
     my ($self, $planet, $filters) = @_;
+    $self->refresh_data("bodies", $planet);
     my @results;
 
-    my $buildings  = $self->{'DATA'}{'bodies'}{$planet}{'buildings'};
+    my $buildings  = $self->{'DATA'}->{'bodies'}->{$planet}->{'buildings'};
     #print Dumper($self->{'planet_data'}{'planets'}{$planet});
     if ($filters){
         foreach my $pattern (@$filters){
-    #        print "(searching planet $planet for $pattern ...)\n"; 
-            foreach (grep {$buildings->{$_}{'url'} eq "/$pattern"} keys %$buildings){
-    #        print "(found $pattern ($_) ...)\n"; 
-              $self->{'OBJECTS'}->{'buildings'}->{$_} =  $self->{'CLIENT'}->building(type => $pattern, id => $_); 
-            push (@results, $_);
+            foreach my $id (keys %$buildings){
+                #print "(searching planet $planet for $pattern ...)\n"; 
+                if ($buildings->{$id}->{'url'} =~ m|/$pattern|){
+                    #        print "(found $pattern ($_) ...)\n"; 
+                    $self->{'OBJECTS'}->{'buildings'}->{$id} =  $self->{'CLIENT'}->building(type => $pattern, id => $id); 
+                    push (@results, $id);
 
+                }
             }
         }
     }else{
-        foreach (keys %$buildings){
-            my $pt = $buildings->{$_}->{'url'};
+        foreach my $id (keys %$buildings){
+            my $pt = $buildings->{$id}->{'url'};
             $pt =~ s|^/||;
-            $self->{'OBJECTS'}->{'buildings'}->{$_} =  $self->{'CLIENT'}->building(type => $pt, id => $_); 
-            push (@results, $_);
+            $self->{'OBJECTS'}->{'buildings'}->{$id} =  $self->{'CLIENT'}->building(type => $pt, id => $id); 
+            push (@results, $id);
         }
 
     }
@@ -134,11 +143,12 @@ sub refresh_data{
     my $response;
     if ($id){
         # It'll be a building or a planet.
-        if ( (time() - $self->{'DATA'}->{$key}->{$id}->{'last_checked'}) >  $self->{'CACHE_TIME'}
+        my $checked = $self->{'DATA'}->{$key}->{$id}->{'last_checked'};
+        if (! $checked ||  (time() - $checked) >  $self->{'CACHE_TIME'}
              || ($self->{'DATA'}->{$key}->{$id}->{'response_type'} eq "partial")){
             # We're stale or we don't exist or we were only partial in the
             # first place. 
-            print "Stale data for $key!\n";
+            #print "Stale data for $key!\n";
             my $client_object = $self->{'OBJECTS'}->{$key}->{$id};
             if ($key =~ m/bodies/){
                 $client_object ||= $self->{'CLIENT'}->body("id"=> $id);
@@ -169,7 +179,8 @@ sub refresh_data{
     }else{
         #We're empire or we're refreshing all bodies (why would you do that?).
         if ($key =~ m/empire/){
-            if ( (time() - $self->{'DATA'}->{$key}->{'last_checked'}) >  $self->{'CACHE_TIME'}){
+        my $checked = $self->{'DATA'}->{$key}->{'last_checked'};
+        if (!$checked ||  (time() - $checked) >  $self->{'CACHE_TIME'}){
                 # We're stale or we don't exist. 
                 # Only force a write when we do this top level, not for every
                 # bloody planet
@@ -195,7 +206,7 @@ sub cache_response {
     # TODO - refactor. This is a little ugly because of the 2 levels of
     # response 
     my ($self, $type, $response) = @_;
-    print "Caching response:\n";
+    #print "Caching response:\n";
     #print Dumper($response);
     print "===================================\n";
     if ($response->{'status'}->{'empire'}){
@@ -205,7 +216,7 @@ sub cache_response {
     if ($response->{'status'}->{'body'}){
         my $id = $response->{'status'}->{'body'}->{'id'};
         $self->{'DATA'}->{'bodies'}->{$id} = $response->{'status'}->{'body'};
-        $self->{'DATA'}->{'bodies'}->{$id}->{'response_type'} = "partial";
+        $self->{'DATA'}->{'bodies'}->{$id}->{'response_type'} = "full";
         $self->{'DATA'}->{'bodies'}->{$id}->{'last_checked'} = time();
     }
 
@@ -217,10 +228,10 @@ sub cache_response {
         $self->{'DATA'}->{'bodies'}->{$body_id}->{'response_type'} = "full";
 
         foreach my $building (keys %{$response->{'buildings'}}){
-                    $self->{'DATA'}->{'buildings'}->{$building} = $response->{'buildings'}->{$building};
-                    $self->{'DATA'}->{'buildings'}->{$building}->{'response_type'} = "partial";
-                    $self->{'DATA'}->{'buildings'}->{$building}->{'last_checked'} = time();
-                    $self->{'DATA'}->{'bodies'}->{$body_id}->{'buildings'}->{$building} = $response->{'buildings'}{$building};
+            $self->{'DATA'}->{'buildings'}->{$building} = $response->{'buildings'}->{$building};
+            $self->{'DATA'}->{'buildings'}->{$building}->{'response_type'} = "partial";
+            $self->{'DATA'}->{'buildings'}->{$building}->{'last_checked'} = time();
+            $self->{'DATA'}->{'bodies'}->{$body_id}->{'buildings'}->{$building} = $response->{'buildings'}{$building};
         }
     }elsif ($type eq "building"){
         my $id = $response->{'building'}->{'id'}; 
@@ -249,8 +260,8 @@ use Games::Lacuna::Cache;
 my $lacuna = Games::Lacuna::Cache->new();
 my $planet_data = $lacuna->planet_data($planet_id);
 
-or 
-my $lacuna = Games::Lacuna::Cache->new(1); 
+or
+my $lacuna = Games::Lacuna::Cache->new(1);
 
 to force the data to refresh.
 
@@ -274,25 +285,31 @@ Returns planet data for $planet_id, or all bodies if you leave off the id.
 
 =head2 body_data([$body_id])
 Ditto.
-=head2 building_data([$building_id])
-And roughly ditto
 
 These should work pretty much as you expect. Cache stores partial information
 if it has it, and full information if you request it. That's because a lot of
-high level calls return a bit of data about the next level down (Empire gives 
+high level calls return a bit of data about the next level down (Empire gives
 planets, Body gives buildings, etc). So we store the partial to avoid hitting
 up a full call when all you want is the id. Expressly asking by id *should*
 give you full info.
+
+=head2 building_data([$building_id], [$refresh])
+This might not work as you expect. By default, we store partial info on 
+buildings from a body->get_buildings() request. That's generally enough 
+for pending build, etc, but you may want to force the refresh flag if you 
+want full info for a building. You can't do that unless you specify a 
+building, though, to prevent 50/60 calls per planet
+
 
 =head2 list_planets()
 returns a very basic hash of planet_id => name
 
 =head2 list_buildings_on_planet($planet, [$array_ref])
 
-    my @filters = ("spaceport");
-    my @buildings = $lacuna->list_buildings_on_planet($planet, \@filters);
+my @filters = ("spaceport");
+my @buildings = $lacuna->list_buildings_on_planet($planet, \@filters);
 
-$planet will be a planet id. foreach my $planet (keys %$planet_data) from above will do. 
+$planet will be a planet id. foreach my $planet (keys %$planet_data) from above will do.
 
 
 @filters needs to contain valid building types of the kind found in a building url - "wasterecycling" or "spaceport". Feel free to implement a look up table for "Space Port" and "Trash Compactor" :)
@@ -301,15 +318,15 @@ The method returns a list of building ids, but it also creates client objects
 in the Cache OBJECT structure. So then you could say
 foreach $building (@buildings){
 
-    my $object = $lacuna{'OBJECTS'}->{'buildings'}->{$building};
-    $object->view();
+my $object = $lacuna{'OBJECTS'}->{'buildings'}->{$building};
+$object->view();
 
 or any similar client method.
 
 Note objects do not persist between script calls, and are not shared between
-scripts. 
+scripts.
 
-=head1 DATA 
+=head1 DATA
 
 =head2 OBJECTS
 
@@ -317,7 +334,7 @@ $lacuna->{'OBJECTS'}->{'buildings'}
 and
 $lacuna->{'OBJECTS'}->{'bodies'}
 
-Stored by id. This just means you don't have to toss around the objects all the time. 
+Stored by id. This just means you don't have to toss around the objects all the time.
 $lacuna->{'OBJECTS'}->{$type}->{$id}->method();
 should always work.
 
@@ -339,5 +356,3 @@ Copyright (C) 2010 by Jai Cornes
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,
 at your option, any later version of Perl 5 you may have available.
-
-
