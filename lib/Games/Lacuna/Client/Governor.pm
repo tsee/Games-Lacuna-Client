@@ -97,6 +97,7 @@ sub govern {
 
     message("Governing ".$status->{name}) if ($self->{config}->{verbosity}->{message});
     Games::Lacuna::Client::PrettyPrint::show_status($status) if ($self->{config}->{verbosity}->{summary});
+    Games::Lacuna::Client::PrettyPrint::surface($details) if ($self->{config}->{verbosity}->{surface_map});
 
     $self->{building_cache}->{body}->{$pid} = $details; 
     for my $bid (keys %{$self->{building_cache}->{body}->{$pid}}) {
@@ -932,6 +933,10 @@ Outputs a storage report for each colony (not yet implemented)
 =head3 summary
 
 Outputs a resource summary for each colony
+
+=head3 surface_map
+
+Too much time on my hands.  Outputs an ASCII version of the planet surface map.
 
 =head3 trace
 
