@@ -25,30 +25,48 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client;
 use YAML::Any ();
 use List::Util qw/first sum/;
-my $verbose = 1;
+use Data::Dumper;
+use Getopt::Long;
 
-my $cfg_file = shift(@ARGV) || 'lacuna.yml';
-unless ( $cfg_file and -e $cfg_file ) {
-	die "Did not provide a config file";
-}
-my $cond_file;
-if (@ARGV) {
-    $cond_file=shift(@ARGV);
-    die "Conditions file '$cond_file' does not exist" unless -e $cond_file;
-} else {
-    $cond_file='colony_conditions.yml';
-}
+my $verbose   = 1;
+my $help      = 0;
+my $cfg_file  = 'lacuna.yml';
+my $cond_file = 'colony_conditions.yml';
+
+GetOptions(
+    'cfg=s'       => \$cfg_file,
+    'cond_file=s' => \$cond_file,
+    "verbose!"    => \$verbose,
+    "help"        => \$help,
+) or usage();
+
+usage() if $help;
+
 my $sortby = shift(@ARGV) || 'score';
+die usage("Did not provide a config file") unless ( $cfg_file and -e $cfg_file );
+warn "Conditions file '$cond_file' does not exist" unless -e $cond_file;
+
+sub usage
+{
+    my ($msg) = @_;
+    print $msg ? "$0 - $msg\n" : "$0\n";
+    print "Options:\n";
+    print "\t--cfg=<filename>         Lacuna Config File, see examples/myaccount.yml\n";
+    print "\t--cond_file=<filename>   Colony Conditions File\n";
+    print "\t--verbose/--no-verbose   Enable/Disables verbose mode\n";
+    print "\n";
+    exit(1);
+}
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
 	# debug    => 1,
 );
-
-use Data::Dumper;
 
 my %building_prereqs=(
 	'Munitions Lab' => {
@@ -218,30 +236,37 @@ for my $p (@planets) {
 }
 
 # Sort and print results
+{
+    my $count = 0;
+    my $limit = $conditions->{limit} || 255;
+
+ 
 PLANET: for my $p (sort { $b->{$sortby} <=> $a->{$sortby} } @planets) {
-    foreach my $building (@buildings) {
-        my $prereqs=$building_prereqs{$building};
-        my $ore_available=0;
-        while (my ($ore, $quantity) = each %$prereqs) {
-            $ore_available++ if ($p->{ore}{lc $ore} >= $quantity);
+        foreach my $building (@buildings) {
+            my $prereqs=$building_prereqs{$building};
+            my $ore_available=0;
+            while (my ($ore, $quantity) = each %$prereqs) {
+                $ore_available++ if ($p->{ore}{lc $ore} >= $quantity);
+            }
+            next PLANET unless $ore_available;
         }
-        next PLANET unless $ore_available;
-    }
-    my $d = $p->{distance};
-    print_bar();
-    printf "%-20s [%4s,%4s] (Distance: %3s)\nSize: %2d                   Colony Ship Travel Time:  %3.1f hours\nWater: %4d    Short Range Colony Ship Travel Time: %3.1f hours\n",
-        $p->{name},$p->{x},$p->{y},int($d),$p->{size},($d/5.23),$p->{water},($d/.12);
-    print_bar();
-    for my $ore (sort keys %{$p->{ore}}) {
-        printf "  %8s %4d",substr($ore,0,8),$p->{ore}->{$ore};
-        if ($ore eq 'chromite' or $ore eq 'gypsum' or $ore eq 'monazite' or $ore eq 'zircon') {
-            print "\n";
+        my $d = $p->{distance};
+        print_bar();
+        printf "%-20s [%4s,%4s] (Distance: %3s)\nSize: %2d                   Colony Ship Travel Time:  %3.1f hours\nWater: %4d    Short Range Colony Ship Travel Time: %3.1f hours\n",
+            $p->{name},$p->{x},$p->{y},int($d),$p->{size},($d/5.23),$p->{water},($d/.12);
+        print_bar();
+        for my $ore (sort keys %{$p->{ore}}) {
+            printf "  %8s %4d",substr($ore,0,8),$p->{ore}->{$ore};
+            if ($ore eq 'chromite' or $ore eq 'gypsum' or $ore eq 'monazite' or $ore eq 'zircon') {
+                print "\n";
+            }
         }
+        print_bar();
+        printf "Score: %3d%% [Size: %3d%%, Water: %3d%%, Ore: %3d%%, Food: %3d%%]\n",@{$p}{'score','size_score','water_score','ore_score','food_score'};
+        print_bar();
+        print "\n";
+        last if (++$count >= $limit);
     }
-    print_bar();
-    printf "Score: %3d%% [Size: %3d%%, Water: %3d%%, Ore: %3d%%, Food: %3d%%]\n",@{$p}{'score','size_score','water_score','ore_score','food_score'};
-    print_bar();
-    print "\n"
 }
 
 sub print_bar {

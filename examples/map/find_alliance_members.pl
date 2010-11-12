@@ -1,12 +1,13 @@
 use strict;
 use warnings;
-use Games::Lacuna::Client;
+use FindBin;
+use lib "$FindBin::Bin/../../lib";
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
 
 $| = 1;
 
-my $config_file = shift @ARGV;
+my $config_file = shift @ARGV || 'lacuna.yml';
 die if not defined $config_file or not -e $config_file;
 
 my $client = Games::Lacuna::Client->new(
