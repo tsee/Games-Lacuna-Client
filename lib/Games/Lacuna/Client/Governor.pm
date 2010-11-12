@@ -413,7 +413,7 @@ sub recycling {
     my ($pid, $status, $cfg) = @{$self->{current}}{qw(planet_id status config)};
     my @reslist = qw(food ore water energy waste happiness);
 
-    if ($status->{waste_hour} < 0) {
+    if ($status->{waste_hour} < 0 and not $cfg->{recycle_when_negative}) {
         trace("Aborting recycling, current waste production is negative.") if ($self->{config}->{verbosity}->{trace});
         return;
     }
@@ -1017,6 +1017,11 @@ to pass without action.
 
 Not yet implemented.  Will permit deviations from the storage profile
 to pass without action. 
+
+=head2 recycle_when_negative
+
+If true, recycling jobs will be triggered even if net waste production on
+this colony is negative.  The default is that this does not happen.
 
 =head2 reserve_build_queue
 
