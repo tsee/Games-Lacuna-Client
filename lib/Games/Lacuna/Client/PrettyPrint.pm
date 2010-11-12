@@ -71,6 +71,67 @@ sub upgrade_report {
     show_bar('-');
 }
 
+sub ship_report {
+    my ($info, $sort) = @_;
+    $sort = [qw(location type task)] if not defined $sort;
+    my @ships;
+    for my $pname (keys %$info) {
+        push @ships, map { $_->{location} = $pname; $_ } @{$info->{$pname}};
+    }
+    my $reverse;
+
+    @ships = sort {
+        my $result;
+        for my $s (@$sort) {
+            my $reverse = $s =~ s/^-//g;
+            if ($s eq 'speed' || $s eq 'hold_size' || $s eq 'stealth') {
+                $result = $a->{$s} <=> $b->{$s};
+            } else {
+                $result = $a->{$s} cmp $b->{$s};
+            }
+            return ($result * ($reverse ? -1 : 1)) if ($result != 0);
+        }
+        return 0;
+    } @ships;
+
+    show_bar('=');
+    say(_c_('bold green'),"Ship Report",_c_('reset'));
+    show_bar('-');
+    printf("%-12s %-12s %-12s %7s %5s %5s  %s\n",qw(Name Type Location Cargo Speed Stlh Status));
+    for my $ship (@ships) {
+         my $task = $ship->{task};
+         my $status_string;
+         if ($task eq 'Docked') {
+            $status_string = _c_('bold green')."Docked";
+         } 
+         elsif ($task eq 'Travelling') {
+            $status_string = _c_('bold cyan')."Travelling"._c_('reset');
+            #_c_('green').sprintf("\n%s%s -> %s, arriving %s",(' 'x13),$ship->{from}->{name},$ship->{to}->{name},$ship->{date_arrives});
+         }
+         elsif ($task eq 'Mining') {
+            $status_string = _c_('bold yellow')."Mining";
+         }
+         elsif ($task eq 'Building') {
+            $status_string = _c_('bold red')."Building";
+         } 
+         else {
+            $status_string = _c_('bold magenta').$task
+         }
+         $status_string .= _c_('reset');
+
+         printf("%s%-12s %s%-12s %s%-12s %s%7s %5s %5s  %s\n",
+             _c_('bold yellow'),substr($ship->{name},    0,12),
+             _c_('bold green') ,substr($ship->{type},    0,12),
+             _c_('bold cyan')  ,substr($ship->{location},0,12),
+             _c_('reset')      ,$ship->{hold_size},
+             $ship->{speed},
+             $ship->{stealth},
+             $status_string
+         );
+    }
+    show_bar('=');
+}
+
 sub message {
     my $message = shift;
     say(_c_('bold blue'),' (*) ',_c_('cyan'),$message,_c_('reset'));

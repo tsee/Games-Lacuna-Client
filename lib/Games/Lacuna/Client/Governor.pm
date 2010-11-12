@@ -12,11 +12,17 @@ use JSON qw(to_json from_json);
 use Data::Dumper;
 
 sub new {
-    my ($self, $client, $config_file) = @_;
+    my ($self, $client, $config_opt) = @_;
 
-    open my $fh, '<', $config_file or die "Couldn't open $config_file";
-    my $config = YAML::Any::Load( do { local $/; <$fh> } );
-    close $fh;
+    my $config;
+    if (not ref $config_opt) {
+        open my $fh, '<', $config_opt or die "Couldn't open $config_opt";
+        $config = YAML::Any::Load( do { local $/; <$fh> } );
+        close $fh;
+    }
+    else {
+        $config = $config_opt;  # We passed in a literal hashref for config. Right?
+    }
 
     return bless {
         client => $client,
@@ -26,7 +32,6 @@ sub new {
 
 sub run {
     my $self = shift;
-    my $refresh_cache = shift;
     my $client = $self->{client};
     my $config = $self->{config};
 
@@ -39,11 +44,7 @@ sub run {
     my $do_keepalive = 1;
     my $start_time = time();
 
-    if ($refresh_cache) {
-        $self->refresh_building_cache();
-    } else {
-        $self->load_building_cache();
-    }
+    $self->load_building_cache();
 
     do {
         if ( $self->{config}->{dry_run} ) {
@@ -61,6 +62,8 @@ sub run {
             $self->govern();
         }
         $self->coordinate_pushes();
+        Games::Lacuna::Client::PrettyPrint::ship_report($self->{ship_info},$self->{config}->{ship_info_sort}) if defined $self->{ship_info};
+        trace(sprintf("%d RPC calls this run",$self->{client}->{total_calls})) if ($self->{config}->{verbosity}->{trace});
         if ( $self->{config}->{dry_run} ) {
             message("Dry run complete.");
             return;
@@ -72,7 +75,7 @@ sub run {
             }
             else {
                 my $nat_time = ptime($next_action_in);
-                trace("Expecting to govern again in $nat_time or so, sleeping...");
+                trace("Expecting to govern again in $nat_time or so, sleeping...") if ($self->{config}->{verbosity}->{trace});
                 sleep( $next_action_in + 5 );
                 $do_keepalive = 1;
             }
@@ -128,7 +131,7 @@ sub govern {
     $self->{current}->{build_queue_remaining} = $max_queue - $current_queue;
     $self->{next_action}->{$pid} = max(map { $_->{pending_build}->{seconds_remaining} + time } values %$details);
     if ($current_queue == $max_queue) {
-        warning("Build queue is full on ".$self->{current}->{status}->{name});
+        warning("Build queue is full on ".$self->{current}->{status}->{name}) if ($self->{config}->{verbosity}->{warning});
     } 
 
     for my $priority (@{$cfg->{priorities}}) {
@@ -154,7 +157,7 @@ sub coordinate_pushes {
 
     delete $self->{trade_ships};
     $self->{sent_ships} = [];
-    trace("Requiring minimum load of $min x capacity to make a push");
+    trace("Requiring minimum load of $min x capacity to make a push") if ($self->{config}->{verbosity}->{trace});
     $self->coordinate_push_mode($info,$min,1);  # Overload pushes
     $self->coordinate_push_mode($info,$min);    # Request pushes
 }
@@ -171,7 +174,7 @@ sub coordinate_push_mode {
                     $self->{planet_names}->{$pid},
                     ($mode ? 'get rid of' : 'ask for'),
                     $reqd,
-                    $res));
+                    $res)) if ($self->{config}->{verbosity}->{trace});
                 my $candidate;
                 for my $other ( keys %$info ) {
                     next if ( $other == $pid );
@@ -230,7 +233,7 @@ sub coordinate_push_mode {
                     push @{$self->{sent_ships}}, $candidate->{ship};
                 }
                 else {
-                    trace("No suitable pushes found.");
+                    trace("No suitable pushes found.") if ($self->{config}->{verbosity}->{trace});
                 }
             }
         }
@@ -277,7 +280,8 @@ sub resource_crisis {
                 my $bldg_data = $self->{building_cache}->{body}->{$status->{id}}->{$upgrade_succeeded};
                 action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
             } else {
-                warning("Could not find any suitable buildings to upgrade");
+                warning("Could not find any suitable buildings to upgrade") if $self->{config}->{verbosity}->{warning};
+
             }
             # If we could not increase production, attempt to reduce consumption (!!)
             if ($type eq 'production' and not $upgrade_succeeded and $cfg->{allow_downgrades}) {
@@ -327,12 +331,12 @@ sub _resource_upgrader {
         ($self->{current}->{build_queue_remaining} <= $cfg->{reserve_build_queue})) {
         warning(sprintf("Aborting, %s slots in build queue <= %s reserve slots specified",
             $self->{current}->{build_queue_remaining},
-            $cfg->{reserve_build_queue}));
+            $cfg->{reserve_build_queue})) if $self->{config}->{verbosity}->{warning};
         return;
     }
 
     my $profile = normalized_profile($cfg->{profile},$type,@reslist);
-    my @selected = select_resource($status,$profile,$type eq 'production' ? 'hour' : 'capacity',@reslist);
+    my @selected = $self->select_resource($status,$profile,$type eq 'production' ? 'hour' : 'capacity',@reslist);
     for my $selected ( @selected ){
         my $upgrade_succeeded = $self->attempt_upgrade_for($selected, $type ); # 1 for override, this is a crisis.
 
@@ -341,7 +345,8 @@ sub _resource_upgrader {
             action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
             last;
         } else {
-            warning("Could not find any suitable buildings for $selected to upgrade");
+            warning("Could not find any suitable buildings for $selected to upgrade") if $self->{config}->{verbosity}->{warning};
+
         }
     }
 }
@@ -366,7 +371,7 @@ sub normalized_profile {
 }
 
 sub select_resource {
-    my ($status, $profile, $key_type, @reslist) = @_;
+    my ($self, $status, $profile, $key_type, @reslist) = @_;
 
     my $hourly_total = sum(map { abs($_) } @{$status}{ map { "$_\_$key_type" } @reslist});
     my $max_discrepancy;
@@ -386,7 +391,7 @@ sub select_resource {
                 "Discrepancy of %2d%% ($key_type) detected for %s.",
                 $discrepancy{$selected}*100, $selected
             )
-        );
+        ) if ($self->{config}->{verbosity}->{trace});
     }
     return @selected;
 }
@@ -395,13 +400,21 @@ sub other_upgrades {
     # Not yet implemented.
 }
 
+sub ship_report {
+    my $self = shift;
+    my $pid = $self->{current}->{planet_id};
+    my ($spaceport) = $self->find_buildings('SpacePort');
+    return if not ($spaceport);
+    $self->{ship_info}->{$self->{planet_names}->{$pid}} = $spaceport->view_all_ships->{ships};
+}
+
 sub recycling {
     my ($self, $type) =  @_;
     my ($pid, $status, $cfg) = @{$self->{current}}{qw(planet_id status config)};
     my @reslist = qw(food ore water energy waste happiness);
 
-    if ($status->{waste_hour} < 0) {
-        trace("Aborting recycling, current waste production is negative.");
+    if ($status->{waste_hour} < 0 and not $cfg->{recycle_when_negative}) {
+        trace("Aborting recycling, current waste production is negative.") if ($self->{config}->{verbosity}->{trace});
         return;
     }
 
@@ -409,18 +422,18 @@ sub recycling {
 
     my @recycling = $self->find_buildings('WasteRecycling');
     if (not scalar @recycling) {
-        warning($status->{name} . " has no recycling centers");
+        warning($status->{name} . " has no recycling centers") if $self->{config}->{verbosity}->{warning};
         return;
     }
 
     if ($status->{waste_stored} < $cfg->{profile}->{waste}->{recycle_above}) {
-        trace("Insufficient waste to trigger recycling.");
+        trace("Insufficient waste to trigger recycling.") if ($self->{config}->{verbosity}->{trace});
         return;
     }
 
     my @available = grep { not exists $self->building_details($pid,$_->{building_id})->{work} } @recycling;
     my $jobs_running = (scalar @recycling - scalar @available);
-    trace("$jobs_running recycling jobs running on ".$status->{name});
+    trace("$jobs_running recycling jobs running on ".$status->{name}) if ($self->{config}->{verbosity}->{trace});
 
     do {
         ### If a job will finish before our next run, lets set ourselves up to run again.
@@ -432,7 +445,7 @@ sub recycling {
     };
 
     if ($jobs_running >= $concurrency) {
-        warning("Maximum (or more) concurrent recycling jobs ($concurrency) are running, aborting.");
+        warning("Maximum (or more) concurrent recycling jobs ($concurrency) are running, aborting.") if $self->{config}->{verbosity}->{warning};
         return;
     }
 
@@ -440,7 +453,7 @@ sub recycling {
     # Resource selection based on criteria.  Default is 'split'.
     my $to_recycle = $status->{waste_stored} - $cfg->{profile}->{waste}->{recycle_reserve};
     if ($to_recycle <= 0) {
-        warning("Confusing directives:  Can't recycle if recycle_reserve > recycle_above");
+        warning("Confusing directives:  Can't recycle if recycle_reserve > recycle_above") if $self->{config}->{verbosity}->{warning};
         return;
     }
     my $max_recycle = $center->view->{recycle}->{max_recycle};
@@ -468,7 +481,7 @@ sub recycling {
     elsif ($criteria eq 'production') { # Whichever we product least of
         ($res) = sort { $status->{"$a\_hour"} <=> $status->{"$b\_hour"} } @rr;
     } else {
-        warning("Unknown recycling_selection: $criteria");
+        warning("Unknown recycling_selection: $criteria") if $self->{config}->{verbosity}->{warning};
         return;
     }
     if (defined $res) {
@@ -484,7 +497,7 @@ sub recycling {
         );
     };
     if ($@) {
-        warning("Problem recycling: $@");
+        warning("Problem recycling: $@") if $self->{config}->{verbosity}->{warning};
     } else {
         action(sprintf("Recycling Initiated: %d water, %d ore, %d energy",@recycle_res{@rr}));
     }
@@ -540,7 +553,7 @@ sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes 
         }
 
     } else {
-        trace("Can't push from here without a Trade Ministry");
+        trace("Can't push from here without a Trade Ministry") if ($self->{config}->{verbosity}->{trace});
     }
 
     # Consider Need
@@ -569,8 +582,11 @@ sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes 
 sub building_details {
     my ($self, $pid, $bid) = @_;
 
-    if ($self->{building_cache}->{body}->{$pid}->{$bid}->{level} ne $self->{building_cache}->{building}->{$bid}->{level} or
-        not defined $self->{building_cache}->{building}->{$bid}->{pretty_type}) {
+    if ((time - $self->{building_cache}->{cache_time} > $self->{config}->{cache_duration})
+        or
+        ($self->{building_cache}->{body}->{$pid}->{$bid}->{level} ne $self->{building_cache}->{building}->{$bid}->{level})
+        or
+        (not defined $self->{building_cache}->{building}->{$bid}->{pretty_type})) {
         $self->refresh_building_details($self->{building_cache}->{body}->{$pid},$bid);
     }
     delete $self->{building_cache}->{building}->{$bid}->{work};
@@ -592,11 +608,7 @@ sub load_building_cache {
         };
     }
     if (not defined $data) {
-        trace("No cache file found, building cache") if ($self->{config}->{verbosity}->{trace});
-        $self->refresh_building_cache();
-    } elsif (time - $data->{cache_time} > $self->{config}->{cache_duration}) {
-        trace("Cache time is too old, refreshing cache") if ($self->{config}->{verbosity}->{trace});
-        $self->refresh_building_cache();
+        trace("No cache file found") if ($self->{config}->{verbosity}->{trace});
     } else {
         trace("Loading building cache") if ($self->{config}->{verbosity}->{trace});
         $self->{building_cache} = $data;
@@ -624,7 +636,7 @@ sub refresh_building_details {
     }
 
     if ( not defined $details->{$bldg_id}->{pretty_type} ) {
-        warning("Building $bldg_id has unknown type (".$details->{$bldg_id}->{url}.").\n");
+        warning("Building $bldg_id has unknown type (".$details->{$bldg_id}->{url}.").\n") if $self->{config}->{verbosity}->{warning};
         return;
     }
 
@@ -639,9 +651,10 @@ sub write_building_cache {
     
     $self->{building_cache}->{cache_time} = time;
 
-    open( my $fh, '>', $cache_file); 
-    print $fh to_json($self->{building_cache});
-    close $fh;
+    if(open( my $fh, '>', $cache_file)) { 
+        print $fh to_json($self->{building_cache});
+        close $fh;
+    }
 }
 
 sub attempt_upgrade_for {
@@ -661,7 +674,7 @@ sub attempt_upgrade_for {
     # Abort if an upgrade is in progress.
     for my $opt (@all_options) {
         if (any {$opt->{building_id} == $_->{building_id}} @{$self->{current}->{build_queue}}) {
-            trace(sprintf("Upgrade already in progress for %s, aborting.",$opt->{building_id}));
+            trace(sprintf("Upgrade already in progress for %s, aborting.",$opt->{building_id})) if ($self->{config}->{verbosity}->{trace});
             return;
         }
     }
@@ -689,7 +702,7 @@ sub attempt_upgrade_for {
     for my $upgrade (@upgrade_options) {
         eval { 
             my $details = $self->building_details($pid,$upgrade->{building_id});
-            trace(sprintf("Attempting to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level}));
+            trace(sprintf("Attempting to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level})) if ($self->{config}->{verbosity}->{trace});
             if (not $self->{config}->{dry_run}) {
                $upgrade->upgrade();
             } else {
@@ -703,7 +716,7 @@ sub attempt_upgrade_for {
         if (not $@) {
             $upgrade_succeeded = $upgrade->{building_id};
         } else {
-            trace("Upgrade failed: $@");
+            trace("Upgrade failed: $@") if ($self->{config}->{verbosity}->{trace});
         }
         last if $upgrade_succeeded;
     }
@@ -839,10 +852,8 @@ path to a YAML configuration file, described in the L<CONFIGURATION FILE> sectio
 
 =head2 run
 
-Runs the governor script according to configuration.  Takes exactly one argument, which is
-treated as boolean.  If the argument is true, this will force the cache to refresh for all
-buildings.  This is expensive in terms of API calls.  I don't actually use this, but it is
-provided for completeness as the caching methods employed are admittedly crude.
+Runs the governor script according to configuration.  Note: old behavior which permitted
+an argument to force a scan of all buildings has been removed as superfluous and wasteful.
 
 =head1 CONFIGURATION FILE
 
@@ -858,7 +869,7 @@ building cache data here.
 This is the maximum permitted age of the cache file, in seconds, before
 a refresh is required.  Note the age of the cache file is updated with
 each run, so this value may be set high enough that a refresh is never
-forced.
+forced.  Refreshes are pulled on a per-building basis.
 
 =head2 dry_run
 
@@ -983,7 +994,7 @@ will perform.  They are performed in the order specified.  Currently
 implemented values include:
 
 production_crisis, storage_crisis, resource_upgrades, production_upgrades,
-storage_upgrades, recycling, pushes
+storage_upgrades, recycling, pushes, ship_report
 
 Note: resource_upgrades performs both a production_upgrades and storage_upgrades priority.
 
@@ -1006,6 +1017,11 @@ to pass without action.
 
 Not yet implemented.  Will permit deviations from the storage profile
 to pass without action. 
+
+=head2 recycle_when_negative
+
+If true, recycling jobs will be triggered even if net waste production on
+this colony is negative.  The default is that this does not happen.
 
 =head2 reserve_build_queue
 
