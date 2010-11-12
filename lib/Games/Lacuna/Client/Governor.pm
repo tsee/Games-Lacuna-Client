@@ -12,11 +12,17 @@ use JSON qw(to_json from_json);
 use Data::Dumper;
 
 sub new {
-    my ($self, $client, $config_file) = @_;
+    my ($self, $client, $config_opt) = @_;
 
-    open my $fh, '<', $config_file or die "Couldn't open $config_file";
-    my $config = YAML::Any::Load( do { local $/; <$fh> } );
-    close $fh;
+    my $config;
+    if (not ref $config_opt) {
+        open my $fh, '<', $config_opt or die "Couldn't open $config_opt";
+        $config = YAML::Any::Load( do { local $/; <$fh> } );
+        close $fh;
+    }
+    else {
+        $config = $config_opt;  # We passed in a literal hashref for config. Right?
+    }
 
     return bless {
         client => $client,
