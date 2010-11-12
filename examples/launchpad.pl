@@ -1,24 +1,30 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Games::Lacuna::Cache;
+use Games::Lacuna::Cachedev;
 use Data::Dumper;
 
 binmode STDOUT, ":utf8";
 
 
-my $refresh = $ARGV[0];
+my $refresh = $ARGV[0] || 0;
 my $shiptype = $ARGV[1];
 my $coords = $ARGV[2];
 
 
 usage() unless $shiptype && $coords;
 
+my %opts = ('cfg_file' => "/path/to/lacuna.yml",
+            'cache_file' => "/path/to/lac_cache.dat",
+            'refresh' => $refresh);
+
+
+my $laluna = Games::Lacuna::Cache->new(%opts);
+my $empire_data = $laluna->empire_data();
+
 my ($t_type, $t_name) = split(":", $coords);
 my $target_id = { $t_type => $t_name };
 
-my $laluna = Games::Lacuna::Cache->new($refresh);
-my $empire_data = $laluna->empire_data();
 my $total_ships = 0;
 my $problem_ships = 0;
 
@@ -66,7 +72,7 @@ if ($total_ships > 0 ){
 }
 
 sub usage{
-    print "Usage: launchpad.pl $refresh $shiptype $target . Consult script 
+    print "Usage: launchpad.pl refresh shiptype target . Consult documentation 
         for target format\n";
     exit;
 }

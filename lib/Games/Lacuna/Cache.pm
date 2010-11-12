@@ -8,21 +8,24 @@ binmode STDOUT, ":utf8";
 
 
 sub new {
-    my $cfg_file =  'lacuna.yml';
+    my $class = shift;
+    my %opt = @_;
     my $self = {};
-    bless($self);
-    $self->{'CLIENT'} = Games::Lacuna::Client->new( cfg_file => $cfg_file,
+    $self->{'CLIENT'} = Games::Lacuna::Client->new( cfg_file => $opt{'cfg_file'},
                                                     # debug    => 1,
                                                   );
 
-    my $refresh = $ARGV[0];
-    $self->{'CACHE_FILE'} = "empire_cache2.dat";
-    $self->{'CACHE_TIME'} = 25*60;
+    my $refresh = $opt{'refresh'};
+    $self->{'debug'} = $opt{'debug'} || 0;
+    $self->{'CACHE_FILE'} = $opt{'cache_file'} || "empire_cache2.dat";
+    $self->{'CACHE_TIME'} = $opt{'cache_time'} || 25*60;
     # We cache building objects to make life easier later.
 
     $self->{'OBJECTS'} = ();
     $self->{'EMPIRE'} = $self->{'CLIENT'}->empire;
     $self->{'DATA'} = (); # Stores the "empire" block from a status response.
+    bless($self);
+
     $self->load_data($refresh);
     
     
@@ -78,13 +81,13 @@ sub force_refresh{
 sub load_data {
     # Replace the return with just updating $self->{'DATA'}
     my ($self, $force_refresh) = @_;
-    print "Loading Empire data... \n";
+    $self->debug( "Loading Empire data... ");
     my $pr;
     my $hr;
     if ($force_refresh || !(-e $self->{'CACHE_FILE'})){
         # $self->{'DATA'} is undef, so we should be able to call this and it
         # will hit up the server.
-        print "Forcing refresh in load_data ...\n";
+        $self->debug( "Forcing refresh in load_data ...");
         $self->refresh_data("empire");
     }
     $self->{'DATA'} = YAML::Any::LoadFile($self->{'CACHE_FILE'});
@@ -184,7 +187,7 @@ sub refresh_data{
                 # We're stale or we don't exist. 
                 # Only force a write when we do this top level, not for every
                 # bloody planet
-                print "Stale in empire - refreshing \n";
+                $self->debug( "Stale in empire - refreshing ");
                 #print "=== MAKING CALL TO SERVER! ===\n";
                 $response = $self->{'EMPIRE'}->get_status();
                 $self->cache_response("empire",$response);
@@ -193,7 +196,7 @@ sub refresh_data{
             # There's no real reason to refresh data for every planet. You
             # have the planet ids, you can work on them directly. If you need
             # all the planets, use a foreach and cache them that way
-            print "Not yet implemented!";
+            $self->debug( "Not yet implemented!");
         }
     }
 
@@ -208,7 +211,6 @@ sub cache_response {
     my ($self, $type, $response) = @_;
     #print "Caching response:\n";
     #print Dumper($response);
-    print "===================================\n";
     if ($response->{'status'}->{'empire'}){
         $self->{'DATA'}->{'empire'} = $response->{'status'}->{'empire'};
         $self->{'DATA'}->{'empire'}->{'last_checked'} = time();
@@ -247,6 +249,10 @@ sub cache_response {
 }
 
 1;
+sub debug{
+    my ($self, $message) = @_;
+    print "$message \n" if $self->{'debug'};
+}
 
 =pod
 

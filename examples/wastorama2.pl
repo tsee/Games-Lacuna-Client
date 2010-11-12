@@ -1,9 +1,12 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Games::Lacuna::Cache;
+use Games::Lacuna::Cachedev;
 use Data::Dumper;
+binmode STDOUT, ":utf8";
 
+
+my $refresh = $ARGV[0] || 0;
 
 my $didyoureadthedocumentation = 1;
 
@@ -12,21 +15,26 @@ if ($didyoureadthedocumentation){
     exit;
 }
 
-my $refresh = $ARGV[0] || 0;
+my %opts = ('cfg_file' => "/path/to/lacuna.yml",
+            'cache_file' => "/path/to/lac_cache.dat",
+            'refresh' => $refresh);
+
+
+my $laluna = Games::Lacuna::Cache->new(%opts);
+my $empire_data = $laluna->empire_data();
+
+
+
+
 #print "Refresh: $refresh \n";
 my $hard_thresh = 0.9; # For colonies producing negative ore - keep some space
 my $cap_thresh = 0.5;
 my $t_thresh = 8;
 my $recyc_prop = 0.5;
 my $hard_prop = 0.1;
-#Let's get rid of one thing to pass around and convert.
 
-binmode STDOUT, ":utf8";
 my $pattern = "wasterecycling";
 my $next_recycle = 1;
-my $laluna = Games::Lacuna::Cache->new($refresh);
-
-my $empire_data = $laluna->empire_data();
 
 #print Dumper(%planet_data);
 #exit;
@@ -217,7 +225,7 @@ Jai Cornes, E<lt>solitaire@tygger.netE<gt>
 
 Copyright (C) 2010 by Jai Cornes
 
-This library is free software; you can redistribute it and/or modify
+This script is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,
 at your option, any later version of Perl 5 you may have available.
 

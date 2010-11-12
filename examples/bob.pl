@@ -1,16 +1,19 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Games::Lacuna::Cache;
+use Games::Lacuna::Cachedev;
 use Data::Dumper;
 
 my $refresh = $ARGV[0] || 0;
-print "Refresh: $refresh \n";
+#print "Refresh: $refresh \n";
 binmode STDOUT, ":utf8";
 
+my %opts = ('cfg_file' => "/path/to/lacuna.yml",
+            'cache_file' => "/path/to/lac_cache.dat",
+            'refresh' => $refresh);
 
 
-my $laluna = Games::Lacuna::Cache->new($refresh);
+my $laluna = Games::Lacuna::Cache->new(%opts);
 my $empire_data = $laluna->empire_data();
 
 my %planet_hash;
