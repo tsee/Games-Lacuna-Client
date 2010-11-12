@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Games::Lacuna::Cachedev;
+use Games::Lacuna::Cache;
 use Data::Dumper;
 
 my $refresh = $ARGV[0] || 0;

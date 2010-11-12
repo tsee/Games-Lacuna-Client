@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Games::Lacuna::Cachedev;
+use Games::Lacuna::Cache;
 use Data::Dumper;
 binmode STDOUT, ":utf8";
 
