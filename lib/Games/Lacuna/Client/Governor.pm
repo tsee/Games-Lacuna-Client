@@ -62,6 +62,7 @@ sub run {
             $self->govern();
         }
         $self->coordinate_pushes();
+        Games::Lacuna::Client::PrettyPrint::ship_report($self->{ship_info},$self->{config}->{ship_info_sort}) if defined $self->{ship_info};
         trace(sprintf("%d RPC calls this run",$self->{client}->{total_calls})) if ($self->{config}->{verbosity}->{trace});
         if ( $self->{config}->{dry_run} ) {
             message("Dry run complete.");
@@ -397,6 +398,14 @@ sub select_resource {
 
 sub other_upgrades {
     # Not yet implemented.
+}
+
+sub ship_report {
+    my $self = shift;
+    my $pid = $self->{current}->{planet_id};
+    my ($spaceport) = $self->find_buildings('SpacePort');
+    return if not ($spaceport);
+    $self->{ship_info}->{$self->{planet_names}->{$pid}} = $spaceport->view_all_ships->{ships};
 }
 
 sub recycling {
@@ -985,7 +994,7 @@ will perform.  They are performed in the order specified.  Currently
 implemented values include:
 
 production_crisis, storage_crisis, resource_upgrades, production_upgrades,
-storage_upgrades, recycling, pushes
+storage_upgrades, recycling, pushes, ship_report
 
 Note: resource_upgrades performs both a production_upgrades and storage_upgrades priority.
 
