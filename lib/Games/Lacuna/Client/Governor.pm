@@ -32,7 +32,6 @@ sub new {
 
 sub run {
     my $self = shift;
-    my $refresh_cache = shift;
     my $client = $self->{client};
     my $config = $self->{config};
 
@@ -45,11 +44,7 @@ sub run {
     my $do_keepalive = 1;
     my $start_time = time();
 
-    if ($refresh_cache) {
-        $self->refresh_building_cache();
-    } else {
-        $self->load_building_cache();
-    }
+    $self->load_building_cache();
 
     do {
         if ( $self->{config}->{dry_run} ) {
@@ -575,8 +570,11 @@ sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes 
 sub building_details {
     my ($self, $pid, $bid) = @_;
 
-    if ($self->{building_cache}->{body}->{$pid}->{$bid}->{level} ne $self->{building_cache}->{building}->{$bid}->{level} or
-        not defined $self->{building_cache}->{building}->{$bid}->{pretty_type}) {
+    if ((time - $self->{building_cache}->{cache_time} > $self->{config}->{cache_duration})
+        or
+        ($self->{building_cache}->{body}->{$pid}->{$bid}->{level} ne $self->{building_cache}->{building}->{$bid}->{level})
+        or
+        (not defined $self->{building_cache}->{building}->{$bid}->{pretty_type})) {
         $self->refresh_building_details($self->{building_cache}->{body}->{$pid},$bid);
     }
     delete $self->{building_cache}->{building}->{$bid}->{work};
@@ -598,11 +596,7 @@ sub load_building_cache {
         };
     }
     if (not defined $data) {
-        trace("No cache file found, building cache") if ($self->{config}->{verbosity}->{trace});
-        $self->refresh_building_cache();
-    } elsif (time - $data->{cache_time} > $self->{config}->{cache_duration}) {
-        trace("Cache time is too old, refreshing cache") if ($self->{config}->{verbosity}->{trace});
-        $self->refresh_building_cache();
+        trace("No cache file found") if ($self->{config}->{verbosity}->{trace});
     } else {
         trace("Loading building cache") if ($self->{config}->{verbosity}->{trace});
         $self->{building_cache} = $data;
@@ -645,9 +639,10 @@ sub write_building_cache {
     
     $self->{building_cache}->{cache_time} = time;
 
-    open( my $fh, '>', $cache_file); 
-    print $fh to_json($self->{building_cache});
-    close $fh;
+    if(open( my $fh, '>', $cache_file)) { 
+        print $fh to_json($self->{building_cache});
+        close $fh;
+    }
 }
 
 sub attempt_upgrade_for {
@@ -845,10 +840,8 @@ path to a YAML configuration file, described in the L<CONFIGURATION FILE> sectio
 
 =head2 run
 
-Runs the governor script according to configuration.  Takes exactly one argument, which is
-treated as boolean.  If the argument is true, this will force the cache to refresh for all
-buildings.  This is expensive in terms of API calls.  I don't actually use this, but it is
-provided for completeness as the caching methods employed are admittedly crude.
+Runs the governor script according to configuration.  Note: old behavior which permitted
+an argument to force a scan of all buildings has been removed as superfluous and wasteful.
 
 =head1 CONFIGURATION FILE
 
@@ -864,7 +857,7 @@ building cache data here.
 This is the maximum permitted age of the cache file, in seconds, before
 a refresh is required.  Note the age of the cache file is updated with
 each run, so this value may be set high enough that a refresh is never
-forced.
+forced.  Refreshes are pulled on a per-building basis.
 
 =head2 dry_run
 
