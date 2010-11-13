@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Games::Lacuna::Cache;
+use Games::Lacuna::Cachedev;
 use Data::Dumper;
 
 my $refresh = $ARGV[0] || 0;
@@ -9,7 +9,7 @@ my $refresh = $ARGV[0] || 0;
 binmode STDOUT, ":utf8";
 
 my %opts = ('cfg_file' => "/path/to/lacuna.yml",
-            'cache_file' => "/path/to/lac_cache.dat",
+            'cache_file' => "/path/to/.lac_cache.dat",
             'refresh' => $refresh);
 
 
@@ -86,7 +86,7 @@ foreach my $key (keys %{$building_hash{$num}}){
                 # checking the return value...
                 sleep(180);
             }
-            $cur_level = schedule_build($key, $new_lev);
+            $cur_level = schedule_build($key, $new_lev, $planet);
             $attempts++;
         }
     }
@@ -95,13 +95,12 @@ foreach my $key (keys %{$building_hash{$num}}){
 
 sub schedule_build{
     use vars qw($laluna);
-    my ($id, $lev) = @_;
+    my ($id, $lev, $planet) = @_;
     my %costs;
     my $sleep;
     #TODO Extend Cache to cache views as well. 
-    my $response = $laluna->{'OBJECTS'}->{'buildings'}->{$id}->view();
-    my $status = $response->{'status'};
-    my $building_info = $response->{'building'};
+    my $building_info = $laluna->view_building($id);
+    my $planet_data = $laluna->planet_data($planet);
 
 
     if ($building_info->{'pending_build'}){
@@ -109,9 +108,7 @@ sub schedule_build{
         print "Build pending - sleeping $sleep...\n";
         sleep $sleep;
         # Check every time, just in case.
-        $response = $laluna->{'OBJECTS'}->{'buildings'}->{$id}->view();
-        $status = $response->{'status'};
-        $building_info = $response->{'building'};
+        $building_info = $laluna->view_building($id);
     }
     $sleep = 0;
 
@@ -121,10 +118,10 @@ sub schedule_build{
         print $building_info->{'upgrade'}->{'cost'}->{$res};
         #$costs{$_} = $building_info->{'upgrade'}->{'cost'}->{$_};
         print "\n";
-        my $gap = $status->{'body'}->{$res."_stored"} - $building_info->{'upgrade'}->{'cost'}->{$res};
+        my $gap = $planet_data->{$res."_stored"} - $building_info->{'upgrade'}->{'cost'}->{$res};
         if ($gap < 0){
             print "You can't afford that. ($res: $gap) \n";
-            my $hours = abs($gap) / $status->{'body'}->{$res."_hour"};
+            my $hours = abs($gap) / $planet_data->{$res."_hour"};
             my $seconds = int($hours * 60 * 60 );
             if ($sleep < $seconds){
                 $sleep = $seconds;
@@ -145,13 +142,11 @@ sub schedule_build{
     # like I say, we're just going to go back into the loop.
     # TODO Oh, build queue. If something goes wrong here, we should check the
     # build queue and sleep until something finishes.
-    $response = $laluna->{'OBJECTS'}->{'buildings'}->{$id}->view();
-    $status = $response->{'status'};
-    $building_info = $response->{'building'};
+    $building_info = $laluna->view_building($id);
     if ($building_info->{'level'} < $lev){
         my $status = $laluna->{'OBJECTS'}->{'buildings'}->{$id}->upgrade($id); 
         if ($status->{'building'}->{'pending_build'}){
-            return $status->{'building'}->{'level'};
+            return ($status->{'building'}->{'level'} +1);
         }else{
             #Kick it back to the controller, but we need some way to break out
             #of it.
