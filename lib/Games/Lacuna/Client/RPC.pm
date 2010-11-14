@@ -63,6 +63,11 @@ sub call {
   my $resp = $self->ua->request($req);
   my $res = $self->marshal->response_to_result($resp);
 
+  if ($self->{client}->{verbose_rpc}) {
+    my @tmp = @$params;
+    shift @tmp;
+    printf("RPC: %s(%s)\n",$method,@tmp);
+  }
   $self->{client}->{total_calls}++;
 
   if ($res->error) {
