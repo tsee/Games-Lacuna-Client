@@ -3,17 +3,21 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 use Imager;
-use Data::Dumper;
 use Getopt::Long qw(GetOptions);
+use YAML::Any ();
 use lib 'lib';
 use lib 'examples/map/lib';
 use LacunaMap::DB;
 
+our $cfg_file = 'map.yml';
 our $DbFile = 'map.sqlite';
 our @HighlightStars;
+our $private = 0; # If private, our colonies are green and alliance is purple
 GetOptions(
+  'c|cfg_file=s' => \$cfg_file,
   'd|dbfile=s' => \$DbFile,
   'hl|highlight-star=s@' => \@HighlightStars,
+  'p|private=i' => \$private,
 );
 
 my %highlight_star_names;
@@ -31,16 +35,25 @@ foreach my $hl (@HighlightStars) {
   }
 }
 
-LacunaMap::DB->import($DbFile);
+my $config;
+if (-e $cfg_file) {
+    $config=YAML::Any::LoadFile($cfg_file);
+}
 
-my @allied_empires = qw(
-  118  188  223  229  261
-  269  272  280  289  293
-  299  305  382  424  539
-  550  635  713  759
-);
+my $my_empire_id = $config->{empire_id} || '';
+unless ( $my_empire_id )
+{
+    die "empire_id missing from $cfg_file\n";
+}
+
+my @allied_empires = @{ $config->{allied_empires} };
+unless ( @allied_empires ) 
+{
+    warn "No allied_empires found.\n";
+}
 my %allied_empires = map {($_ => 1)} @allied_empires;
-my $my_empire_id = 299;
+
+LacunaMap::DB->import($DbFile);
 
 # Let's hardcode these for the sake of a nicer map
 #my $min_x = LacunaMap::DB::Stars->min_x-10;
@@ -84,7 +97,6 @@ $img->polygon(
     [$map_xsize+11+9, int($map_ysize*1/4.)+15],
   ],
 );
-
 
 $img->box(xmin => int($map_xsize/4.), xmax => int($map_xsize*3/4),
           ymin => $map_ysize+10, ymax => $map_ysize+12,
@@ -150,7 +162,10 @@ LacunaMap::DB::Bodies->iterate(
     my $eid = $body->empire_id;
     if ($eid) {
       if ($eid == $my_empire_id) { $color = $green; }
-      elsif ($allied_empires{$eid}) { $color = $green; } # FIXME distinguish between "my" colonies and the alliance's
+      elsif ($allied_empires{$eid}) { 
+        if ($private) { $color = $purple; }
+        else { $color = $green; }
+      }
       else { $color = $red; }
     }
     elsif ($body->type =~ /habitable/i) { $color = $blue; }
@@ -159,5 +174,7 @@ LacunaMap::DB::Bodies->iterate(
   }
 );
 
-$img->write(file => "map.png");
+$img->write(file => "map.png")
+    or die q{Cannot save map.png, }, $img->errstr;
+
 
