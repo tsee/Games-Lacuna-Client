@@ -742,6 +742,8 @@ sub resource_buildings {
         my $pertinent = 0;
         my $details = $self->building_details($pid,$bid);
         my $pretty_type = $details->{pretty_type};
+        my $meta_type = meta_type($pretty_type);
+        next if (not any { $_ eq $meta_type } qw(food ore water energy waste storage happiness));
         if ($type eq 'storage' && $details->{"$res\_capacity"} > 0) {
             $pertinent = ($pretty_type eq 'PlanetaryCommand') ? $cfg->{pcc_is_storage} : 1;
         } elsif ($type eq 'production' && $details->{"$res\_hour"} > 0) {
@@ -801,12 +803,133 @@ sub upgrade_cost {
 }
 
 sub food_types {
-    return qw(algae apple bean beetle bread burger chip cider corn fungus lapis meal milk pancake pie potato root shake soup syrup wheat);
+    return qw(algae apple bean beetle bread burger chip cheese cider corn fungus lapis meal milk pancake pie potato root shake soup syrup wheat);
 }
 
 sub ore_types {
     return qw(anthracite bauxite beryl chalcopyrite chromite fluorite galena goethite gold gypsum halite kerogen magnetite methane monazite rutile sulfur trona uraninite zircon);
 }
+
+sub meta_type {
+    my $type = shift;
+    my $meta_types = {
+        command => [qw{
+            Archaeology
+            Development
+            Embassy
+            Intelligence
+            Network19
+            Observatory
+            Park
+            PlanetaryCommand
+            Security
+            Shipyard
+            SpacePort
+            Trade
+            Transporter
+            Capitol
+            CloakingLab
+            Espionage
+            GasGiantLab
+            GasGiantPlatform
+            GeneticsLab
+            MissionCommand
+            MunitionsLab
+            Oversight
+            PilotTraining
+            Propulsion
+            Stockpile
+            TerraformingLab
+            TerraformingPlatform
+            University
+        }],
+        happiness => [qw{
+            Entertainment
+            LuxuryHousing
+        }],
+        food => [qw{
+            Algae
+            Apple
+            Bean
+            Beeldeban
+            Bread
+            Burger
+            Cheese
+            Chip
+            Cider
+            Corn
+            CornMeal
+            Dairy
+            Denton
+            Lapis
+            Malcud
+            Pancake
+            Pie
+            Potato
+            Shake
+            Soup
+            Syrup
+            Wheat
+        }],
+
+        glyph => [qw{
+            Crater
+            CrashedShipSite
+            EssentiaVein
+            GeoThermalVent
+            InterDimensionalRift
+            KalavianRuins
+            Lake
+            Lagoon
+            LibraryOfJith
+            Grove
+            MassadsHenge
+            NaturalSpring
+            OracleOfAnid
+            RockyOutcrop
+            Ravine
+            Sand
+            TempleOfTheDrajilites
+            Volcano
+        }],
+        energy => [qw{
+            Fission
+            Fusion
+            Geo
+            HydroCarbon
+            Singularity
+            WasteEnergy
+        }],
+        ore => [qw{
+            Mine
+            OreRefinery
+            WasteDigester
+            MiningMinistry
+        }],
+        waste => [qw{
+            WasteTreatment
+            WasteRecycling
+        }],
+        water => [qw{
+            WaterProduction
+            WaterPurification
+            WaterReclamation
+        }],
+        storage => [qw{
+            WasteSequestration
+            EnergyReserve
+            WaterStorage
+            FoodReserve
+            OreStorage
+        }],
+    };
+    for my $k (keys %$meta_types) {
+        if (any {$_ eq $type} @{$meta_types->{$k}}) {
+            return $k;
+        }
+    }
+}
+
 
 1;
 
