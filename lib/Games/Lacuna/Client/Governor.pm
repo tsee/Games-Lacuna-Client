@@ -91,19 +91,25 @@ sub govern {
     my $client = $self->{client};
 
     my $result  = $self->{client}->body( id => $pid )->get_buildings();
+    my $surface_image = $result->{body}->{surface_image};
+    $surface_image =~ s/^surface-//g;
     my $details = $result->{buildings};
     my $status  = $result->{status}->{body};
     $self->{status}->{$pid} = $status;
 
     message("Governing ".$status->{name}) if ($self->{config}->{verbosity}->{message});
     Games::Lacuna::Client::PrettyPrint::show_status($status) if ($self->{config}->{verbosity}->{summary});
-    Games::Lacuna::Client::PrettyPrint::surface($details) if ($self->{config}->{verbosity}->{surface_map});
-
+    Games::Lacuna::Client::PrettyPrint::surface($surface_image,$details) if ($self->{config}->{verbosity}->{surface_map});
     $self->{building_cache}->{body}->{$pid} = $details; 
     for my $bid (keys %{$self->{building_cache}->{body}->{$pid}}) {
         $self->{building_cache}->{body}->{$pid}->{$bid}->{pretty_type} = 
             Games::Lacuna::Client::Buildings::type_from_url( $self->{building_cache}->{body}->{$pid}->{$bid}->{url} );
     }
+
+    if ($self->{config}->{verbosity}->{production}) {
+        Games::Lacuna::Client::PrettyPrint::production_report(map { $self->building_details($pid,$_) } keys %$details);
+    }
+
 
     $status->{happiness_capacity} = $cfg->{resource_profile}->{happiness}->{storage_target} || 1;
    

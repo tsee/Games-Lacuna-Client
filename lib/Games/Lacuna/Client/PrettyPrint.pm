@@ -1,5 +1,6 @@
 package Games::Lacuna::Client::PrettyPrint;
 use English qw(-no_match_vars);
+use List::Util qw(sum);
 use warnings;
 use Term::ANSIColor;
 
@@ -132,6 +133,107 @@ sub ship_report {
     show_bar('=');
 }
 
+sub production_report { 
+    # Takes a list of hashrefs, each is the "building" portion of view()
+    my @buildings = @_; 
+    show_bar('=','magenta');
+    say(_c_('bold magenta').'Production Report (Per Hour)');
+    show_bar('-','magenta');
+    printf("%20s %2s %6s %6s %6s %6s %6s %6s\n",
+        'Building Type','Lv',
+        qw(Food Ore Water Energy Happy Waste));
+    @buildings = sort { production_sum($b) <=> production_sum($a) 
+                        || $a->{waste_hour} <=> $b->{waste_hour} } 
+                        @buildings;
+    my $gross;
+    for my $building (@buildings) {
+        printf("%s%20s %2s %s%6s %s%6s %s%6s %s%6s %s%6s %s%6s%s\n",
+            _c_('bold yellow'),
+            substr($building->{name},0,20),
+            $building->{level},
+            (map { color_code($building->{"$_\_hour"}) } 
+                qw(food ore water energy happiness)),
+            color_code($building->{waste_hour},1), #reverse color coding
+            _c_('reset'),
+        );
+        for my $res (qw(food ore water energy happiness waste)) {
+            my $rate = $building->{"$res\_hour"};
+            if ($rate > 0) {
+                $gross->{production}->{$res} += $rate;
+            }
+            elsif ($rate < 0) {
+                $gross->{consumption}->{$res} += $rate;
+            }
+        }
+    }
+    show_bar('-','magenta');
+    for my $type (qw(production consumption)) {
+        printf("%s%20s %2s %s%6s %s%6s %s%6s %s%6s %s%6s %s%6s%s\n",
+            _c_('bold yellow'),
+            "Gross $type",
+            '',
+            (map { color_code($gross->{$type}->{$_}) } 
+                qw(food ore water energy happiness waste)),
+            _c_('reset'),
+        );
+    }
+    show_bar('-','magenta');
+}
+
+sub trade_list {
+    show_bar('-','green');
+    printf("%15s %10s %15s %10s %s\n",
+        'Empire',
+        'Body ID',
+        'Asking',
+        'Offering',
+        'Description',
+    );
+    for (@_) {
+        my $rt = $_->{real_type};
+        printf("%s%15s %s%10s %s%15s %s%10s %s\n",
+            _c_('bold cyan'),
+            substr($_->{empire}->{name},0,15),
+            _c_('reset')._c_('cyan'),
+            $_->{body}->{id},
+            _c_('reset'),
+            substr($_->{ask_description},0,15),
+            _c_($rt eq 'food' ? 'bold green' :
+                $rt eq 'ore'  ? 'bold yellow' :
+                $rt eq 'water' ? 'bold blue' :
+                $rt eq 'energy' ? 'bold cyan' :
+                $rt eq 'glyph' ? 'bold magenta' :
+                $rt eq 'plan' ? 'magenta' :
+                $rt eq 'waste' ? 'bold red' :
+                $rt eq 'ship' ? 'bold white' :
+                'reset'),
+            $rt,
+            $_->{offer_description},
+        );
+    }
+    show_bar('-','green');
+}
+
+sub color_code {
+    my ($val, $reverse) = @_;
+    $val = 0 if not defined $val;
+    my $original = $val;
+    $val *= -1 if $reverse;
+    return ((($val > 0) ? _c_('bold green') 
+           : ($val < 0) ? _c_('bold red') 
+           : _c_('white')),$original);
+}
+
+sub production_sum {
+    my $building = shift;
+    return sum( 
+        @{$building}{
+            map { "$_\_hour" } 
+            qw(food water ore energy happiness)
+        }
+    );
+}
+
 sub message {
     my $message = shift;
     say(_c_('bold blue'),' (*) ',_c_('cyan'),$message,_c_('reset'));
@@ -154,7 +256,8 @@ sub trace {
 
 sub show_bar {
     my $char = shift;
-    say(_c_('blue'),($char x 72),_c_('reset'));
+    my $color = shift || 'blue';
+    say(_c_($color),($char x 72),_c_('reset'));
 }
 
 sub say  {
@@ -187,6 +290,7 @@ sub ptime {
 }
 
 sub surface {
+    my $surface_type = shift;
     my $building_hash = shift;
     my $buildings = [values %$building_hash];
     my @map_x = (-5,-4,-3,-2,-1,0,1,2,3,4,5);
@@ -196,21 +300,22 @@ sub surface {
     print "___".('|___' x 11)."\n";
     for my $map_y (@map_y) {
         printf "%2s |",$map_y;
-        surface_line('label',$buildings,$map_y,@map_x);
+        surface_line('label',$surface_type,$buildings,$map_y,@map_x);
         print "\n";
         print "___|";
-        surface_line('level',$buildings,$map_y,@map_x);
+        surface_line('level',$surface_type,$buildings,$map_y,@map_x);
         print "\n";
     }
 }
 
 sub surface_line {
-    my ($mode,$buildings,$map_y,@map_x) = @_;
+    my ($mode,$surface,$buildings,$map_y,@map_x) = @_;
 
     for my $map_x (@map_x) {
         my ($building) = grep { $_->{x} == $map_x && $_->{y} == $map_y } @$buildings;
         if (not $building) {
-            print _c_('green') . ($mode eq 'label' ? ' .  ' : '. . ') . _c_('reset');
+            my ($s1,$s2) = @{surface_types()->{surface}->{$surface}};
+            print (($mode eq 'label' ? $s1 : $s2) . _c_('reset'));
             next;
         }
         my $btype = Games::Lacuna::Client::Buildings::type_from_url($building->{url});
@@ -241,6 +346,31 @@ sub surface_line {
 
 sub surface_types {
     return {
+        surface => {
+            p1  => [_c_('yellow').' .  ',_c_('green')  .'` . '],
+            p2  => [_c_('red')   .'\_/ ',_c_('red')    .'/ \_'],
+            p3  => [_c_('bold yellow').' .  ',_c_('white')  .': : '],
+            p4  => [_c_('white') .' .  ',_c_('magenta').'. . '],
+            p5  => [_c_('bold yellow').'\_/  ',_c_('green')  .'/ \_'],
+
+            p6  => [_c_('yellow').' .  ',_c_('bold black').'. . '],
+            p7  => [_c_('magenta').' .  ',_c_('white').'` . '],
+            p8  => [_c_('bold black').' .  ',_c_('bold black').'. . '],
+            p9  => [_c_('white').' .  ',_c_('green').'. . '],
+            p10 => [_c_('yellow').' :  ',_c_('yellow').': : '],
+
+            p11 => [_c_('green').' .  ',_c_('yellow').'. . '],
+            p12 => [_c_('bold green').' .  ',_c_('green').'` . '],
+            p13 => [_c_('white').' :  ',_c_('white').': : '],
+            p14 => [_c_('bold black').' .  ',_c_('white').'. . '],
+            p15 => [_c_('red').' .  ',_c_('yellow').'. . '],
+
+            p16 => [_c_('red').' .  ',_c_('yellow').'` . '],
+            p17 => [_c_('cyan').' .  ',_c_('bold green').'` . '],
+            p18 => [_c_('cyan').' .  ',_c_('white').'. . '],
+            p19 => [_c_('bold blue').' .  ',_c_('cyan').'. . '],
+            p20 => [_c_('bold black').' .  ',_c_('yellow').'. . '],
+        },
         command => {
             Archaeology          => 'Arc',
             Development          => 'Dev',
