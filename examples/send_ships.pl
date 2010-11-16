@@ -5,6 +5,7 @@ use warnings;
 use List::Util            (qw(first));
 use Games::Lacuna::Client ();
 use Getopt::Long          (qw(GetOptions));
+my $cfg_file;
 
 if ($ARGV[0] !~ /^--/) {
 	$cfg_file = shift @ARGV;
