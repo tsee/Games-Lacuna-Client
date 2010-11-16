@@ -9,7 +9,7 @@ use YAML::Any;
 
 $| = 1;
 
-my $client_config   = '/path/to/client_config.yml';
+my $client_config   = shift @ARGV || 'lacuna.yml';
 my $client = Games::Lacuna::Client->new( cfg_file => $client_config );
 
 $Games::Lacuna::Client::PrettyPrint::ansi_color = 1;
