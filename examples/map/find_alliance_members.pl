@@ -1,7 +1,9 @@
+#!/usr/bin/env perl
 use strict;
 use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
+use Games::Lacuna::Client;
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
 
@@ -20,11 +22,15 @@ my $alliance = $rv->{alliances}[0];
 die if not defined $alliance;
 
 my $profile = $client->alliance(id => $alliance->{id})->view_profile();
-print Dumper $profile;
-
 my $members = $profile->{profile}{members};
 
-print "Member ids:\n";
-print $_->{id},"\n" for @$members;
+open my $yml, '>', 'map.yml'
+    or die "Unable to open map.yml for writing, $!\n";
+print $yml "---\n";
+print $yml "empire_id: $profile->{status}{empire}{id}\n";
+print $yml "allied_empires: \n";
+print $yml "  - $_->{id}\n" for @{ $members };
+close $yml;
 
+print "Successfully created map.yml\n";
 
