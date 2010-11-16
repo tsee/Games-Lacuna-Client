@@ -1,0 +1,69 @@
+---
+- name: Algae Pond
+  types:
+      - methane
+      - uraninite
+- name: Citadel of Knope
+  types:
+      - beryl
+      - galena
+      - monazite
+      - sulfur
+- name: Crashed Ship Site
+  types:
+      - bauxite
+      - gold
+      - monazite
+      - trona
+- name: Gas Giant Platfrom
+  types:
+      - anthracite
+      - galena
+      - methane
+      - sulfur
+- name: Geo Thermal Vent
+  types:
+      - chalcopyrite
+      - sulfur
+- name: Interdimensional Rift
+  types:
+      - fluorite
+      - methane
+      - zircon
+- name: Kalavain Ruins
+  types:
+      - galena
+      - gold
+- name: Lapis Forest
+  types:
+      - anthracite
+      - halite
+- name: Malcud Field
+  types:
+      - fluorite
+      - kerogen
+- name: Natural Spring
+  types:
+      - halite
+      - magnetite
+- name: Ravine
+  types:
+      - fluorite
+      - galena
+      - methane
+- name: Temple of the Drajilites
+  types:
+      - chalcopyrite
+      - chromite
+      - kerogen
+      - rutile
+- name: Terraforming Platform
+  types:
+      - beryl
+      - magnetite
+      - methane
+      - zircon
+- name: Volcano
+  types:
+      - magnetite
+      - uraninite
