@@ -27,7 +27,7 @@ sub show_status {
         sprintf("%-10s %8s /%8s %11s %4s   %s",'Resource','Stored','Capacity','Production','Full','Hours (until full)'),
         _c_('reset'));
     for my $res (qw(food ore water energy waste happiness)) {
-        my $pct_full = $res eq 'happiness' ? 0 : ($status->{"$res\_stored"} / $status->{"$res\_capacity"})*100;
+        my $pct_full = !$status->{$res .'_capacity'} ? 0 : ($status->{"$res\_stored"} / $status->{"$res\_capacity"})*100;
         printf "%s%-10s%s:%s %7d %s/%s %7s %s(%s%6d%s/hr)%s %s %s %s%s\n",
             _c_('bold green'),
             ucfirst($res),
