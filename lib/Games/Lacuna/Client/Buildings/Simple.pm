@@ -19,6 +19,7 @@ our @BuildingTypes = (qw(
     Cheese
     Chip
     Cider
+    CitadelOfKnope
     CloakingLab
     Corn
     CornMeal
@@ -47,6 +48,7 @@ our @BuildingTypes = (qw(
     LibraryOfJith
     LuxuryHousing
     Malcud
+    MalcudField
     MassadsHenge
     Mine
     MissionCommand
