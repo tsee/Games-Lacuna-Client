@@ -53,8 +53,8 @@ Valid options:
                    If not specified, the script scans your empire for
                    a planet with a suitable building.
   --sort <key>     Sort the trade listing by the given key, one of:*
-                   offer_quantity,offer_description,offer_type,real_type**
-                   ask_quantity,ask_description,ask_type.  You may
+                   offer_quantity,offer_description,offer_type,real_type**,
+                   ratio**,ask_quantity,ask_description,ask_type.  You may
                    specify this order more than once, and the sorts are
                    applied in the order specified.
   --desc           Specify a descending, rather than ascending, sort.
@@ -84,7 +84,9 @@ Example filter options:
    type of offers (only for offer_type, not ask_type) by providing the following
    shorthand types:  food, ore, glyph, plan, ship.  For other types, the
    real_type is equal to the literal offer_type.
-
+** 'ratio' is another conventience key added by this script.  The ratio is offered
+   to asking quantity.  If viewing SST trades, the 1 essentia SST cost of making a 
+   trade is included in the ratio calculation.
 __END_USAGE__
 exit(0) if $show_usage;
 
@@ -126,14 +128,24 @@ while ($page_num <= $max_pages and (not defined $trade_count
 }
 print "\n";
 
-$_->{real_type} = real_type($_) for (@trades);
+for (@trades) {
+    $_->{ratio} = ($_->{offer_quantity} / ($_->{ask_quantity} + ($use_sst ? 1 : 0)));
+    $_->{real_type} = real_type($_);
+
+    if ($_->{ratio} < 100) {
+        $_->{ratio} = sprintf("%0.4f",$_->{ratio});
+    } 
+    else {
+        $_->{ratio} = int($_->{ratio});
+    }
+}
 
 @trades = grep { filter_trade($_,@filters) } @trades;
 
 
 @trades = sort {
     for my $s (@sorts) {
-        my $result = $s =~ m/quantity$/ ? ($a->{$s} <=> $b->{$s}) : ($a->{$s} cmp $b->{$s});
+        my $result = $s =~ m/ratio|quantity$/ ? ($a->{$s} <=> $b->{$s}) : ($a->{$s} cmp $b->{$s});
         return $result if $result != 0;
     }
     return 0;
