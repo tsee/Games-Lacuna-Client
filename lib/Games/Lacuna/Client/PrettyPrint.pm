@@ -261,23 +261,23 @@ sub production_sum {
 }
 
 sub message {
-    my $message = shift;
-    say(_c_('bold blue'),' (*) ',_c_('cyan'),$message,_c_('reset'));
+    my @messages = @ARG;;
+    say(_c_('bold blue'),' (*) ',_c_('cyan'),@messages,_c_('reset'));
 }
 
 sub warning {
-    my $message = shift;
-    say(_c_('bold red'),' <!> ',_c_('yellow'),$message,_c_('reset'));
+    my @messages = @ARG;;
+    say(_c_('bold red'),' <!> ',_c_('yellow'),@messages,_c_('reset'));
 }
 
 sub action {
-    my $message = shift;
-    say(_c_('bold green'),' [+] ',_c_('white'),$message,_c_('reset'));
+    my @messages = @ARG;;
+    say(_c_('bold green'),' [+] ',_c_('white'),@messages,_c_('reset'));
 }
 
 sub trace {
-    my $message = shift;
-    say(_c_('blue'),'   .oO( ',_c_('cyan'),$message,_c_('blue'),' )',_c_('reset'));
+    my @messages = @ARG;;
+    say(_c_('blue'),'   .oO( ',_c_('cyan'),@messages,_c_('blue'),' )',_c_('reset'));
 }
 
 sub show_bar {
