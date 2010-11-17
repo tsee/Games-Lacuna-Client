@@ -1,11 +1,12 @@
 package Games::Lacuna::Client::Governor;
 use strict;
 use warnings;
+use English qw(-no_match_vars);
 no warnings 'uninitialized'; # Yes, I count on undef to be zero.  Cue admonishments.
 
 use Games::Lacuna::Client::PrettyPrint qw(trace message warning action ptime phours);
 use List::Util qw(sum max min);
-use List::MoreUtils qw(any part);
+use List::MoreUtils qw(any part uniq);
 use Hash::Merge qw(merge);
 use JSON qw(to_json from_json);
 
@@ -47,6 +48,7 @@ sub run {
     $self->load_cache();
 
     do {
+        my @priorities;
         if ( $self->{config}->{dry_run} ) {
             message("Starting dry run, actions are not actually taking place...");
         }
@@ -59,9 +61,15 @@ sub run {
             next if ( not exists $colony_config->{priorities} or $colony_config->{exclude} );
             $self->{current}->{planet_id} = $pid;
             $self->{current}->{config}    = $colony_config;
+            push @priorities, @{$colony_config->{priorities}};
             $self->govern();
         }
-        $self->coordinate_pushes();
+
+        ### Do post_$priority actions.
+        for my $priority (uniq @priorities) {
+            $self->do_post_priority($priority);
+        }
+
         Games::Lacuna::Client::PrettyPrint::ship_report($self->{ship_info},$self->{config}->{ship_info_sort}) if defined $self->{ship_info};
         trace(sprintf("%d RPC calls this run",$self->{client}->{total_calls})) if ($self->{config}->{verbosity}->{trace});
         if ( $self->{config}->{dry_run} ) {
@@ -143,8 +151,7 @@ sub govern {
     } 
 
     for my $priority (@{$cfg->{priorities}}) {
-        trace("Priority: $priority") if ($self->{config}->{verbosity}->{trace});
-        $self->$priority();
+        $self->do_priority($priority);
     }
 
     if ($dev_ministry) {
@@ -153,6 +160,80 @@ sub govern {
         my $next_build = max(map { $_->{seconds_remaining} } @{$dev_ministry->view->{build_queue}});
         $self->set_next_action_if_sooner( $next_build + time() );
     }
+}
+
+sub do_post_priority {
+    my $self    = shift;
+    my $priority = shift;
+
+    trace("Post Priority: $priority") if $self->{config}{verbosity}{trace};
+    my $postsub = "post_$priority";
+
+    if( $self->can($postsub) ){
+        $self->$postsub();
+        return;
+    }
+
+    ### Try to see if a plugin wants to run.
+    my $plugin = $self->_priority_to_plugin($priority);
+
+    return if not $plugin;
+
+    $plugin->post_run($self, $priority);
+
+    return;
+}
+
+sub _priority_to_plugin {
+    my $self     = shift;
+    my $priority = shift;
+
+    my $cased_name  = join q{::}, map { ucfirst } split qr/_/, $priority;
+    $cased_name     = "Games::Lacuna::Client::Governor::$cased_name";
+    my $file_name  .= "$cased_name.pm";
+    $file_name     =~ s{::}{/}g;
+
+    if( not $INC{$file_name} ){
+        ### Module is not loaded, try to load it.
+        eval qq{require "$file_name";$cased_name->import();};
+
+        if( $EVAL_ERROR and $EVAL_ERROR =~ m/Can't locate $file_name in \@INC/ ){
+            #trace(
+            #    "Unable to load priority module [$priority].",
+            #    " We were unable to find the module in \@INC, is it spelled correctly?"
+            #);
+            return;
+        }
+        elsif( $EVAL_ERROR ){
+            warning("Error occured while loading priority module [$priority => $file_name]: $EVAL_ERROR");
+            return;
+        }
+    }
+
+    return $cased_name;
+}
+
+sub do_priority {
+    my $self    = shift;
+    my $priority = shift;
+    trace("Priority: $priority") if ($self->{config}->{verbosity}->{trace});
+
+    if( $self->can($priority) ){
+        $self->$priority();
+        return;
+    }
+    else {
+        ### Grab the module name and run it.
+        my $plugin = $self->_priority_to_plugin($priority);
+        return if not $plugin;
+        $plugin->run($self, $priority);
+    }
+    return;
+}
+
+sub post_pushes {
+    my $self = shift;
+    $self->coordinate_pushes();
 }
 
 sub coordinate_pushes {
