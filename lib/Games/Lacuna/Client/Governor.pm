@@ -97,6 +97,7 @@ sub govern {
     my $status  = $result->{status}->{body};
     $self->{status}->{$pid} = $status;
 
+    Games::Lacuna::Client::PrettyPrint::show_bar('*');
     message("Governing ".$status->{name}) if ($self->{config}->{verbosity}->{message});
     Games::Lacuna::Client::PrettyPrint::show_status($status) if ($self->{config}->{verbosity}->{summary});
     Games::Lacuna::Client::PrettyPrint::surface($surface_image,$details) if ($self->{config}->{verbosity}->{surface_map});
