@@ -62,6 +62,7 @@ our @BuildingTypes = (qw(
     PilotTraining
     Potato
     Propulsion
+    Ravine
     RockyOutcrop
     Sand
     Shake
