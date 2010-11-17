@@ -694,6 +694,8 @@ sub attempt_upgrade_for {
             not any { ($status->{"$_\_stored"} - $self->building_details($pid,$bid)->{upgrade}->{cost}->{$_}) 
                 < $build_above{$_} 
             } qw(food ore water energy)
+            and (not ($status->{waste_stored} + $self->building_details($pid,$bid)->{upgrade}->{cost}->{waste})
+                > $status->{waste_capacity})
         )+0;
     } @all_options;
 
