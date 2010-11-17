@@ -17,6 +17,11 @@ unless ( $cfg_file and -e $cfg_file ) {
 	die "Did not provide a config file";
 }
 
+my $client = Games::Lacuna::Client->new(
+	cfg_file => $cfg_file,
+	# debug    => 1,
+);
+
 my $show_usage = 0;
 my $show_color = 0;
 my $use_sst = 0;
