@@ -209,6 +209,7 @@ sub send_pushes {
                 my $ratio = ($trip_composite->{hold_size} / $composite_sum);
                 $_->{quantity} = int($_->{quantity} * $ratio) for @{$trip_composite->{items}};
             }
+            @{$trip_composite->{items}} = grep { $_->{quantity} > 0 } @{$trip_composite->{items}};
             push @potential_destinations, $trip_composite;
         }
 
