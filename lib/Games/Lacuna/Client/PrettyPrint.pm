@@ -184,7 +184,7 @@ sub trade_list {
     show_bar('-','green');
     printf("%15s %10s %15s %10s %s\n",
         'Empire',
-        'Body ID',
+        'Ratio',
         'Asking',
         'Offering',
         'Description',
@@ -195,7 +195,7 @@ sub trade_list {
             _c_('bold cyan'),
             substr($_->{empire}->{name},0,15),
             _c_('reset')._c_('cyan'),
-            $_->{body}->{id},
+            $_->{ratio},
             _c_('reset'),
             substr($_->{ask_description},0,15),
             _c_($rt eq 'food' ? 'bold green' :

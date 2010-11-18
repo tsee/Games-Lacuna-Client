@@ -2,6 +2,8 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Number::Format        qw( format_number );
 use List::Util            qw( max );
 use Games::Lacuna::Client ();
