@@ -1,6 +1,8 @@
 #!/usr/bin/perl 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Getopt::Long qw(GetOptions);
 
 use Data::Dumper;
@@ -10,8 +12,15 @@ use List::MoreUtils qw(any);
 
 $| = 1;
 
-my $client_config   = '/path/to/config/file';
-my $client = Games::Lacuna::Client->new( cfg_file => $client_config );
+my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+unless ( $cfg_file and -e $cfg_file ) {
+	die "Did not provide a config file";
+}
+
+my $client = Games::Lacuna::Client->new(
+	cfg_file => $cfg_file,
+	# debug    => 1,
+);
 
 my $show_usage = 0;
 my $show_color = 0;

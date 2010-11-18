@@ -97,6 +97,7 @@ sub govern {
     my $status  = $result->{status}->{body};
     $self->{status}->{$pid} = $status;
 
+    Games::Lacuna::Client::PrettyPrint::show_bar('*');
     message("Governing ".$status->{name}) if ($self->{config}->{verbosity}->{message});
     Games::Lacuna::Client::PrettyPrint::show_status($status) if ($self->{config}->{verbosity}->{summary});
     Games::Lacuna::Client::PrettyPrint::surface($surface_image,$details) if ($self->{config}->{verbosity}->{surface_map});
@@ -189,9 +190,12 @@ sub coordinate_push_mode {
                     my $dest = $mode ? $other : $pid;
 
                     my $avail = $mode ? min( $info->{$other}->{$res}->{space_left}, $reqd ) : min( $info->{$other}->{$res}->{available} , $reqd ); 
-                    my @ships = defined $self->{trade_ships}->{$orig} 
-                        ? (grep { my $s=$_; not any { $s->{id} == $_ } @{$self->{sent_ships}} } @{$self->{trade_ships}->{$orig}})
-                        : @{ $info->{$orig}->{trade}->get_trade_ships()->{ships} };
+                    my @ships;
+                    if( $info->{$orig}->{trade} ){
+                        @ships = defined $self->{trade_ships}->{$orig}
+                            ? (grep { my $s=$_; not any { $s->{id} == $_ } @{$self->{sent_ships}} } @{$self->{trade_ships}->{$orig}})
+                            : @{ $info->{$orig}->{trade}->get_trade_ships()->{ships} };
+                    }
                     $self->{trade_ships}->{$orig} = [@ships];
 
                     if ( defined $self->{config}->{push_ships_named} ) {
