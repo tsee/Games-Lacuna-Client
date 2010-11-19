@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use List::Util            (qw(first));
+use List::Util            (qw(first max));
 use Games::Lacuna::Client ();
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
