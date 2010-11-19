@@ -133,6 +133,32 @@ sub ship_report {
     show_bar('=');
 }
 
+sub mission_list {
+    use Text::Wrap;
+    $Text::Wrap::columns = 78;
+    my ($planet,@missions) = @_;
+    show_bar('=','bold black');
+    say(_c_('bold yellow')."$planet Mission Command"._c_('reset'));
+    show_bar('-','bold black');
+    for (@missions) {
+        say(_c_('bold white').sprintf("[%d] %s",$_->{id},$_->{name}));
+        say(_c_('bold blue'),'Max Uni.: ',_c_('bold cyan'),$_->{max_university_level},
+            _c_('reset')._c_('bold blue'),', Posted: ',_c_('bold cyan'),$_->{date_posted});
+        say(_c_('reset').wrap('','',$_->{description}));
+        my @objectives = @{$_->{objectives}};
+        my @rewards   = @{$_->{rewards}};
+        say(_c_('bold white')."\nObjectives:");
+        for (@objectives) {
+            say(_c_('bold yellow').$_);
+        }
+        say(_c_('bold white')."\nRewards:");
+        for (@rewards) {
+            say(_c_('bold green').$_);
+        }
+        show_bar('-','bold black');
+    }
+}   
+
 sub production_report { 
     # Takes a list of hashrefs, each is the "building" portion of view()
     my @buildings = @_; 

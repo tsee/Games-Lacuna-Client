@@ -16,6 +16,7 @@ our @BuildingTypes = (qw(
     Embassy
     Intelligence
     MiningMinistry
+    MissionCommand
     Network19
     Observatory
     Park

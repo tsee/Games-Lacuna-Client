@@ -51,7 +51,6 @@ our @BuildingTypes = (qw(
     MalcudField
     MassadsHenge
     Mine
-    MissionCommand
     MunitionsLab
     NaturalSpring
     OracleOfAnid
