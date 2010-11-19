@@ -218,7 +218,7 @@ sub send_pushes {
 
     for my $dest (keys %{$self->{cache}->{shipments}}) {
         # Reduce space_left by project arrivals for shipments known to the governor
-        $self->{cache}->{shipments}->{$dest} = grep { $_->{arrival} gt time } @{$self->{cache}->{shipments}->{dest}};
+        $self->{cache}->{shipments}->{$dest} = [grep { $_->{arrival} gt time } @{$self->{cache}->{shipments}->{dest}}];
         for my $shipment (@{$self->{cache}->{shipments}->{$dest}}) {
             $info->{$dest}->{$shipment->{resource}}->{space_left} -= $shipment->{quantity};
         }
@@ -354,6 +354,7 @@ sub coordinate_push_mode {
                     if ($res eq 'food' or $res eq 'ore') {
                         for my $spec ($res eq 'food' ? $self->food_types : $self->ore_types) {
                             my $has = $mode ? $info->{$pid} : $info->{$other};
+                            next if not $has->{$res}{available};
                             push @items, { type => $spec, quantity => int(($has->{$spec}->{available} / $has->{$res}->{available}) * $amt_to_ship) };
                         }
                     } else {
