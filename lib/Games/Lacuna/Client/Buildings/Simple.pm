@@ -10,6 +10,7 @@ use Class::MOP;
 
 our @BuildingTypes = (qw(
     Algae
+    AlgaePond
     Apple
     Bean
     Beeldeban
