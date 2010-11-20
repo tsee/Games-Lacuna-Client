@@ -126,10 +126,10 @@ for my $planet (@incoming) {
         my $type = $ship->{type_human} ? $ship->{type_human}
                  :                       'Unknown ship';
         
-        my $from = $ship->{from} ? sprintf( "%s [%s]",
+        my $from = $ship->{from}{name} ? sprintf( "%s [%s]",
                                             $ship->{from}{name},
                                             $ship->{from}{empire}{name} )
-                 :                 'Unknown location';
+                 :                       'Unknown location';
         
         my $when = $ship->{date_arrives};
         
@@ -148,8 +148,8 @@ my $email = MIME::Lite->new(
     Type    => 'TEXT',
     Data    => $body,
 );
-print $email->as_string;
-#$email->send( @$mime_lite_conf );
+
+$email->send( @$mime_lite_conf );
 
 # Update cache
 for my $planet (@incoming) {
