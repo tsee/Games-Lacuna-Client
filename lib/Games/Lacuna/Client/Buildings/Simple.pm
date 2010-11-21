@@ -46,6 +46,7 @@ our @BuildingTypes = (qw(
     Lake
     Lagoon
     Lapis
+    LapisForest
     LibraryOfJith
     LuxuryHousing
     Malcud
