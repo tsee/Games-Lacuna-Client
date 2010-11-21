@@ -1,12 +1,14 @@
 #!/usr/bin/perl
+
 use strict;
 use warnings;
-use Games::Lacuna::Client;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use List::Util            (qw(first));
+use Games::Lacuna::Client ();
 use YAML;
 use YAML::Dumper;
 use Getopt::Long qw(GetOptions);
-
-binmode STDOUT, ":utf8";
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
@@ -17,13 +19,13 @@ my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
 	# debug    => 1,
 );
-
 my $recipe_yml = 'glyph_recipes.yml';
 
 GetOptions{
   'g=s' => \$recipe_yml,
 };
 
+#Load recipe file
 my $recipes = YAML::LoadFile($recipe_yml);
 
 my %glyph_names = (
@@ -47,41 +49,48 @@ my %glyph_names = (
 "trona" => 0,
 "uraninite" => 0,
 "zircon" => 0,
+"unknown" => 0, # For recipes we know exist, but don't know what goes in them
 );
 
-my $empire = $client->empire;
-my $estatus = $empire->get_status->{empire};
-my %planets_by_name = map { ($estatus->{planets}->{$_} => $client->body(id => $_)) }
-                      keys %{$estatus->{planets}};
-# Beware. I think these might contain asteroids, too.
-# TODO: The body status has a 'type' field that should be listed as 'habitable planet'
+# Load the planets
+my $empire  = $client->empire->get_status->{empire};
 
-my @glyphs;
+# reverse hash, to key by name instead of id
+my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
-foreach my $planet (values %planets_by_name) {
-  my %buildings = %{ $planet->get_buildings->{buildings} };
+# Scan each planet
+foreach my $name ( sort keys %planets ) {
 
-  my @b = grep {$buildings{$_}{name} eq 'Archaeology Ministry'}
-                  keys %buildings;
-  my @amin;
-  push @amin, map  { $client->building(type => 'Archaeology', id => $_) } @b;
+    # Load planet data
+    my $planet    = $client->body( id => $planets{$name} );
+    my $result    = $planet->get_buildings;
+    my $body      = $result->{status}->{body};
+    
+    my $buildings = $result->{buildings};
 
-  for my $bld (@amin) {
-    my $glyph = $bld->get_glyphs();
-
-    foreach my $gly ( @{$glyph->{glyphs}} ) {
-      $gly->{planet} = $glyph->{status}->{body}->{name};
+    # Find the Archaeology Ministry
+    my $arch_id = first {
+            $buildings->{$_}->{name} eq 'Archaeology Ministry'
+    } keys %$buildings;
+    
+    next unless $arch_id;
+    my $arch   = $client->building( id => $arch_id, type => 'Archaeology' );
+    my $glyphs = $arch->get_glyphs->{glyphs};
+    
+    next if !@$glyphs;
+    
+    printf "%s\n", $name;
+    print "=" x length $name;
+    print "\n";
+    
+    @$glyphs = sort { $a->{type} cmp $b->{type} } @$glyphs;
+    
+    for my $glyph (@$glyphs) {
+        printf "%s\n", ucfirst( $glyph->{type} );
+        $glyph_names{$glyph->{type}}++;
     }
-    push @glyphs, @{$glyph->{glyphs}};
-  }
-}
-
-
-printf "%s,%s,%s\n", "Planet", "Glyph","ID";
-foreach my $glyph (sort byglyphsort @glyphs) {
-  printf "%s,%s,%d\n",
-         $glyph->{planet}, $glyph->{type}, $glyph->{id};
-  $glyph_names{$glyph->{type}}++;
+    
+    print "\n";
 }
 
 print "\nPossible Recipes:\n";
@@ -95,14 +104,6 @@ foreach my $recipe (sort @$recipes) {
     $good = 0 if ($glyph_names{$ingredient} == 0);
   }
   if ($good) {
-    print $recipe->{name}, ":", join(" ", @{$recipe->{types}}), "\n";
+    print $recipe->{name}, ": ", join(" ", @{$recipe->{types}}), "\n";
   }
-}
-
-
-sub byglyphsort {
-   $a->{planet} cmp $b->{planet} ||
-    $a->{type} cmp $b->{type} ||
-    $a->{id} <=> $b->{id}; 
-    
 }

@@ -1,68 +1,165 @@
 ---
 - name: Algae Pond
   types:
-      - methane
       - uraninite
+      - methane
+- name: Beach 1
+  types:
+      - gypsum
+- name: Beach 2
+  types:
+      - gypsum
+      - gypsum
+- name: Beach 3
+  types:
+      - gypsum
+      - magnetite
+- name: Beach 4
+  types:
+      - gypsum
+      - uraninite
+- name: Beach 5
+  types:
+      - gypsum
+      - halite
+- name: Beach 6
+  types:
+      - gypsum
+      - rutile
+- name: Beach 7
+  types:
+      - gypsum
+      - chalcopyrite
+- name: Beach 8
+  types:
+      - gypsum
+      - sulfur
+- name: Beach 9
+  types:
+      - gypsum
+      - anthracite
+- name: Beach 10
+  types:
+      - gypsum
+      - methane
+- name: Beach 11
+  types:
+      - gypsum
+      - chromite
+- name: Beach 12
+  types:
+      - gypsum
+      - goethite
+- name: Beach 13
+  types:
+      - gypsum
+      - galena
+- name: Black Hole Generator
+  types:
+      - unknown
 - name: Citadel of Knope
   types:
       - beryl
-      - galena
-      - monazite
       - sulfur
+      - monazite
+      - galena
 - name: Crashed Ship Site
   types:
-      - bauxite
-      - gold
       - monazite
       - trona
+      - gold
+      - bauxite
+- name: Crater
+  types:
+      - rutile
 - name: Gas Giant Platfrom
   types:
-      - anthracite
-      - galena
-      - methane
       - sulfur
+      - methane
+      - galena
+      - anthracite
 - name: Geo Thermal Vent
   types:
       - chalcopyrite
       - sulfur
+- name: Gratchs Gauntlet
+  types:
+      - unknown
+- name: Grove of Trees
+  types:
+      - methane
+- name: Halls of Vrbansk
+  types:
+      - unknown
 - name: Interdimensional Rift
   types:
-      - fluorite
       - methane
       - zircon
+      - fluorite
 - name: Kalavain Ruins
   types:
       - galena
       - gold
+- name: Kasterns Keep
+  types:
+      - unknown
+- name: Lake
+  types:
+      - goethite
 - name: Lapis Forest
   types:
-      - anthracite
       - halite
+      - anthracite
+- name: Library of Jith
+  types:
+      - unknown
 - name: Malcud Field
   types:
       - fluorite
       - kerogen
+- name: Massads Henge
+  types:
+      - unknown
 - name: Natural Spring
   types:
-      - halite
       - magnetite
+      - halite
+- name: Oracle of Anid
+  types:
+      - unknown
+- name: Pantheon of Hagness
+  types:
+      - gypsum
+      - trona
+      - beryl
+      - anthracite
+- name: Patch of Sand
+  types:
+      - bauxite
 - name: Ravine
   types:
-      - fluorite
-      - galena
+      - zircon
       - methane
+      - galena
+      - fluorite
+- name: Rocky Outcropping
+  types:
+      - trona
 - name: Temple of the Drajilites
   types:
-      - chalcopyrite
-      - chromite
       - kerogen
       - rutile
+      - chromite
+      - chalcopyrite
 - name: Terraforming Platform
   types:
-      - beryl
-      - magnetite
       - methane
       - zircon
+      - magnetite
+      - beryl
+- name: The Dillon Forge
+  types:
+      - unknown
 - name: Volcano
   types:
       - magnetite
