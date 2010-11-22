@@ -1,10 +1,10 @@
 package Games::Lacuna::Cache;
+use utf8;
 use strict;
 use warnings;
 use Games::Lacuna::Client;
 use YAML::Any qw(LoadFile DumpFile);
 use Data::Dumper;
-binmode STDOUT, ":utf8";
 
 
 sub new {
@@ -12,7 +12,7 @@ sub new {
     my %opt = @_;
     my $self = {};
     $self->{'CLIENT'} = Games::Lacuna::Client->new( cfg_file => $opt{'cfg_file'},
-                                                    # debug    => 1,
+                                                   #  debug    => 1,
                                                   );
 
     my $refresh = $opt{'refresh'};
@@ -27,6 +27,7 @@ sub new {
     $self->{'EMPIRE'} = $self->{'CLIENT'}->empire;
     $self->{'DATA'} = (); # Stores the "empire" block from a status response.
     bless($self);
+    $self->debug("Using cache file: $self->{'CACHE_FILE'}");
 
     $self->load_data($refresh);
     
@@ -122,6 +123,7 @@ sub view_building{
     return $self->{'DATA'}->{'buildings'}->{$id};
 
 }
+
 sub get_building_object{
     my ($self, $id) = @_;
     if (! $self->{'OBJECTS'}->{'buildings'}->{$id}){
@@ -249,8 +251,8 @@ sub refresh_data{
     }else{
         #We're empire or we're refreshing all bodies (why would you do that?).
         if ($key =~ m/empire/){
-        my $checked = $self->{'DATA'}->{$key}->{'last_checked'};
-        if (!$checked ||  (time() - $checked) >  $self->{'CACHE_TIME'}){
+            my $checked = $self->{'DATA'}->{$key}->{'last_checked'};
+            if (!$checked ||  (time() - $checked) >  $self->{'CACHE_TIME'}){
                 # We're stale or we don't exist. 
                 # Only force a write when we do this top level, not for every
                 # bloody planet
@@ -261,7 +263,6 @@ sub refresh_data{
             }else{
                 $self->extrapolate();
             }
-
         }else{
             # There's no real reason to refresh data for every planet. You
             # have the planet ids, you can work on them directly. If you need
@@ -285,9 +286,13 @@ sub cache_response {
         $self->{'DATA'}->{'empire'} = $response->{'status'}->{'empire'};
         $self->{'DATA'}->{'empire'}->{'last_checked'} = time();
     }
+
     if ($response->{'status'}->{'body'}){
+        # Need to store the building hash temporarily then re-enable this
         my $id = $response->{'status'}->{'body'}->{'id'};
-        $self->{'DATA'}->{'bodies'}->{$id} = $response->{'status'}->{'body'};
+        foreach (%{$response->{'status'}->{'body'}}){
+            $self->{'DATA'}->{'bodies'}->{$id}->{$_} = $response->{'status'}->{'body'}->{$_};
+        }
         $self->{'DATA'}->{'bodies'}->{$id}->{'response_type'} = "full";
         $self->{'DATA'}->{'bodies'}->{$id}->{'last_checked'} = time();
     }
@@ -297,7 +302,9 @@ sub cache_response {
         # {'buildings'} by id, put the ids in {'body'}{'buildings'} and make
         # objects
         my $body_id = $response->{'status'}->{'body'}->{'id'};
+        $self->{'DATA'}->{'bodies'}->{$body_id} = $response->{'status'}->{'body'};
         $self->{'DATA'}->{'bodies'}->{$body_id}->{'response_type'} = "full";
+        $self->{'DATA'}->{'bodies'}->{$body_id}->{'last_checked'} = time();
 
         foreach my $building (keys %{$response->{'buildings'}}){
             $self->{'DATA'}->{'buildings'}->{$building} = $response->{'buildings'}->{$building};
@@ -325,10 +332,18 @@ sub cache_response {
         }
 
     }
+    # GAR GAR GAR
+    #foreach (keys %{$self->{'DATA'}->{'empire'}->{'planets'}}){
+        #utf8::decode($self->{'DATA'}->{'empire'}->{'planets'}->{$_});
+        #print "\n==\nEncoded " . $self->{'DATA'}->{'empire'}->{'planets'}->{$_} .  " in empire data\n";
+        #utf8::decode($self->{'DATA'}->{'bodies'}->{$_}->{'name'});
+        #print "Encoded " . $self->{'DATA'}->{'empire'}->{'planets'}->{$_} .  "in planet data \n";
+    #}
+    #my $fh = open(">:utf8",$self->{'CACHE_FILE'});
+    #YAML::Any::DumpFile($fh, $self->{'DATA'});
 
 }
 
-1;
 
 sub extrapolate{
     my $self = shift;
@@ -351,7 +366,7 @@ sub extrapolate{
         };
         $data->{'last_extrapolated'} = time();
     }
-    YAML::Any::DumpFile($self->{'CACHE_FILE'}, $self->{'DATA'});
+        YAML::Any::DumpFile($self->{'CACHE_FILE'}, $self->{'DATA'});
 
 }
 
@@ -360,6 +375,117 @@ sub debug{
     print "$message \n" if $self->{'debug'};
 }
 
+sub remaining_capacity{
+    my ($self, $planet, $res) = @_;
+    $self->extrapolate();
+
+    my $amount = $self->{'DATA'}->{'bodies'}->{$planet}->{$res."_stored"};
+    my $capacity = $self->{'DATA'}->{'bodies'}->{$planet}->{$res."_capacity"};
+    return $capacity - $amount; 
+
+}
+sub prop_capacity{
+    my ($self, $planet, $res) = @_;
+    $self->extrapolate();
+
+    my $amount = $self->{'DATA'}->{'bodies'}->{$planet}->{$res."_stored"};
+    my $capacity = $self->{'DATA'}->{'bodies'}->{$planet}->{$res."_capacity"};
+    return ($amount / $capacity); 
+}
+
+
+sub list_trade_ships{
+    my ($self, $tm_id, $refresh) = @_;
+    my @ships;
+    # One day, we will cache ships....
+    my $obj = $self->get_building_object($tm_id);
+    my $response = $obj->get_trade_ships();
+    #print Dumper($response);
+    foreach (@{$response->{'ships'}}){
+        push (@ships, $_);
+    }
+    return @ships;
+
+}
+
+sub resource_details{
+    my ($self, $planet_id, $resource_type) = @_;
+
+    my $breakdown = $self->{'DATA'}->{'planets'}->{$planet_id}->{'breakdowns'}->{$resource_type};
+
+    if (! $breakdown ){
+        my @buildings = $self->list_buildings_on_planet($planet_id, ["trade"]);
+        if (@buildings){
+            my $obj = $self->get_building_object($buildings[0]);
+            my $response = $obj->get_stored_resources();
+            $breakdown = $self->parse_resource_breakdown($response->{'resources'}, $resource_type); 
+
+        }
+    }
+    return $breakdown;
+
+}
+
+sub parse_resource_breakdown{
+    my ($self, $data, $type) = @_;
+
+    my @foods = (
+                 "algae",
+                 "apple",
+                 "bean",
+                 "beetle",
+                 "bread",
+                 "burger",
+                 "cheese",
+                 "chip",
+                 "cider",
+                 "corn",
+                 "fungus",
+                 "lapis",
+                 "meal",
+                 "milk",
+                 "pancake",
+                 "pie",
+                 "potato",
+                 "root",
+                 "shake",
+                 "soup",
+                 "syrup",
+                 "wheat",
+                 );
+    my @ores = (
+                "anthracite",
+                "bauxite",
+                "beryl",
+                "chalcopyrite",
+                "chromite",
+                "fluorite",
+                "galena",
+                "goethite",
+                "gold",
+                "gypsum",
+                "halite",
+                "kerogen",
+                "magnetite",
+                "methane",
+                "monazite",
+                "rutile",
+                "sulfur",
+                "trona",
+                "uraninite",
+                "zircon",
+               );
+    foreach my $food( @foods){
+        $self->{'DATA'}->{'breakdowns'}->{'food'}->{$food} = $data->{$food};
+    }
+    foreach my $ore( @ores){
+        $self->{'DATA'}->{'breakdowns'}->{'ore'}->{$ore} = $data->{$ore};
+    }
+
+return $self->{'DATA'}->{'breakdowns'}->{$type};
+
+}
+1;
 =pod
 
 =head1 NAME
@@ -374,7 +500,7 @@ my $lacuna = Games::Lacuna::Cache->new(
                                        'cache_file' => "/path/to/lac_cache.dat",
                                        'cache_debug' => 1,
                                        'refresh' => 0
-                                       );
+                                      );
 
 my $empire_data = $lacuna->empire_data();
 my $planet_data = $lacuna->planet_data($planet_id, $refresh);
@@ -393,13 +519,13 @@ my $lacuna = Games::Lacuna::Cache->new( $refresh );
 If $refresh is defined, the Cache will force a refresh of the data.
 
 =head2 empire_data([$refresh])
-    Returns top level empire data
+Returns top level empire data
 
 =head2 planet_data([$planet_id], [$refresh])
     Returns planet data for $planet_id, or all bodies if you leave off the id.
     At the moment, 
 
-=head2 body_data([$body_id], [$refresh])
+    =head2 body_data([$body_id], [$refresh])
     Ditto.
 
     These should work pretty much as you expect. Cache stores partial 
@@ -411,8 +537,8 @@ If $refresh is defined, the Cache will force a refresh of the data.
     planets (just ID and name). Planet_data will give you full data on the
     planet and partial (though fairly good) data on the buildings.
     ->building_data will give you full info on the building. 
-    
-    
+
+
 
 =head2 building_data([$building_id], [$refresh])
     This might not work as you expect. By default, when we call body_data, 
@@ -431,7 +557,7 @@ If $refresh is defined, the Cache will force a refresh of the data.
     you'll also get $spaceport->{'docked_ships'}. Similarly,
     $recycler->{'recycle'} if it's in the middle of one. 
 
-=head2 NB REFRESH FLAG
+    =head2 NB REFRESH FLAG
     The "refresh" flag may not work quite as you expect. It doesn't 
     guarantee fresh info. It guarantees full data less than 25 minutes old 
     (or whatever you set CACHE_TIME to). That's somewhat counterintuitive,
@@ -445,7 +571,7 @@ If $refresh is defined, the Cache will force a refresh of the data.
 =head2 view_planet($planet_id)
 =head2 view_building($building_id)
     These are wrappers around the body->view_buildings (because that gives
-    building info *and* full planet info) and building->view() client methods.
+                                                        building info *and* full planet info) and building->view() client methods.
     These guarantee you up-to-the-second information about a planet or
     building, and they also cache the info.
 
@@ -470,45 +596,45 @@ If $refresh is defined, the Cache will force a refresh of the data.
         my $object = $lacuna{'OBJECTS'}->{'buildings'}->{$building};
         $object->recycle();
 
-    or any similar client method. Don't use the object for view methods,
-    though - use the helper methods above so data is cached (and actually
-    just use cached data where you can)
+        or any similar client method. Don't use the object for view methods,
+           though - use the helper methods above so data is cached (and actually
+                                                                    just use cached data where you can)
 
-    Note objects do not persist between script calls, and are not shared 
-    between scripts.
+               Note objects do not persist between script calls, and are not shared 
+               between scripts.
 
-=head1 DATA
+               =head1 DATA
 
-=head2 OBJECTS
+               =head2 OBJECTS
 
-    $lacuna->{'OBJECTS'}->{'buildings'}
-    and
-    $lacuna->{'OBJECTS'}->{'bodies'}
+               $lacuna->{'OBJECTS'}->{'buildings'}
+        and
+            $lacuna->{'OBJECTS'}->{'bodies'}
 
-Stored by id. This just means you don't have to toss around the objects all 
-the time.
+        Stored by id. This just means you don't have to toss around the objects all 
+            the time.
             $lacuna->{'OBJECTS'}->{$type}->{$id}->method();
 
         should always work.
 
 
-I think that's about it.
+            I think that's about it.
 
-=head1 CAVEATS
+            =head1 CAVEATS
 
-It may stomp on disk data, but scripts should play friendly with each other. 
-See how it goes.
+            It may stomp on disk data, but scripts should play friendly with each other. 
+            See how it goes.
 
-You know the drill. Don't use it to run Fusion Power plants. Oh, wait....
+            You know the drill. Don't use it to run Fusion Power plants. Oh, wait....
 
-=head1 AUTHOR
+            =head1 AUTHOR
 
-Jai Cornes, E<lt>solitaire@tygger.netE<gt>
+            Jai Cornes, E<lt>solitaire@tygger.netE<gt>
 
-=head1 COPYRIGHT AND LICENSE
+            =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010 by Jai Cornes
+            Copyright (C) 2010 by Jai Cornes
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.10.0 or,
-   at your option, any later version of Perl 5 you may have available.
+            This library is free software; you can redistribute it and/or modify
+            it under the same terms as Perl itself, either Perl version 5.10.0 or,
+               at your option, any later version of Perl 5 you may have available.

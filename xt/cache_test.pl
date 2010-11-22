@@ -21,6 +21,7 @@ my %opts = ('cfg_file' => "/path/to/lacuna.yml",
                          'cache_file' => "/path/to/lac_cache.dat",
                          'cache_debug' => 1,
                          'refresh' => $refresh);
+
                          
 
 my $laluna = Games::Lacuna::Cache->new(%opts);
