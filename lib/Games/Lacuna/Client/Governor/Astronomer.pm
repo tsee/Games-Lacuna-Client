@@ -206,7 +206,7 @@ use Data::Dumper;
 
         if( not any {
                 my $o = $gov->{_observatory_plugin}{stars}{$_}{observatory};
-                $o->{max_probes} - $o->{star_count} > 0;
+                $o ? $o->{max_probes} - $o->{star_count} > 0 : 0;
             } @pids
         ){
             trace("All observatories are capped, aborting.");
