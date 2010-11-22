@@ -332,6 +332,46 @@ use Data::Dumper;
 __END__
 =pod
 
+=head1 NAME
+
+Games::Lacuna::Client::Governor::Astronomer - A rudimentary plugin for Governor that will automate the targetting of probes.
+
+=head1 SYNOPSIS
+
+    Add 'astronomer' to the Governor configuration priorities list.
+
+=head1 DESCRIPTION
+
+This module examines each colony and the probes currently available (as well as in transit)
+to determine what stars the available probes should be sent to. It is a fast-and-dirty first-fit
+algorithm, intended merely do expand the observatory's scan in an every increasing radius.
+
+=head1 DEPENDENCIES
+
+Depends on internet access to download the static stars listing. If this is not available,
+some modification of this code will be necessary. See the L</stars> subroutine for details
+on how this information is used.
+
+=head1 SEE ALSO
+
+Games::Lacuna::Client, by Steffen Mueller on which this module is dependent.
+
+Games::Lacuna::Client::Governor, by Adam Bellaire of which this module is a plugin.
+
+Of course also, the Lacuna Expanse API docs themselves at L<http://us1.lacunaexpanse.com/api>.
+
+=head1 AUTHOR
+
+Daniel Kimsey, E<lt>daniel@kimsey.orgE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2010 by Steffen Mueller
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.10.0 or,
+at your option, any later version of Perl 5 you may have available.
+
 =cut
 
 
