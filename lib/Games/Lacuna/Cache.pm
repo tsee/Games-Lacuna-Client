@@ -26,6 +26,7 @@ sub new {
     $self->{'OBJECTS'} = ();
     $self->{'EMPIRE'} = $self->{'CLIENT'}->empire;
     $self->{'DATA'} = (); # Stores the "empire" block from a status response.
+    $self->{'SESSION_CALLS'} = 0;
     bless($self);
     $self->debug("Using cache file: $self->{'CACHE_FILE'}");
 
@@ -110,6 +111,8 @@ sub view_planet{
     my $object = $self->{'OBJECTS'}->{'bodies'}->{$id};
     # Again, we call view buildings so that *all* data is current. 
     my $response = $object->view_buildings();
+    $self->{'SESSION_CALLS'} += 1;
+    $self->debug( "=== SESSION CALLS: $self->{'SESSION_CALLS'} ! ===\n");
     $self->cache_response("body", $response);
     return $self->{'DATA'}->{'bodies'}->{$id};
 
@@ -119,6 +122,8 @@ sub view_building{
     my ($self, $id) = @_;
     my $object = $self->get_building_object($id);
     my $response = $object->view();
+    $self->{'SESSION_CALLS'} += 1;
+    $self->debug( "=== SESSION CALLS: $self->{'SESSION_CALLS'} ! ===\n");
     $self->cache_response("building", $response);
     return $self->{'DATA'}->{'buildings'}->{$id};
 
@@ -224,6 +229,8 @@ sub refresh_data{
                 # for those as well.
                 $response = $client_object->get_buildings();
                 $self->debug( "=== RPC CALL - refresh $key $id ! ===\n");
+                $self->{'SESSION_CALLS'} += 1;
+                $self->debug( "=== SESSION CALLS: $self->{'SESSION_CALLS'} ! ===\n");
                 $self->cache_response("body",$response);
             }elsif($key =~ m/buildings/){
                 # This is the hard part. IF the object doesn't exist, we
@@ -238,6 +245,8 @@ sub refresh_data{
                                                                  "id" => $id);
                 }
                 $self->debug( "=== RPC CALL - refresh $key $id ! ===\n");
+                $self->{'SESSION_CALLS'} += 1;
+                $self->debug( "=== SESSION CALLS: $self->{'SESSION_CALLS'} ! ===\n");
                 $response = $client_object->view();
                 $self->cache_response("building",$response);
             
@@ -258,6 +267,9 @@ sub refresh_data{
                 # bloody planet
                 $self->debug( "Stale in empire - refreshing ");
                 $self->debug( "=== RPC CALL - refresh Empire ! ===\n");
+                $self->{'SESSION_CALLS'} += 1;
+                $self->debug( "=== SESSION CALLS: $self->{'SESSION_CALLS'} ! ===\n");
+
                 $response = $self->{'EMPIRE'}->get_status();
                 $self->cache_response("empire",$response);
             }else{
@@ -485,6 +497,12 @@ sub parse_resource_breakdown{
 return $self->{'DATA'}->{'breakdowns'}->{$type};
 
 }
+
+sub count_calls{
+    my $self = shift;
+    $self->debug( "=== SESSION CALLS: $self->{'SESSION_CALLS'} ! ===\n");
+    return $self->{'SESSION_CALLS'};
+}
 1;
 =pod
 
@@ -519,7 +537,7 @@ my $lacuna = Games::Lacuna::Cache->new( $refresh );
 If $refresh is defined, the Cache will force a refresh of the data.
 
 =head2 empire_data([$refresh])
-Returns top level empire data
+    Returns top level empire data
 
 =head2 planet_data([$planet_id], [$refresh])
     Returns planet data for $planet_id, or all bodies if you leave off the id.
@@ -596,45 +614,45 @@ Returns top level empire data
         my $object = $lacuna{'OBJECTS'}->{'buildings'}->{$building};
         $object->recycle();
 
-        or any similar client method. Don't use the object for view methods,
-           though - use the helper methods above so data is cached (and actually
-                                                                    just use cached data where you can)
+    or any similar client method. Don't use the object for view methods,
+    though - use the helper methods above so data is cached (and actually
+    just use cached data where you can)
 
-               Note objects do not persist between script calls, and are not shared 
-               between scripts.
+    Note objects do not persist between script calls, and are not shared 
+    between scripts.
 
-               =head1 DATA
+=head1 DATA
 
-               =head2 OBJECTS
+=head2 OBJECTS
 
-               $lacuna->{'OBJECTS'}->{'buildings'}
-        and
-            $lacuna->{'OBJECTS'}->{'bodies'}
+$lacuna->{'OBJECTS'}->{'buildings'}
+    and
+        $lacuna->{'OBJECTS'}->{'bodies'}
 
-        Stored by id. This just means you don't have to toss around the objects all 
-            the time.
-            $lacuna->{'OBJECTS'}->{$type}->{$id}->method();
+    Stored by id. This just means you don't have to toss around the objects all 
+        the time.
+        $lacuna->{'OBJECTS'}->{$type}->{$id}->method();
 
-        should always work.
+    should always work.
 
 
-            I think that's about it.
+    I think that's about it.
 
-            =head1 CAVEATS
+=head1 CAVEATS
 
-            It may stomp on disk data, but scripts should play friendly with each other. 
-            See how it goes.
+    It may stomp on disk data, but scripts should play friendly with each other. 
+    See how it goes.
 
-            You know the drill. Don't use it to run Fusion Power plants. Oh, wait....
+    You know the drill. Don't use it to run Fusion Power plants. Oh, wait....
 
-            =head1 AUTHOR
+    =head1 AUTHOR
 
-            Jai Cornes, E<lt>solitaire@tygger.netE<gt>
+    Jai Cornes, E<lt>solitaire@tygger.netE<gt>
 
-            =head1 COPYRIGHT AND LICENSE
+    =head1 COPYRIGHT AND LICENSE
 
-            Copyright (C) 2010 by Jai Cornes
+    Copyright (C) 2010 by Jai Cornes
 
-            This library is free software; you can redistribute it and/or modify
-            it under the same terms as Perl itself, either Perl version 5.10.0 or,
-               at your option, any later version of Perl 5 you may have available.
+    This library is free software; you can redistribute it and/or modify
+    it under the same terms as Perl itself, either Perl version 5.10.0 or,
+       at your option, any later version of Perl 5 you may have available.
