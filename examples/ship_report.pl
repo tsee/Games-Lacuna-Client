@@ -25,6 +25,7 @@ my %planets_by_name = map { ($estatus->{planets}->{$_} => $client->body(id => $_
 # Beware. I think these might contain asteroids, too.
 # TODO: The body status has a 'type' field that should be listed as 'habitable planet'
 
+printf PLANET "%s,%s,%s\n", "Planet","Max","Avail";
 my @ships;
 foreach my $planet (values %planets_by_name) {
   my %buildings = %{ $planet->get_buildings->{buildings} };
@@ -37,8 +38,7 @@ foreach my $planet (values %planets_by_name) {
   my $sp = $spaceports[0];
   my $bld_data = $sp->view();
   my $planet_name = $bld_data->{status}->{body}->{name};
-  print PLANET "%s,%s,%s\n", "Planet","Max","Avail";
-  print PLANET "%s,%d,%d",
+  printf PLANET "%s,%d,%d\n",
                $planet_name, $bld_data->{max_ships}, $bld_data->{docks_available};
   my $pages = 1;
   my @ship_page;
