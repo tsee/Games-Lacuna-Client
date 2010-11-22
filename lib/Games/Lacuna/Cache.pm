@@ -258,7 +258,10 @@ sub refresh_data{
                 $self->debug( "=== RPC CALL - refresh Empire ! ===\n");
                 $response = $self->{'EMPIRE'}->get_status();
                 $self->cache_response("empire",$response);
+            }else{
+                $self->extrapolate();
             }
+
         }else{
             # There's no real reason to refresh data for every planet. You
             # have the planet ids, you can work on them directly. If you need
