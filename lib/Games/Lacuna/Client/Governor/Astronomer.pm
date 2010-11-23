@@ -229,8 +229,16 @@ use Data::Dumper;
         ### Determine star distances from Colonies.
         my (%planet_distances);
         my %pid_loc = map { $_ => [@{$gov->{status}{$_}}{qw(x y)}]; } keys %{$gov->{status}{empire}{planets}};
+        PLANET:
         while( my ($pid, $planet_xy) = each %pid_loc ){
             my ($planet_x, $planet_y) = @$planet_xy;
+            if( not defined $planet_x or not defined $planet_y ){
+                warning(
+                    sprintf "Unable to determine origin of planet %s, x y coords missing",
+                        $gov->{status}{empire}{planets}{$pid}
+                );
+                next PLANET;
+            }
             foreach my $star ( values %valid_target_stars ){
                 my ($star_x, $star_y) = @{$star}{qw(x y)};
                 my $dist = sqrt( ($star_x - $planet_x)**2 + ($star_y - $planet_y)**2 );
