@@ -70,6 +70,7 @@ our @BuildingTypes = (qw(
     Singularity
     Soup
     Stockpile
+    SubspaceSupplyDepot
     Syrup
     TempleOfTheDrajilites
     TerraformingLab
