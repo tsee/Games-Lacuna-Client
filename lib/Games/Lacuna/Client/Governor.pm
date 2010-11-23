@@ -934,11 +934,14 @@ sub write_cache {
     }
 }
 
-sub attempt_upgrade_for {
-    my ($self,$resource,$type,$override) = @_;
+sub attempt_upgrade {
+    my ($self, $buildings, $override) = @ARG;
     my ($status, $pid, $cfg) = @{$self->{current}}{qw(status planet_id config)};
 
-    my @all_options = $self->resource_buildings($resource,$type);
+    croak "No buildings specified for upgrade attempt" if not $buildings;
+    croak "Current planet_id is not set" if not $pid;
+
+    my @all_options = ref $buildings eq 'ARRAY' ? @$buildings : $buildings;
 
     my %build_above = map { $_ => (($cfg->{profile}->{$_}->{build_above} > 0) ?
                 $cfg->{profile}->{$_}->{build_above} :
@@ -978,6 +981,7 @@ sub attempt_upgrade_for {
     }
 
     my $upgrade_succeeded = 0;
+    UPGRADE:
     for my $upgrade (@upgrade_options) {
         eval { 
             my $details = $self->building_details($pid,$upgrade->{building_id});
@@ -997,12 +1001,22 @@ sub attempt_upgrade_for {
         } else {
             trace("Upgrade failed: $@") if ($self->{config}->{verbosity}->{trace});
         }
-        last if $upgrade_succeeded;
+        last UPGRADE if $upgrade_succeeded;
     }
 
     # Decrement remaining build queue if upgrade succeeded.
     $self->{current}->{build_queue_remaining}-- if ($upgrade_succeeded);
     return $upgrade_succeeded;
+
+}
+
+sub attempt_upgrade_for {
+    my ($self,$resource,$type,$override) = @_;
+    my ($status, $pid, $cfg) = @{$self->{current}}{qw(status planet_id config)};
+
+    my @all_options = $self->resource_buildings($resource,$type);
+
+    return $self->attempt_upgrade( \@all_options, $override );
 }
 
 sub resource_buildings {
