@@ -9,6 +9,7 @@ use List::Util qw(sum max min);
 use List::MoreUtils qw(any part uniq);
 use Hash::Merge qw(merge);
 use JSON qw(to_json from_json);
+use Carp;
 
 use Data::Dumper;
 
@@ -854,6 +855,9 @@ sub archaeology {
 
 sub building_details {
     my ($self, $pid, $bid) = @_;
+
+    croak "Unable to retrieve building_details, require a valid planet_id and building_id"
+        if not $pid or not $bid;
 
     if ((time - $self->{cache}->{cache_time} > $self->{config}->{cache_duration})
         or
