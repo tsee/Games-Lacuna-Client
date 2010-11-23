@@ -335,12 +335,14 @@ use Data::Dumper;
                         $port->send_ship( $probe_id, { star_name => $star } );
                     }
                 };
-                if( $EVAL_ERROR and $EVAL_ERROR =~ m/^RPC Error \(1009\)/ ){
-                    warning("Unable to send probe from $planet, Observatory is capped.");
-                    next PLANET;
-                }
-                elsif( $EVAL_ERROR ){
-                    warning("Unable to send probe[$probe_id] from $planet to $star: $EVAL_ERROR");
+                if( my $e = Exception::Class->caught ){
+                    if( $e->isa('LacunaRPCException') and $e->code == 1009 ){
+                        warning("Unable to send probe from $planet, Observatory is capped.");
+                        next PLANET;
+                    }
+                    else {
+                        warning("Unable to send probe[$probe_id] from $planet to $star: $e");
+                    }
                 }
                 else {
                     action("${dry_run}Probe[$probe_id] sent from $planet to $star");
@@ -387,7 +389,7 @@ Of course also, the Lacuna Expanse API docs themselves at L<http://us1.lacunaexp
 
 =head1 AUTHOR
 
-Daniel Kimsey, E<lt>daniel@kimsey.orgE<gt>
+Daniel Kimsey, E<lt>dekimsey@ufl.eduE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
