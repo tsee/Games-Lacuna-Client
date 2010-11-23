@@ -996,10 +996,16 @@ sub attempt_upgrade {
                }
             }
         };
-        if (not $@) {
+        if( my $e = Exception::Class->caught ){
+            if( $e->isa('LacunaRPCException') and $e->code == '1010' ){
+                trace("This buildings already has an upgrade in progress!");
+            }
+            else {
+                trace("Upgrade failed: $@") if $self->{config}->{verbosity}->{trace};
+            }
+        }
+        else {
             $upgrade_succeeded = $upgrade->{building_id};
-        } else {
-            trace("Upgrade failed: $@") if ($self->{config}->{verbosity}->{trace});
         }
         last UPGRADE if $upgrade_succeeded;
     }
