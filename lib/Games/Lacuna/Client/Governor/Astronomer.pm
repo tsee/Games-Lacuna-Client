@@ -20,6 +20,7 @@ use Data::Dumper;
     use Games::Lacuna::Client::PrettyPrint qw(trace message warning action ptime phours);
     my $PROBES_PER_PAGE = 25;
     my $SHIPS_PER_PAGE = 25;
+    my $PROBES_PER_LVL = 3;
 
     sub run {
         my $class   = shift;
@@ -87,7 +88,7 @@ use Data::Dumper;
             probe2port => { @probe_to_port },
         };
         $gov->{_observatory_plugin}{stars}{$pid} = {
-            observatory => $observatory,
+            observ_id   => $observatory->{building_id},
             stars       => \@stars,
         };
 
@@ -204,11 +205,7 @@ use Data::Dumper;
             }
         }
 
-        if( not any {
-                my $o = $gov->{_observatory_plugin}{stars}{$_}{observatory};
-                $o ? $o->{max_probes} - $o->{star_count} > 0 : 0;
-            } @pids
-        ){
+        if( not any { $class->can_observe($gov, $_); } @pids ){
             trace("All observatories are capped, aborting.");
             return;
         }
@@ -260,6 +257,17 @@ use Data::Dumper;
         $class->search_and_scan($gov, \%planet_distances, \%distances_by_planet);
 
         return;
+    }
+
+    sub can_observe {
+        my $class   = shift;
+        my $gov     = shift;
+        my $pid     = shift;
+        my $oid = $gov->{_observatory_plugin}{stars}{$pid}{observ_id};
+        my $o   = $gov->building_details($pid, $oid);
+        my $max_probes      = $o->{level} * $PROBES_PER_LVL;
+        my $active_probes   = scalar @{$gov->{_observatory_plugin}{stars}{$pid}{stars}};
+        return $max_probes - $active_probes > 0;
     }
 
     sub search_and_scan {
