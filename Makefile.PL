@@ -24,6 +24,7 @@ WriteMakefile(
         'FindBin'           => '0',
         'MIME::Lite'        => '0',
         'Crypt::SSLeay'     => '0', # or IO::Socket::SSL
+        'Exception::Class'  => '0',
     },                                               # e.g., Module::Name => 1.1
     (
         $] >= 5.005
