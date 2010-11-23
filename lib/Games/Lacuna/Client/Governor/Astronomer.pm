@@ -92,6 +92,15 @@ use Data::Dumper;
             stars       => \@stars,
         };
 
+        if( not $class->can_observe($gov, $pid) ){
+            ### Hey, maybe we should upgrade the Observatory on this planet...
+            my $observatory_bldg = $gov->{client}->building(
+                id      => $observatory->{building_id},
+                type    => 'Observatory',
+            );
+            $gov->attempt_upgrade($observatory_bldg);
+        }
+
         return;
     }
 
