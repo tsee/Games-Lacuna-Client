@@ -152,6 +152,14 @@ sub govern {
     }
 
     my $current_queue = scalar grep { exists $_->{pending_build} } values %$details;
+    $self->{current}->{build_queue} = [ 
+        map { 
+            { 
+                building_id => $_, 
+                seconds_remainings => $details->{$_}->{pending_build}->{seconds_remaining},
+            }
+        } grep { exists $details->{$_}->{pending_build} } keys %$details
+    ];
     $self->{current}->{build_queue_remaining} = $max_queue - $current_queue;
     $self->{next_action}->{$pid} = max(map { $_->{pending_build}->{seconds_remaining} + time } values %$details);
     if ($current_queue == $max_queue) {
