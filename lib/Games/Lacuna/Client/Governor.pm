@@ -195,6 +195,7 @@ sub do_post_priority {
     my $plugin = $self->_priority_to_plugin($priority);
 
     return if not $plugin;
+    return if not $plugin->can('post_run');
 
     $plugin->post_run($self, $priority);
 
