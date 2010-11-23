@@ -805,6 +805,12 @@ sub archaeology {
     my ($pid, $status, $cfg) = @{$self->{current}}{qw(planet_id status config)};
 
     my ($arch) = $self->find_buildings('Archaeology');
+
+    if (not defined $arch) {
+        warning("There is no Archaeology Ministry on ".$self->{planet_names}->{$pid});
+        return;
+    }
+
     if (ref $self->building_details($pid,$arch->{building_id})->{work}) {
         warning("The Archaeology Ministry on ".$self->{planet_names}->{$pid}." is busy.");
         return;
