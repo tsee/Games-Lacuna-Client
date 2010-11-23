@@ -103,6 +103,7 @@ sub build {
 
 sub type_from_url {
   my $url = shift;
+  croak "URL is undefined" if not $url;
   $url =~ m{/([^/]+)$} or croak("Bad URL: '$url'");
   my $url_elem = $1;
   my $type = type_for(__PACKAGE__, $url) or croak("Bad URL: '$url'");
