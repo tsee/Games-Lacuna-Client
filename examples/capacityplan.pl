@@ -1,7 +1,9 @@
-#!/usr/bin/perl
-
+#!/usr/bin/perl 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+
 use List::Util            ();
 use Games::Lacuna::Client ();
 

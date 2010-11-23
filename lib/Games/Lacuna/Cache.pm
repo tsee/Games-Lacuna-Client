@@ -411,6 +411,7 @@ sub list_trade_ships{
     my @ships;
     # One day, we will cache ships....
     my $obj = $self->get_building_object($tm_id);
+    $self->{'SESSION_CALLS'} += 1;
     my $response = $obj->get_trade_ships();
     #print Dumper($response);
     foreach (@{$response->{'ships'}}){
@@ -429,6 +430,7 @@ sub resource_details{
         my @buildings = $self->list_buildings_on_planet($planet_id, ["trade"]);
         if (@buildings){
             my $obj = $self->get_building_object($buildings[0]);
+            $self->{'SESSION_CALLS'} += 1;
             my $response = $obj->get_stored_resources();
             $breakdown = $self->parse_resource_breakdown($response->{'resources'}, $resource_type); 
 

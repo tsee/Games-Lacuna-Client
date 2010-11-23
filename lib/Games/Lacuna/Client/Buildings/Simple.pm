@@ -10,6 +10,7 @@ use Class::MOP;
 
 our @BuildingTypes = (qw(
     Algae
+    AlgaePond
     Apple
     Bean
     Beeldeban
@@ -19,6 +20,7 @@ our @BuildingTypes = (qw(
     Cheese
     Chip
     Cider
+    CitadelOfKnope
     CloakingLab
     Corn
     CornMeal
@@ -44,12 +46,13 @@ our @BuildingTypes = (qw(
     Lake
     Lagoon
     Lapis
+    LapisForest
     LibraryOfJith
     LuxuryHousing
     Malcud
+    MalcudField
     MassadsHenge
     Mine
-    MissionCommand
     MunitionsLab
     NaturalSpring
     OracleOfAnid
@@ -60,12 +63,14 @@ our @BuildingTypes = (qw(
     PilotTraining
     Potato
     Propulsion
+    Ravine
     RockyOutcrop
     Sand
     Shake
     Singularity
     Soup
     Stockpile
+    SubspaceSupplyDepot
     Syrup
     TempleOfTheDrajilites
     TerraformingLab

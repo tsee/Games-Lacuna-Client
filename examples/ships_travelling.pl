@@ -2,9 +2,12 @@
 #
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client;
 use Date::Parse;
 use Date::Format;
+use List::Util (qw(first));
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
@@ -28,7 +31,7 @@ my @spaceports;
 foreach my $planet (values %planets_by_name) {
   my %buildings = %{ $planet->get_buildings->{buildings} };
 
-  my @b = grep {$buildings{$_}{name} eq 'Space Port'}
+  my @b = first {$buildings{$_}{name} eq 'Space Port'}
                   keys %buildings;
   push @spaceports, map  { $client->building(type => 'SpacePort', id => $_) } @b;
 }
