@@ -59,6 +59,13 @@ sub run {
             trace( "Examining " . $planets->{$pid} ) if ( $self->{config}->{verbosity}->{trace} );
             my $colony_config = merge( $config->{colony}->{ $planets->{$pid} } || {}, $config->{colony}->{_default_} );
 
+            ### Fix the merge w/ priority lists.
+            ### Normally Hash::Merge just concats two lists.
+            ### We want our more specific array to override.
+            if( my $colony_priorities = $config->{colony}{$planets->{$pid}}{priorities} ){
+                $colony_config->{priorities} = $colony_priorities;
+            }
+
             next if ( not exists $colony_config->{priorities} or $colony_config->{exclude} );
             $self->{current}->{planet_id} = $pid;
             $self->{current}->{config}    = $colony_config;
