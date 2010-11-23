@@ -28,7 +28,8 @@ use Data::Dumper;
             return;
         }
 
-        if (ref $gov->building_details($pid,$arch->{building_id})->{work}) {
+        if ( my $time = $gov->building_details($pid,$arch->{building_id})->{work}{seconds_remaining} ){
+            $gov->set_next_action_if_sooner( $time );
             warning("The Archaeology Ministry on ".$gov->{planet_names}->{$pid}." is busy.");
             return;
         }
