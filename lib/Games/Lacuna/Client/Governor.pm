@@ -820,58 +820,6 @@ sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes 
     }
 }
 
-sub archaeology {
-    my $self = shift;
-    my ($pid, $status, $cfg) = @{$self->{current}}{qw(planet_id status config)};
-
-    my ($arch) = $self->find_buildings('Archaeology');
-
-    if (not defined $arch) {
-        warning("There is no Archaeology Ministry on ".$self->{planet_names}->{$pid});
-        return;
-    }
-
-    if (ref $self->building_details($pid,$arch->{building_id})->{work}) {
-        warning("The Archaeology Ministry on ".$self->{planet_names}->{$pid}." is busy.");
-        return;
-    }
-    my %ore_avail = %{$arch->get_ores_available_for_processing->{ore}};
-    my @ores = keys %ore_avail;
-
-    if (defined $cfg->{archaeology}->{search_only}) {
-        @ores = grep { my $o = $_; any { $o eq $_ } @{$cfg->{archaeology}->{search_only}} } @ores;
-    }
-
-    if (defined $cfg->{archaeology}->{do_not_search}) {
-        @ores = grep { my $o = $_; not any { $o eq $_ } @{$cfg->{archaeology}->{do_not_search}} } @ores;
-    }
-
-    my $selection = $cfg->{archaeology}->{'select'} || 'most';
-
-    my $ore;
-    if ($selection eq 'most') {
-        ($ore) = sort { $ore_avail{$b} <=> $ore_avail{$a} } @ores;
-    }
-    elsif ($selection eq 'least') {
-        ($ore) = sort { $ore_avail{$a} <=> $ore_avail{$b} } @ores;
-    }
-    elsif ($selection eq 'random') {
-        ($ore) = splice(@ores, rand(@ores), 1) 
-    }
-    else {
-        warning("Unknown archaeology selection command: $selection");
-    }
-
-    eval {
-        $arch->search_for_glyph($ore);
-    };
-    if ($@) {
-        warning("Unable to search for $ore at archaeology ministry: $@");
-    } else {
-        action("Searching for $ore glyph at archaeology ministry");
-    }
-}
-
 sub building_details {
     my ($self, $pid, $bid) = @_;
 
@@ -1408,28 +1356,6 @@ settings.
 (Not yet implemented).  Allow downgrading buildings if negative production 
 levels are causing problems.  True or false.
 
-=head2 archaeology
-
-This heading contains sub-keys related to archaeology searches. 
-NOTE: archaeology must be a specified item in the priorities list for
-archaeology searches to take place.
-
-=head3 search_only
-
-This is a list of ore types which should be exclusively searched for
-
-=head3 do_not_search
-
-This is a list of ore types which should be avoided in searches
-
-=head3 select
-
-This is how to select among candidate ores for a search.  One of 'most',
-pick whichever ore we have most of (subject to above restrictions), 'least',
-pick whichever we have least of (as above), or 'random', which picks one
-at random, subject to above restrictions.  If not specified, the default
-is 'most'.
-
 =head2 crisis_threshhold_hours
 
 A number of hours, decimals allowed.  
@@ -1461,13 +1387,18 @@ will perform.  They are performed in the order specified.  Currently
 implemented values include:
 
 production_crisis, storage_crisis, resource_upgrades, production_upgrades,
-storage_upgrades, recycling, pushes, ship_report, archaeology
+storage_upgrades, recycling, pushes, ship_report
 
 Note: resource_upgrades performs both a production_upgrades and storage_upgrades priority.
 
 To be implemented are:
 
 repairs, construction, other_upgrades
+
+B<Note: See the Games::Lacuna::Governor namespace for plugins.> Most plugins can be activated
+by simply including their names in the priority list.
+
+Known plugins: L<Games::Lacuna::Governor::Astronomy>, L<Games::Lacuna::Governor::Archaeology>.
 
 =head2 profile
 
