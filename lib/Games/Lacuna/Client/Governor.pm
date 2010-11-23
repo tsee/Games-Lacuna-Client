@@ -181,6 +181,7 @@ sub govern {
 sub do_post_priority {
     my $self    = shift;
     my $priority = shift;
+    $priority = lc $priority;
 
     trace("Post Priority: $priority") if $self->{config}{verbosity}{trace};
     my $postsub = "post_$priority";
@@ -203,6 +204,7 @@ sub do_post_priority {
 sub _priority_to_plugin {
     my $self     = shift;
     my $priority = shift;
+    $priority = lc $priority;
 
     my $cased_name  = join q{::}, map { ucfirst } split qr/_/, $priority;
     $cased_name     = "Games::Lacuna::Client::Governor::$cased_name";
@@ -233,6 +235,8 @@ sub do_priority {
     my $self    = shift;
     my $priority = shift;
     trace("Priority: $priority") if ($self->{config}->{verbosity}->{trace});
+
+    $priority = lc $priority;
 
     if( $self->can($priority) ){
         $self->$priority();
