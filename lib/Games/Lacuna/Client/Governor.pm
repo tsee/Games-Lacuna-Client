@@ -61,7 +61,7 @@ sub run {
             next if ( not exists $colony_config->{priorities} or $colony_config->{exclude} );
             $self->{current}->{planet_id} = $pid;
             $self->{current}->{config}    = $colony_config;
-            push @priorities, @{$colony_config->{priorities}};
+            push @priorities, @{$colony_config->{priorities} || [] };
             $self->govern();
         }
 
