@@ -60,6 +60,11 @@ use Data::Dumper;
             warning("Unknown archaeology selection command: $selection");
         }
 
+        if( not $ore ){
+            warning('Unable to find a suitable ore for archaeology');
+            return;
+        }
+
         eval {
             $arch->search_for_glyph($ore);
         };
