@@ -73,7 +73,8 @@ use Data::Dumper;
         my $class = shift;
         my $gov   = shift;
         my $park  = shift;
-        return 1 if $gov->building_details($gov->{current}{planet_id}, $park->{building_id})->{party}{can_throw};
+        my $bldg  = $park->view;
+        return 1 if $bldg->{party}{can_throw};
         trace( sprintf "There is already a party in progress in park[%i]", $park->{building_id} );
         return;
     }
