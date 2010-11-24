@@ -59,6 +59,12 @@ use Data::Dumper;
                 $e->rethrow;
             }
         }
+
+        ### If a park is going to finish soon, lets push that as a next_action.
+        for my $park ( @parks ){
+            my $time = $gov->building_details($pid, $park->{building_id})->{party}{seconds_remaining};
+            $gov->set_next_action_if_sooner($time);
+        }
     }
 
     sub can_party {
