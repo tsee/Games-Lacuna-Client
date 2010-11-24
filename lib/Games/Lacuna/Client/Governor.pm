@@ -1588,12 +1588,12 @@ Pick whichever we produce least of
 
 =head1 SEE ALSO
 
-Games::Lacuna::Client, by Steffen Mueller on which this module is dependent.
+L<Games::Lacuna::Client>, by Steffen Mueller on which this module is dependent.
 
 Of course also, the Lacuna Expanse API docs themselves at L<http://us1.lacunaexpanse.com/api>. 
 
-The Games::Lacuna::Client distribution includes two files pertinent to this script. Well, three.  We need 
-Games::Lacuna::Client::PrettyPrint for output.
+The L<Games::Lacuna::Client distribution> includes two files pertinent to this script. Well, three.  We need 
+L<Games::Lacuna::Client::PrettyPrint> for output.
 
 Also, in F<examples>, you've got the example config file in governor.yml, and the example script in governor.pl.
 

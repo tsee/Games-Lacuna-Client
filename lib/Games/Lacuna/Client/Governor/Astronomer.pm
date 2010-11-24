@@ -381,9 +381,9 @@ on how this information is used.
 
 =head1 SEE ALSO
 
-Games::Lacuna::Client, by Steffen Mueller on which this module is dependent.
+L<Games::Lacuna::Client>, by Steffen Mueller on which this module is dependent.
 
-Games::Lacuna::Client::Governor, by Adam Bellaire of which this module is a plugin.
+L<Games::Lacuna::Client::Governor>, by Adam Bellaire of which this module is a plugin.
 
 Of course also, the Lacuna Expanse API docs themselves at L<http://us1.lacunaexpanse.com/api>.
 
