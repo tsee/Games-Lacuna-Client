@@ -123,9 +123,7 @@ use Data::Dumper;
         my ($pid, $config, $status)  = @{$gov->{current}}{qw(planet_id config status)};
         my $pname   = $gov->{planet_names}{$pid};
 
-        my $food_limit = ($config->{profile}{food}{build_above} || 0) > 0
-            ? $config->{profile}{food}{build_above}
-            : $config->{profile}{_default_}{build_above};
+        my $food_limit = $config->{profile}{party_above} || 0;
 
         my $stored_food = $status->{food_stored};
         return $stored_food - $PARTY_COST >= $food_limit;
