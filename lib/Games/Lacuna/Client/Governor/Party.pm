@@ -37,6 +37,7 @@ use Data::Dumper;
 
         my $dry_run = $gov->{config}{dry_run} ? '[DRYRUN] ' : q{} ;
 
+        ### Start the Party Monster.
         PARK:
         for my $park ( @$inactive ){
             last if $class->check_foods( $gov );
@@ -67,6 +68,7 @@ use Data::Dumper;
         }
     }
 
+    ### Can this Park host a party?
     sub can_party {
         my $class = shift;
         my $gov   = shift;
@@ -76,6 +78,7 @@ use Data::Dumper;
         return;
     }
 
+    ### Returns hash of the break-down of food types.
     sub resources {
         my $class   = shift;
         my $gov     = shift;
@@ -91,6 +94,7 @@ use Data::Dumper;
         return $gov->{_party}{food_reserve} = $food_reserve;
     }
 
+    ### Checks if we have enough food types to run w/o causing negative happiness.
     sub check_foods {
         my $class   = shift;
         my $gov     = shift;
@@ -115,6 +119,7 @@ use Data::Dumper;
         return 1;
     }
 
+    ### Checks configuration settings to see if we should run. Things like party_above.
     sub should_party {
         my $class   = shift;
         my $gov     = shift;
@@ -134,6 +139,59 @@ use Data::Dumper;
 1;
 __END__
 =pod
+
+=head1 NAME
+
+Games::Lacuna::Client::Governor::Party - A plugin for Governor that will automate the hosting of Parties.
+
+=head1 SYNOPSIS
+
+    Add 'party' to the Governor configuration priorities list.
+
+=head1 DESCRIPTION
+
+This module examines each colony and hosts a party at each park on it. It will only
+execute if a Trade Ministry or Food Reserve is detected as it must verify the
+colony has more than 2 food-types. (Less than that will generate negative happiness,
+I know this from experience...)
+
+=head2 'party' configuration
+
+This heading contains sub-keys related to parties.
+NOTE: C<party> must be a specified item in the priorities list for parties to take place.
+
+=head3 party_above
+
+This is similiar to the C<build_above> setting used in Governor's resource production. This
+is the minimum amount of food the colony must maintain if a party is hosted.
+
+=head1 TODO
+
+=head2 Minimum food types
+
+It'd be nice if we had a configuration for how many valid (>500 units) food types must
+exist before a party can be hosted.
+
+=head1 SEE ALSO
+
+Games::Lacuna::Client, by Steffen Mueller on which this module is dependent.
+
+Games::Lacuna::Client::Governor, by Adam Bellaire of which this module is a plugin.
+
+Of course also, the Lacuna Expanse API docs themselves at L<http://us1.lacunaexpanse.com/api>.
+
+=head1 AUTHOR
+
+Daniel Kimsey, E<lt>dekimsey@ufl.eduE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2010 by Steffen Mueller
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.10.0 or,
+at your option, any later version of Perl 5 you may have available.
+
 
 =cut
 
