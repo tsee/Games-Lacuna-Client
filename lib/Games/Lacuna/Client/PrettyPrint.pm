@@ -208,22 +208,24 @@ sub production_report {
 
 sub trade_list {
     show_bar('-','green');
-    printf("%15s %10s %15s %10s %s\n",
+    printf("%15s %10s %15s %10s %10s %s\n",
         'Empire',
         'Ratio',
         'Asking',
         'Offering',
+        'Quantity',
         'Description',
     );
-    for (@_) {
-        my $rt = $_->{real_type};
-        printf("%s%15s %s%10s %s%15s %s%10s %s\n",
+    for my $item (@_) {
+        my $rt = $item->{real_type};
+        my ($desc) = $item->{offer_description} =~ m/^(?:\d+\s)?(.+)/imxg;
+        printf("%s%15s %s%10s %s%15s %s%10s %10i %s\n",
             _c_('bold cyan'),
-            substr($_->{empire}->{name},0,15),
+            substr($item->{empire}->{name},0,15),
             _c_('reset')._c_('cyan'),
-            $_->{ratio},
+            $item->{ratio},
             _c_('reset'),
-            substr($_->{ask_description},0,15),
+            substr($item->{ask_description},0,15),
             _c_($rt eq 'food' ? 'bold green' :
                 $rt eq 'ore'  ? 'bold yellow' :
                 $rt eq 'water' ? 'bold blue' :
@@ -234,7 +236,8 @@ sub trade_list {
                 $rt eq 'ship' ? 'bold white' :
                 'reset'),
             $rt,
-            $_->{offer_description},
+            $item->{offer_quantity},
+            $desc,
         );
     }
     show_bar('-','green');
