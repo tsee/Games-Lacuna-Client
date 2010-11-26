@@ -15,6 +15,8 @@ my $client = Games::Lacuna::Client->new(
 	# debug    => 1,
 );
 
+my $trades_per_page = 25;
+
 # Load the planets
 my $empire  = $client->empire->get_status->{empire};
 my $planets = $empire->{planets};
@@ -44,22 +46,22 @@ foreach my $planet_id ( sort keys %$planets ) {
     
     
     if ($trade_id) {
-        my $trade = $client->building( id => $trade_id, type => 'Trade' );
+        my $trade_min = $client->building( id => $trade_id, type => 'Trade' );
         
-        my $trades = $trade->view_my_trades;
+        my $trades = get_trades( $trade_min );
         
-        if ( $trades->{trade_count} ) {
-            $my_trades{$name}{'Trade Ministry'} = $trades->{trades};
+        if ( @$trades ) {
+            $my_trades{$name}{'Trade Ministry'} = $trades;
         }
     }
     
     if ($transporter_id) {
         my $transporter = $client->building( id => $transporter_id, type => 'Transporter' );
         
-        my $trades = $transporter->view_my_trades;
+        my $trades = get_trades( $transporter );
         
-        if ( $trades->{trade_count} ) {
-            $my_trades{$name}{'Subspace Transporter'} = $trades->{trades};
+        if ( @$trades ) {
+            $my_trades{$name}{'Subspace Transporter'} = $trades;
         }
     }
 }
@@ -84,4 +86,29 @@ for my $name (sort keys %my_trades) {
         
         print "\n";
     }
+}
+
+sub get_trades {
+    my ( $building ) = @_;
+
+    my $trades = $building->view_my_trades;
+    my $count  = $trades->{trade_count};
+    
+    return [] if !$count;
+    
+    my $page = 1;
+    
+    my @trades = @{ $trades->{trades} };
+    
+    $count -= $trades_per_page;
+    
+    while ( $count > 0 ) {
+        $page++;
+        
+        push @trades, @{ $building->view_my_trades( $page )->{trades} };
+        
+        $count -= $trades_per_page;
+    }
+    
+    return \@trades;
 }
