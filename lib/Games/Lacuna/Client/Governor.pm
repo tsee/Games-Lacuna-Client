@@ -1399,7 +1399,8 @@ repairs, construction, other_upgrades
 B<Note: See the Games::Lacuna::Governor namespace for plugins.> Most plugins can be activated
 by simply including their names in the priority list.
 
-Known plugins: L<Games::Lacuna::Governor::Astronomy>, L<Games::Lacuna::Governor::Archaeology>.
+Known plugins: L<Games::Lacuna::Governor::Astronomy>, L<Games::Lacuna::Governor::Archaeology>,
+L<Games::Lacuna::Governor::Party>.
 
 =head2 profile
 
