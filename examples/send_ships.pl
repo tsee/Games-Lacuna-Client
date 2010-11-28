@@ -18,7 +18,7 @@ unless ( $cfg_file and -e $cfg_file ) {
 	die "Did not provide a config file";
 }
 
-my @ship_names = ('Scanner 10');
+my @ship_names;
 my $from;
 my $star;
 my $planet;
