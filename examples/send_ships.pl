@@ -122,15 +122,21 @@ for my $ship_name (@ship_names) {
         next if $ship->{name} ne $ship_name;
         next if $sent{ $ship->{id} };
         
-        $space_port->send_ship( $ship->{id}, { $target_type => $target_id } );
+        send_ship( $ship );
         
-        printf "Sent %s to %s\n", $ship->{name}, $target_name;
-        
-        $sent{ $ship->{id} } = 1;
         last;
     }
 }
 
+sub send_ship {
+    my ($ship) = @_;
+    
+    $space_port->send_ship( $ship->{id}, { $target_type => $target_id } );
+    
+    printf "Sent %s to %s\n", $ship->{name}, $target_name;
+    
+    $sent{ $ship->{id} } = 1;
+}
 
 sub usage {
   die <<"END_USAGE";
