@@ -916,7 +916,7 @@ sub attempt_upgrade {
                 $cfg->{profile}->{_default_}->{build_above})
         } qw(food ore water energy);
 
-    Games::Lacuna::Client::PrettyPrint::upgrade_report(\%build_above,map { $self->building_details($pid,$_->{building_id}) } @all_options)
+    Games::Lacuna::Client::PrettyPrint::upgrade_report($status,\%build_above,map { $self->building_details($pid,$_->{building_id}) } @all_options)
         if ($self->{config}->{verbosity}->{upgrades});
 
     # Abort if an upgrade is in progress.
@@ -931,13 +931,14 @@ sub attempt_upgrade {
 
     my @options = part {
         my $bid = $_->{building_id};
-        (
-            not any { ($status->{"$_\_stored"} - $self->building_details($pid,$bid)->{upgrade}->{cost}->{$_}) 
+        my $insuff_resources = 
+            any { ($status->{"$_\_stored"} - $self->building_details($pid,$bid)->{upgrade}->{cost}->{$_}) 
                 < $build_above{$_} 
-            } qw(food ore water energy)
-            and (not ($status->{waste_stored} + $self->building_details($pid,$bid)->{upgrade}->{cost}->{waste})
-                > $status->{waste_capacity})
-        )+0;
+            } qw(food ore water energy);
+        my $waste_overflow = 
+            ($status->{waste_stored} + $self->building_details($pid,$bid)->{upgrade}->{cost}->{waste})
+                > $status->{waste_capacity};
+        return (not $insuff_resources and not $waste_overflow)+0;
     } @all_options;
 
     @options = map { ref $_ ? $_ : [] } @options[0,1];
@@ -981,7 +982,6 @@ sub attempt_upgrade {
     # Decrement remaining build queue if upgrade succeeded.
     $self->{current}->{build_queue_remaining}-- if ($upgrade_succeeded);
     return $upgrade_succeeded;
-
 }
 
 sub attempt_upgrade_for {

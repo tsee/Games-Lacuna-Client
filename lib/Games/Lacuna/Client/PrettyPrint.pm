@@ -2,6 +2,7 @@ package Games::Lacuna::Client::PrettyPrint;
 use English qw(-no_match_vars);
 use List::Util qw(sum);
 use warnings;
+no warnings 'uninitialized';
 use Term::ANSIColor;
 
 use Exporter;
@@ -51,19 +52,22 @@ sub show_status {
 }
 
 sub upgrade_report {
-    my ($build_above,@buildings) = @_;
-
+    my ($status,$build_above,@buildings) = @_;
     show_bar('=');
     say(_c_('bold yellow'),"Upgrade Options Report",_c_('reset'));
     show_bar('-');
-               printf "%7s %20s %2s %3s %6s %6s %6s %6s\n","ID","Type","Lv","Can","Food","Ore","Water","Energy";
+    printf "%7s %15s %2s %3s %7s %7s %7s %7s %s\n","ID","Type","Lv","Can","Food","Ore","Water","Energy","Waste";
     show_bar('-');
-    printf "%s%-35s %6s %6s %6s %6s%s\n",_c_('bold green'),"Build Above",@{$build_above}{qw(food ore water energy)},_c_('reset');
+    printf "%s%-30s %7s %7s %7s %7s      --%s\n",_c_('bold green'),"Build Above",@{$build_above}{qw(food ore water energy)},_c_('reset');
+    printf "%s%-30s %7s %7s %7s %7s %7s%s\n",_c_('bold green'),"Avail. For Build",
+        (map { $status->{"$_\_stored"} - $build_above->{$_} } qw(food ore water energy)),
+        $status->{"waste_capacity"} - $status->{"waste_stored"},
+        _c_('reset');
     show_bar('-');
     for my $bldg (@buildings) {
         my $up = $bldg->{upgrade};
         print _c_('cyan');
-        printf "%7s %20s %2s %3s %6s %6s %6s %6s\n",$bldg->{id},$bldg->{pretty_type},$bldg->{level},$up->{can} ? 'YES' : 'NO',map {$up->{cost}->{$_} } qw(food ore water energy);
+        printf "%7s %15s %2s %3s %7s %7s %7s %7s %7s\n",$bldg->{id},substr($bldg->{pretty_type},0,15),$bldg->{level},$up->{can} ? 'YES' : 'NO',map {$up->{cost}->{$_} } qw(food ore water energy waste);
         print _c_('reset');
     }
     if (not scalar @buildings) {
