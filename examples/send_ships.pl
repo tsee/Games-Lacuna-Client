@@ -19,22 +19,24 @@ unless ( $cfg_file and -e $cfg_file ) {
 }
 
 my @ship_names;
-my $from;
+my @ship_types;
 my $speed;
-my $send_all;
+my $from;
 my $star;
 my $planet;
 
 GetOptions(
     'ship=s@'  => \@ship_names,
+    'type=s@'  => \@ship_types,
     'speed=i'  => \$speed,
-    'all'      => \$send_all,
     'from=s'   => \$from,
     'star=s'   => \$star,
     'planet=s' => \$planet,
 );
 
-usage() if !@ship_names || !$from;
+usage() if !@ship_names && !@ship_types;
+
+usage() if !$from;
 
 usage() if !$star && !$planet;
 
@@ -119,43 +121,33 @@ my $ships = $space_port->get_ships_for( $from_id, { body_id => $target_id}  );
 
 my $available = $ships->{available};
 
-my %sent;
-
-for my $ship_name (@ship_names) {
-    for my $ship ( @$available ) {
-        next if $ship->{name} ne $ship_name;
-        next if $sent{ $ship->{id} };
-        next if defined $speed && $speed != $ship->{speed};
-        
-        send_ship( $ship );
-        
-        last if !$send_all;
-    }
-}
-
-sub send_ship {
-    my ($ship) = @_;
+for my $ship ( @$available ) {
+    next if @ship_names && !grep { $ship->{name} eq $_ } @ship_names;
+    next if @ship_types && !grep { $ship->{type} eq $_ } @ship_types;
+    next if $speed && $speed != $ship->{speed};
     
     $space_port->send_ship( $ship->{id}, { $target_type => $target_id } );
     
     printf "Sent %s to %s\n", $ship->{name}, $target_name;
-    
-    $sent{ $ship->{id} } = 1;
 }
+
 
 sub usage {
   die <<"END_USAGE";
 Usage: $0 send_ship.yml
-       --ship       NAME  (required)
-       --all
+       --ship       NAME
+       --type       TYPE
        --speed      SPEED
        --from       NAME  (required)
        --star       NAME
        --planet     NAME
 
+Either of --ship_name or --type is required.
+
 --ship_name can be passed multiple times.
 
-If --all is passed, all matching ships will be sent, not just the first ship.
+--type can be passed multiple times.
+It must match the ship's "type", not "type_human", e.g. "scanner", "spy_pod".
 
 --from is the colony from which the ship should be sent.
 
