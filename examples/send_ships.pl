@@ -20,12 +20,14 @@ unless ( $cfg_file and -e $cfg_file ) {
 
 my @ship_names;
 my $from;
+my $speed;
 my $send_all;
 my $star;
 my $planet;
 
 GetOptions(
     'ship=s@'  => \@ship_names,
+    'speed=i'  => \$speed,
     'all'      => \$send_all,
     'from=s'   => \$from,
     'star=s'   => \$star,
@@ -123,6 +125,7 @@ for my $ship_name (@ship_names) {
     for my $ship ( @$available ) {
         next if $ship->{name} ne $ship_name;
         next if $sent{ $ship->{id} };
+        next if defined $speed && $speed != $ship->{speed};
         
         send_ship( $ship );
         
@@ -145,13 +148,14 @@ sub usage {
 Usage: $0 send_ship.yml
        --ship       NAME  (required)
        --all
+       --speed      SPEED
        --from       NAME  (required)
        --star       NAME
        --planet     NAME
 
 --ship_name can be passed multiple times.
 
-If -all is passed, all matching ships will be sent, not just the first ship.
+If --all is passed, all matching ships will be sent, not just the first ship.
 
 --from is the colony from which the ship should be sent.
 
