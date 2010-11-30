@@ -916,7 +916,7 @@ sub attempt_upgrade {
                 $cfg->{profile}->{_default_}->{build_above})
         } qw(food ore water energy);
 
-    Games::Lacuna::Client::PrettyPrint::upgrade_report(\%build_above,map { $self->building_details($pid,$_->{building_id}) } @all_options)
+    Games::Lacuna::Client::PrettyPrint::upgrade_report($status,\%build_above,map { $self->building_details($pid,$_->{building_id}) } @all_options)
         if ($self->{config}->{verbosity}->{upgrades});
 
     # Abort if an upgrade is in progress.
