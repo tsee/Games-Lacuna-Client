@@ -21,6 +21,7 @@ unless ( $cfg_file and -e $cfg_file ) {
 my @ship_names;
 my @ship_types;
 my $speed;
+my $max;
 my $from;
 my $star;
 my $planet;
@@ -29,6 +30,7 @@ GetOptions(
     'ship=s@'  => \@ship_names,
     'type=s@'  => \@ship_types,
     'speed=i'  => \$speed,
+    'max=i'    => \$max,
     'from=s'   => \$from,
     'star=s'   => \$star,
     'planet=s' => \$planet,
@@ -120,6 +122,7 @@ my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
 my $ships = $space_port->get_ships_for( $from_id, { body_id => $target_id}  );
 
 my $available = $ships->{available};
+my $sent = 0;
 
 for my $ship ( @$available ) {
     next if @ship_names && !grep { $ship->{name} eq $_ } @ship_names;
@@ -129,6 +132,9 @@ for my $ship ( @$available ) {
     $space_port->send_ship( $ship->{id}, { $target_type => $target_id } );
     
     printf "Sent %s to %s\n", $ship->{name}, $target_name;
+    
+    $sent++;
+    last if $max && $max == $sent;
 }
 
 
@@ -138,6 +144,7 @@ Usage: $0 send_ship.yml
        --ship       NAME
        --type       TYPE
        --speed      SPEED
+       --max        MAX
        --from       NAME  (required)
        --star       NAME
        --planet     NAME
@@ -148,6 +155,9 @@ Either of --ship_name or --type is required.
 
 --type can be passed multiple times.
 It must match the ship's "type", not "type_human", e.g. "scanner", "spy_pod".
+
+If --max is set, this is the maximum number of matching ships that will be
+sent. Default behaviour is to send all matching ships.
 
 --from is the colony from which the ship should be sent.
 
