@@ -140,7 +140,7 @@ sub ship_report {
 sub mission_list {
     use Text::Wrap;
     $Text::Wrap::columns = 78;
-    my ($planet,@missions) = @_;
+    my ($planet,$terse,@missions) = @_;
     show_bar('=','bold black');
     say(_c_('bold yellow')."$planet Mission Command"._c_('reset'));
     show_bar('-','bold black');
@@ -148,16 +148,21 @@ sub mission_list {
         say(_c_('bold white').sprintf("[%d] %s",$_->{id},$_->{name}));
         say(_c_('bold blue'),'Max Uni.: ',_c_('bold cyan'),$_->{max_university_level},
             _c_('reset')._c_('bold blue'),', Posted: ',_c_('bold cyan'),$_->{date_posted});
-        say(_c_('reset').wrap('','',$_->{description}));
         my @objectives = @{$_->{objectives}};
         my @rewards   = @{$_->{rewards}};
-        say(_c_('bold white')."\nObjectives:");
-        for (@objectives) {
-            say(_c_('bold yellow').$_);
-        }
-        say(_c_('bold white')."\nRewards:");
-        for (@rewards) {
-            say(_c_('bold green').$_);
+        if (not $terse) {
+            say(_c_('reset').wrap('','',$_->{description}));
+            say(_c_('bold white')."\nObjectives:");
+            for (@objectives) {
+                say(_c_('bold yellow').$_);
+            }
+            say(_c_('bold white')."\nRewards:");
+            for (@rewards) {
+                say(_c_('bold green').$_);
+            }
+        } else {
+            say(_c_('bold white')."Objectives: "._c_('bold yellow').join(q{, },@objectives));
+            say(_c_('bold white')."Rewards: "._c_('bold green').join(q{, },@rewards));
         }
         show_bar('-','bold black');
     }
