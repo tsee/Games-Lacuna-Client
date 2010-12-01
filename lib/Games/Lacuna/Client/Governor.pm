@@ -335,21 +335,23 @@ sub send_pushes {
             my $load_size = sum(map { $_->{quantity} } @{$route->{items}});
             $route->{load_size} = $load_size;
 
-            # Don't consider this route if the recipient planet can't store the load.
+            # Don't consider this route if the recipient planet can't store the load
+            # or if the source planet doesn't have the resources anymore.
             for my $shipping_item (@{$route->{items}}) {            
                 my $type = $shipping_item->{type};
                 my $qty  = $shipping_item->{quantity};
                 my $res  = (any {$_ eq $type} $self->food_types) ? 'food' :
                            (any {$_ eq $type} $self->ore_types)  ? 'ore'  :
                             $type;
+                my $avail_res  = $info->{$route->{orig}}->{$res}->{available};
                 my $space_left = $info->{$route->{dest}}->{$res}->{space_left};
 
                 # Reduce space_left by projected usage at current production levels on target
                 $space_left -= int($self->{status}->{$dest}->{"$res\_hour"} * ($route->{travel_time}/3600));
-
+  
+                next route if ($avail_res < $qty);
                 next route if ($space_left < $qty);
             }
-
 
             # Don't consider this route if the hold is not full enough.
             next if (($load_size / $route->{hold_size}) < $self->{config}->{push_minimum_load});
@@ -365,9 +367,11 @@ sub send_pushes {
                 $selected_route = $route;
             }
         }
-        push @selected_routes, $selected_route if defined ($selected_route);
 
-        # Reduce the space_left at the target.
+        next if not defined $selected_route;
+        push @selected_routes, $selected_route;
+
+        # Reduce the space_left at the target, and the availability at the source
         for my $shipping_item (@{$selected_route->{items}}) {            
             my $type = $shipping_item->{type};
             my $qty  = $shipping_item->{quantity};
@@ -375,6 +379,7 @@ sub send_pushes {
                        (any {$_ eq $type} $self->ore_types)  ? 'ore'  :
                        $type;
             $info->{$selected_route->{dest}}->{$res}->{space_left} -= $qty;
+            $info->{$selected_route->{orig}}->{$type}->{available} -= $qty;
 
             # Cache data about this shipment and its arrival time for later invocations of governor
             push @{$self->{cache}->{shipments}->{$selected_route->{dest}}}, {
