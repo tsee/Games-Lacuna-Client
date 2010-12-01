@@ -965,8 +965,13 @@ sub attempt_upgrade {
     my $upgrade_succeeded = 0;
     UPGRADE:
     for my $upgrade (@upgrade_options) {
+        my $details = $self->building_details($pid,$upgrade->{building_id});
+        if (any { $_ eq $details->{pretty_type} } @{$cfg->{never_upgrade}}) {
+            trace(sprintf("Not allowed to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level})) if ($self->{config}->{verbosity}->{trace});
+            next;
+        }
+
         eval { 
-            my $details = $self->building_details($pid,$upgrade->{building_id});
             trace(sprintf("Attempting to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level})) if ($self->{config}->{verbosity}->{trace});
             if (not $self->{config}->{dry_run}) {
                $upgrade->upgrade();
@@ -1386,6 +1391,11 @@ triggered which forces production upgrades for those resources.
 
 If this is true for any particular colony which would otherwise be governed,
 the governor will skip this colony and perform no actions.
+
+=head2 never_upgrade
+
+If defined, buildings whose class name appear in this list will never be upgraded by the governor.
+Classnames are, for example, "MiningMinistry" or "Fusion".
 
 =head2 pcc_is_storage
 
