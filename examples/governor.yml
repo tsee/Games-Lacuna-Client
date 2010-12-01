@@ -20,7 +20,7 @@ colony:
       _default_:
         build_above: 10000
         production: 1
-        request_below:0.25
+        request_below: 0.25
         push_above: 0.5
         requested_level: 0.9
         overload_above: 0.95
