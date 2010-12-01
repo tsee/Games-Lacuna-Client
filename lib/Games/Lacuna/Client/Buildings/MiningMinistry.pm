@@ -12,6 +12,7 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 sub api_methods {
   return {
     view                    => { default_args => [qw(session_id building_id)] },
+    view_platforms          => { default_args => [qw(session_id building_id)] },
     view_ships              => { default_args => [qw(session_id building_id)] },
     abandon_platform        => { default_args => [qw(session_id building_id)] },
     add_cargo_ship_to_fleet => { default_args => [qw(session_id building_id)] },
