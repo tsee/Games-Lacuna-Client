@@ -124,7 +124,15 @@ sub govern {
     }
 
     if ($self->{config}->{verbosity}->{production}) {
-        Games::Lacuna::Client::PrettyPrint::production_report(map { $self->building_details($pid,$_) } keys %$details);
+        my @buildings = map { $self->building_details($pid,$_) } keys %$details;
+        # We need to get the details from view_platform at the mining ministry, if it exists, and add it into the details.
+        for (@buildings) {
+            if ($_->{name} eq 'Mining Ministry') {
+                my $platforms = $client->building( id => $_->{id}, type => 'MiningMinistry' )->view_platforms->{platforms};
+                $_->{ore_hour} += sum( map { my $p=$_; sum(map { $p->{$_ } } grep {/_hour$/} keys %$p) } @$platforms);
+            }
+        }
+        Games::Lacuna::Client::PrettyPrint::production_report(@buildings);
     }
 
 
