@@ -39,7 +39,7 @@ GetOptions(
     'filter=s'  => \@filters,
     'sort=s'    => \@sorts,
     'desc'      => \$sort_descending,
-    'max-pages' => \$max_pages
+    'max-pages=n' => \$max_pages
 );
 
 print << '__END_USAGE__' if $show_usage;
