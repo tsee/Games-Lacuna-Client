@@ -14,6 +14,7 @@ use English qw(-no_match_vars);
 use Data::Dumper;
 
 {
+    use List::MoreUtils qw(any);
     use Games::Lacuna::Client::PrettyPrint qw(trace message warning action ptime phours);
 
     sub run {
