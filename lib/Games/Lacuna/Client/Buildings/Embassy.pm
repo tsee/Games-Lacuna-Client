@@ -25,6 +25,10 @@ sub api_methods {
     update_alliance        => { default_args => [qw(session_id building_id)] },
     leave_alliance         => { default_args => [qw(session_id building_id)] },
     expel_member           => { default_args => [qw(session_id building_id)] },
+    view_stash             => { default_args => [qw(session_id building_id)] },
+    donate_to_stash        => { default_args => [qw(session_id building_id)] },
+    exchange_with_stash    => { default_args => [qw(session_id building_id)] },
+
   };
 }
 
