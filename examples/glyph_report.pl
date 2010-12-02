@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-
 use strict;
 use warnings;
 use FindBin;
@@ -9,6 +8,8 @@ use Games::Lacuna::Client ();
 use YAML;
 use YAML::Dumper;
 use Getopt::Long qw(GetOptions);
+
+binmode STDOUT, ":utf8";
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {

@@ -54,6 +54,9 @@
   types:
       - gypsum
       - galena
+- name: Beeldeban Nest
+  types:
+      - unknown
 - name: Black Hole Generator
   types:
       - unknown
