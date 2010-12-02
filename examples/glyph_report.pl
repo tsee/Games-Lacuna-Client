@@ -24,6 +24,7 @@ my $empire  = $client->empire->get_status->{empire};
 my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
 # Scan each planet
+my %all_glyphs;
 foreach my $name ( sort keys %planets ) {
 
     # Load planet data
@@ -37,6 +38,8 @@ foreach my $name ( sort keys %planets ) {
     my $arch_id = first {
             $buildings->{$_}->{name} eq 'Archaeology Ministry'
     } keys %$buildings;
+
+    next if not $arch_id;
     
     my $arch   = $client->building( id => $arch_id, type => 'Archaeology' );
     my $glyphs = $arch->get_glyphs->{glyphs};
