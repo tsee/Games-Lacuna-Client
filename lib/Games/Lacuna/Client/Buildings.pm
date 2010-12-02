@@ -14,6 +14,7 @@ our @BuildingTypes = (qw(
     Archaeology
     Development
     Embassy
+    Entertainment
     Intelligence
     MiningMinistry
     MissionCommand

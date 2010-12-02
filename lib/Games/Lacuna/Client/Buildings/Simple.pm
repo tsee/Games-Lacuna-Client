@@ -29,7 +29,6 @@ our @BuildingTypes = (qw(
     Dairy
     Denton
     EnergyReserve
-    Entertainment
     Espionage
     EssentiaVein
     Fission
