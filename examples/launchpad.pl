@@ -13,11 +13,8 @@ my $coords = $ARGV[2];
 
 usage() unless $shiptype && $coords;
 
-#my %opts = ('cfg_file' => "/path/to/lacuna.yml",
-#            'cache_file' => "/path/to/lac_cache.dat",
-#            'refresh' => $refresh);
-my %opts = ('cfg_file' => "/home/mmusgrove/lacuna/lacuna.yml",
-            'cache_file' => "/home/mmusgrove/lacuna/cache/lac_cache.dat",
+my %opts = ('cfg_file' => "/path/to/lacuna.yml",
+            'cache_file' => "/path/to/lac_cache.dat",
             'refresh' => $refresh);
 
 my ($t_type, $t_name) = split(":", $coords);
