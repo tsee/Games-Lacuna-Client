@@ -7,7 +7,11 @@ use lib "$FindBin::Bin/../lib";
 use List::Util            (qw(first));
 use Games::Lacuna::Client ();
 use Getopt::Long;
-$Games::Lacuna::Client::PrettyPrint::ansi_color = 1;
+
+if ( $^O !~ /MSWin32/) {
+    $Games::Lacuna::Client::PrettyPrint::ansi_color = 1;
+}
+
 my $opt_update_yml = 0;
 GetOptions(
     'c|color!' => \$Games::Lacuna::Client::PrettyPrint::ansi_color,
