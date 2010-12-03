@@ -31,8 +31,10 @@ our @BuildingTypes = (qw(
     WasteRecycling
   ),
 );
-eval join '',
-   map { "require Games::Lacuna::Client::Buildings::$_;" } @BuildingTypes;
+for my $building_type ( @BuildingTypes ){
+    eval "require Games::Lacuna::Client::Buildings::$building_type;";
+    die "Unable to load building type module $building_type: $@" if $@;
+}
 
 use Class::XSAccessor {
   getters => [qw(building_id)],
