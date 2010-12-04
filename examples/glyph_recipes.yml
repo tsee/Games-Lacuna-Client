@@ -1,169 +1,211 @@
 ---
 - name: Algae Pond
+  class: resource
   types:
       - uraninite
       - methane
 - name: Beach 1
+  class: decor
   types:
       - gypsum
 - name: Beach 2
+  class: decor
   types:
       - gypsum
       - gypsum
 - name: Beach 3
+  class: decor
   types:
       - gypsum
       - magnetite
 - name: Beach 4
+  class: decor
   types:
       - gypsum
       - uraninite
 - name: Beach 5
+  class: decor
   types:
       - gypsum
       - halite
 - name: Beach 6
+  class: decor
   types:
       - gypsum
       - rutile
 - name: Beach 7
+  class: decor
   types:
       - gypsum
       - chalcopyrite
 - name: Beach 8
+  class: decor
   types:
       - gypsum
       - sulfur
 - name: Beach 9
+  class: decor
   types:
       - gypsum
       - anthracite
 - name: Beach 10
+  class: decor
   types:
       - gypsum
       - methane
 - name: Beach 11
+  class: decor
   types:
       - gypsum
       - chromite
 - name: Beach 12
+  class: decor
   types:
       - gypsum
       - goethite
 - name: Beach 13
+  class: decor
   types:
       - gypsum
       - galena
 - name: Beeldeban Nest
+  class: resource
   types:
       - unknown
 - name: Black Hole Generator
+  class: resource
   types:
       - unknown
 - name: Citadel of Knope
+  class: resource
   types:
       - beryl
       - sulfur
       - monazite
       - galena
 - name: Crashed Ship Site
+  class: resource
   types:
       - monazite
       - trona
       - gold
       - bauxite
 - name: Crater
+  class: decor
   types:
       - rutile
 - name: Gas Giant Platfrom
+  class: resource
   types:
       - sulfur
       - methane
       - galena
       - anthracite
 - name: Geo Thermal Vent
+  class: resource
   types:
       - chalcopyrite
       - sulfur
 - name: Gratchs Gauntlet
+  class: resource
   types:
       - unknown
 - name: Grove of Trees
+  class: decor
   types:
       - methane
 - name: Halls of Vrbansk
+  class: resource
   types:
       - unknown
 - name: Interdimensional Rift
+  class: resource
   types:
       - methane
       - zircon
       - fluorite
 - name: Kalavain Ruins
+  class: resource
   types:
       - galena
       - gold
 - name: Kasterns Keep
+  class: resource
   types:
       - unknown
 - name: Lake
+  class: decor
   types:
       - goethite
 - name: Lapis Forest
+  class: resource
   types:
       - halite
       - anthracite
 - name: Library of Jith
+  class: resource
   types:
       - unknown
 - name: Malcud Field
+  class: resource
   types:
       - fluorite
       - kerogen
 - name: Massads Henge
+  class: resource
   types:
       - unknown
 - name: Natural Spring
+  class: resource
   types:
       - magnetite
       - halite
 - name: Oracle of Anid
+  class: resource
   types:
       - unknown
 - name: Pantheon of Hagness
+  class: resource
   types:
       - gypsum
       - trona
       - beryl
       - anthracite
 - name: Patch of Sand
+  class: decor
   types:
       - bauxite
 - name: Ravine
+  class: resource
   types:
       - zircon
       - methane
       - galena
       - fluorite
 - name: Rocky Outcropping
+  class: decor
   types:
       - trona
 - name: Temple of the Drajilites
+  class: resource
   types:
       - kerogen
       - rutile
       - chromite
       - chalcopyrite
 - name: Terraforming Platform
+  class: resource
   types:
       - methane
       - zircon
       - magnetite
       - beryl
 - name: The Dillon Forge
+  class: resource
   types:
       - unknown
 - name: Volcano
+  class: resource
   types:
       - magnetite
       - uraninite

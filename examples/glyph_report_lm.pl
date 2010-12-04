@@ -16,15 +16,18 @@ unless ( $cfg_file and -e $cfg_file ) {
 	die "Did not provide a config file";
 }
 
+my $recipe_yml = 'glyph_recipes.yml';
+my $decor = 0;
+
+GetOptions{
+  'g=s' => \$recipe_yml,
+  'decor' => \$decor,
+};
+
 my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
 	# debug    => 1,
 );
-my $recipe_yml = 'glyph_recipes.yml';
-
-GetOptions{
-  'g=s' => \$recipe_yml,
-};
 
 #Load recipe file
 my $recipes = YAML::LoadFile($recipe_yml);
@@ -97,6 +100,7 @@ foreach my $name ( sort keys %planets ) {
 print "\nPossible Recipes:\n";
 foreach my $recipe (sort @$recipes) {
   my $good = 1;
+  next if ($recipe->{class} eq "decor" && $decor == 0);
   foreach my $ingredient (@{$recipe->{types}}) {
     unless (defined($glyph_names{$ingredient})) {
       print "Define: $ingredient\n";
