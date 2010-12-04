@@ -15,12 +15,15 @@ our @BuildingTypes = (qw(
     Capitol
     Development
     Embassy
+    EnergyReserve
     Entertainment
+    FoodReserve
     Intelligence
     MiningMinistry
     MissionCommand
     Network19
     Observatory
+    OreStorage
     Park
     PlanetaryCommand
     Security
@@ -29,6 +32,7 @@ our @BuildingTypes = (qw(
     Trade
     Transporter
     WasteRecycling
+    WaterStorage
   ),
 );
 for my $building_type ( @BuildingTypes ){

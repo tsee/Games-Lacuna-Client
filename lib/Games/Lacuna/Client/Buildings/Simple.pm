@@ -28,7 +28,6 @@ our @BuildingTypes = (qw(
     CrashedShipSite
     Dairy
     Denton
-    EnergyReserve
     Espionage
     EssentiaVein
     Fission
@@ -83,11 +82,8 @@ our @BuildingTypes = (qw(
     WaterProduction
     WaterPurification
     WaterReclamation
-    WaterStorage
     Wheat
   ),
-  'FoodReserve', # extended view method, but same interface as far as we are concerned
-  'OreStorage', # extended view method, but same interface as far as we are concerned
 );
 
 
