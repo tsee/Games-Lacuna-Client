@@ -4,12 +4,27 @@ use warnings;
 use Games::Lacuna::Cache;
 use Data::Dumper;
 
+######################################
+# Recommended usage: Run this script with an argument of 1, and check the 
+# server calls. There should be one call for the Empire, and one per planet.
+# Run it again in 10 minutes, and check for a lack of server calls. You can
+# also check the extrapolation figures against your actual figures if you
+# like.
+
+
+
 my $refresh = $ARGV[0] || 0;
 print "Refresh: $refresh \n";
 binmode STDOUT, ":utf8";
 
+my %opts = ('cfg_file' => "/path/to/lacuna.yml",
+                         'cache_file' => "/path/to/lac_cache.dat",
+                         'cache_debug' => 1,
+                         'refresh' => $refresh);
 
-my $laluna = Games::Lacuna::Cache->new($refresh);
+                         
+
+my $laluna = Games::Lacuna::Cache->new(%opts);
 
 # Store your own data for more direct manipulation....
 my $empire_data = $laluna->empire_data();
@@ -24,6 +39,7 @@ foreach my $planet (keys %{$laluna->planet_data()}){
     my $name = $empire_data->{'planets'}{$planet};
     utf8::decode($name);
     print "Waste per hour on $name : $planet_data->{'waste_hour'}\n";
+    print "Extrapolated waste on $name: $planet_data->{'waste_stored'}\n";
 }
 
 print "======= END PLANET DATA ========\n\n";

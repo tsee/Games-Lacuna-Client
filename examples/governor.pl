@@ -24,7 +24,10 @@ my $client = Games::Lacuna::Client->new(
     #debug    => 1,
 );
 
-$Games::Lacuna::Client::PrettyPrint::ansi_color = 1;
+if ( $^O !~ /MSWin32/) {
+    $Games::Lacuna::Client::PrettyPrint::ansi_color = 1;
+}
+
 my $governor = Games::Lacuna::Client::Governor->new( $client, $governor_config );
 my $arg = shift @ARGV;
 $governor->run( defined $arg and $arg eq 'refresh' );

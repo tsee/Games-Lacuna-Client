@@ -21,6 +21,10 @@ WriteMakefile(
         'Date::Parse'       => '0',
         'Date::Format'      => '0',
         'Number::Format'    => '0',
+        'FindBin'           => '0',
+        'MIME::Lite'        => '0',
+        'Crypt::SSLeay'     => '0', # or IO::Socket::SSL
+        'Exception::Class'  => '0',
     },                                               # e.g., Module::Name => 1.1
     (
         $] >= 5.005

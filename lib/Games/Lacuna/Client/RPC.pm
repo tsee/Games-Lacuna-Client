@@ -29,6 +29,15 @@ use Class::XSAccessor {
   getters => [qw(ua marshal)],
 };
 
+use Exception::Class (
+    'LacunaException',
+    'LacunaRPCException' => {
+        isa         => 'LacunaException',
+        description => 'The RPC service generated an error.',
+        fields      => [qw(code text)],
+    },
+);
+
 sub new {
   my $class = shift;
   my %opt = @_;
@@ -70,9 +79,15 @@ sub call {
   }
   $self->{client}->{total_calls}++;
 
-  if ($res->error) {
-    Carp::croak("RPC Error (" . $res->error->code . "): " . $res->error->message);
-  }
+  LacunaRPCException->throw(
+    error   => "RPC Error (" . $res->error->code . "): " . $res->error->message,
+    code    => $res->error->code,
+    ## Note we don't use the key 'message'. Exception::Class stringifies based
+    ## on "message or error" attribute. For backwards compatiblity we don't
+    ## want to change how this object will stringify.
+    text    => $res->error->message,
+  ) if $res->error;
+
   return $res->deflate;
 }
 
@@ -90,6 +105,14 @@ Games::Lacuna::Client::RPC - The actual RPC client
   use Games::Lacuna::Client;
 
 =head1 DESCRIPTION
+
+=head1 EXCEPTIONS
+
+=head2 LacunaRPCException
+
+This exception is generated if the RPC call fails. It is an Exception::Class object that has the RPC error details.
+
+Attribute C<< $e->code >> contains the error code. Attribute C<< $e->text >> contains the error text.
 
 =head1 AUTHOR
 

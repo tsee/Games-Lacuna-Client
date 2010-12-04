@@ -18,25 +18,20 @@ unless ( $cfg_file and -e $cfg_file ) {
 	die "Did not provide a config file";
 }
 
-my @ship_names;
-my @ship_types;
 my $speed;
 my $max;
 my $from;
 my $star;
 my $planet;
+my $trades_per_page = 25;
 
 GetOptions(
-    'ship=s@'  => \@ship_names,
-    'type=s@'  => \@ship_types,
     'speed=i'  => \$speed,
     'max=i'    => \$max,
     'from=s'   => \$from,
     'star=s'   => \$star,
     'planet=s' => \$planet,
 );
-
-usage() if !@ship_names && !@ship_types;
 
 usage() if !$from;
 
@@ -112,6 +107,18 @@ my $body      = $client->body( id => $from_id );
 my $result    = $body->get_buildings;
 my $buildings = $result->{buildings};
 
+# Find the Subspace Transporter
+my $transporter_id = first {
+        $buildings->{$_}->{name} eq 'Subspace Transporter'
+} keys %$buildings;
+
+return if !$transporter_id;
+
+my $transporter = $client->building( id => $transporter_id, type => 'Transporter' );
+
+# Find waste trades
+my @trades = get_trades();
+
 # Find the first Space Port
 my $space_port_id = first {
         $buildings->{$_}->{name} eq 'Space Port'
@@ -123,13 +130,27 @@ my $ships = $space_port->get_ships_for( $from_id, { body_id => $target_id}  );
 
 my $available = $ships->{available};
 my $sent = 0;
+my %trade_withdrawn;
+
+@$available = grep { $_->{type} eq "scow" } @$available;
 
 for my $ship ( @$available ) {
-    next if @ship_names && !grep { $ship->{name} eq $_ } @ship_names;
-    next if @ship_types && !grep { $ship->{type} eq $_ } @ship_types;
     next if $speed && $speed != $ship->{speed};
     
+    my $trade =
+        first {
+               $_->{offer_quantity} == $ship->{hold_size}
+            && !$trade_withdrawn{ $_->{id} }
+        }
+        @trades;
+    
+    next if !$trade;
+    
     $space_port->send_ship( $ship->{id}, { $target_type => $target_id } );
+    
+    # withdraw trade
+    $transporter->withdraw_trade( $trade->{id} );
+    $trade_withdrawn{ $trade->{id} } = 1;
     
     printf "Sent %s to %s\n", $ship->{name}, $target_name;
     
@@ -138,23 +159,49 @@ for my $ship ( @$available ) {
 }
 
 
+sub get_trades {
+    my $trades = $transporter->view_my_trades;
+    my $count  = $trades->{trade_count};
+    
+    return if !$count;
+    
+    my $page = 1;
+    
+    my @trades = @{ $trades->{trades} };
+    
+    $count -= $trades_per_page;
+    
+    while ( $count > 0 ) {
+        $page++;
+        
+        push @trades, @{ $transporter->view_my_trades( $page )->{trades} };
+        
+        $count -= $trades_per_page;
+    }
+    
+    @trades = grep { $_->{offer_type} eq 'waste' } @trades;
+    
+    return @trades;
+}
+
+
 sub usage {
   die <<"END_USAGE";
-Usage: $0 send_ship.yml
-       --ship       NAME
-       --type       TYPE
+Usage: $0 send_scows.yml
        --speed      SPEED
        --max        MAX
        --from       NAME  (required)
        --star       NAME
        --planet     NAME
 
-Either of --ship_name or --type is required.
+There must be at least as much waste already in storage as the largest
+hold-size of any scow being sent, as get_ships_for() will only return scows
+for which there is sufficient waste available.
 
---ship_name can be passed multiple times.
-
---type can be passed multiple times.
-It must match the ship's "type", not "type_human", e.g. "scanner", "spy_pod".
+Each scow is only sent if there is a SST trade available, whose waste offered
+exactly matches the hold-size of the scow.
+Each trade is withdrawn after each scow is sent, to avoid overflowing the
+waste storage.
 
 If --max is set, this is the maximum number of matching ships that will be
 sent. Default behaviour is to send all matching ships.

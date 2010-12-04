@@ -1,13 +1,15 @@
 package Games::Lacuna::Client::Governor;
 use strict;
 use warnings;
+use English qw(-no_match_vars);
 no warnings 'uninitialized'; # Yes, I count on undef to be zero.  Cue admonishments.
 
 use Games::Lacuna::Client::PrettyPrint qw(trace message warning action ptime phours);
 use List::Util qw(sum max min);
-use List::MoreUtils qw(any part);
+use List::MoreUtils qw(any part uniq);
 use Hash::Merge qw(merge);
 use JSON qw(to_json from_json);
+use Carp;
 
 use Data::Dumper;
 
@@ -44,9 +46,10 @@ sub run {
     my $do_keepalive = 1;
     my $start_time = time();
 
-    $self->load_building_cache();
+    $self->load_cache();
 
     do {
+        my @priorities;
         if ( $self->{config}->{dry_run} ) {
             message("Starting dry run, actions are not actually taking place...");
         }
@@ -56,12 +59,25 @@ sub run {
             trace( "Examining " . $planets->{$pid} ) if ( $self->{config}->{verbosity}->{trace} );
             my $colony_config = merge( $config->{colony}->{ $planets->{$pid} } || {}, $config->{colony}->{_default_} );
 
+            ### Fix the merge w/ priority lists.
+            ### Normally Hash::Merge just concats two lists.
+            ### We want our more specific array to override.
+            if( my $colony_priorities = $config->{colony}{$planets->{$pid}}{priorities} ){
+                $colony_config->{priorities} = $colony_priorities;
+            }
+
             next if ( not exists $colony_config->{priorities} or $colony_config->{exclude} );
             $self->{current}->{planet_id} = $pid;
             $self->{current}->{config}    = $colony_config;
+            push @priorities, @{$colony_config->{priorities} || [] };
             $self->govern();
         }
-        $self->coordinate_pushes();
+
+        ### Do post_$priority actions.
+        for my $priority (uniq @priorities) {
+            $self->do_post_priority($priority);
+        }
+
         Games::Lacuna::Client::PrettyPrint::ship_report($self->{ship_info},$self->{config}->{ship_info_sort}) if defined $self->{ship_info};
         trace(sprintf("%d RPC calls this run",$self->{client}->{total_calls})) if ($self->{config}->{verbosity}->{trace});
         if ( $self->{config}->{dry_run} ) {
@@ -82,7 +98,7 @@ sub run {
         }
     } while ($do_keepalive);
 
-    $self->write_building_cache();
+    $self->write_cache();
 }
 
 sub govern {
@@ -97,17 +113,26 @@ sub govern {
     my $status  = $result->{status}->{body};
     $self->{status}->{$pid} = $status;
 
+    Games::Lacuna::Client::PrettyPrint::show_bar('*');
     message("Governing ".$status->{name}) if ($self->{config}->{verbosity}->{message});
     Games::Lacuna::Client::PrettyPrint::show_status($status) if ($self->{config}->{verbosity}->{summary});
     Games::Lacuna::Client::PrettyPrint::surface($surface_image,$details) if ($self->{config}->{verbosity}->{surface_map});
-    $self->{building_cache}->{body}->{$pid} = $details; 
-    for my $bid (keys %{$self->{building_cache}->{body}->{$pid}}) {
-        $self->{building_cache}->{body}->{$pid}->{$bid}->{pretty_type} = 
-            Games::Lacuna::Client::Buildings::type_from_url( $self->{building_cache}->{body}->{$pid}->{$bid}->{url} );
+    $self->{cache}->{body}->{$pid} = $details; 
+    for my $bid (keys %{$self->{cache}->{body}->{$pid}}) {
+        $self->{cache}->{body}->{$pid}->{$bid}->{pretty_type} = 
+            Games::Lacuna::Client::Buildings::type_from_url( $self->{cache}->{body}->{$pid}->{$bid}->{url} );
     }
 
     if ($self->{config}->{verbosity}->{production}) {
-        Games::Lacuna::Client::PrettyPrint::production_report(map { $self->building_details($pid,$_) } keys %$details);
+        my @buildings = map { $self->building_details($pid,$_) } keys %$details;
+        # We need to get the details from view_platform at the mining ministry, if it exists, and add it into the details.
+        for (@buildings) {
+            if ($_->{name} eq 'Mining Ministry') {
+                my $platforms = $client->building( id => $_->{id}, type => 'MiningMinistry' )->view_platforms->{platforms};
+                $_->{ore_hour} += sum( map { my $p=$_; sum(map { $p->{$_ } } grep {/_hour$/} keys %$p) } @$platforms);
+            }
+        }
+        Games::Lacuna::Client::PrettyPrint::production_report(@buildings);
     }
 
 
@@ -135,6 +160,14 @@ sub govern {
     }
 
     my $current_queue = scalar grep { exists $_->{pending_build} } values %$details;
+    $self->{current}->{build_queue} = [ 
+        map { 
+            { 
+                building_id => $_, 
+                seconds_remainings => $details->{$_}->{pending_build}->{seconds_remaining},
+            }
+        } grep { exists $details->{$_}->{pending_build} } keys %$details
+    ];
     $self->{current}->{build_queue_remaining} = $max_queue - $current_queue;
     $self->{next_action}->{$pid} = max(map { $_->{pending_build}->{seconds_remaining} + time } values %$details);
     if ($current_queue == $max_queue) {
@@ -142,8 +175,7 @@ sub govern {
     } 
 
     for my $priority (@{$cfg->{priorities}}) {
-        trace("Priority: $priority") if ($self->{config}->{verbosity}->{trace});
-        $self->$priority();
+        $self->do_priority($priority);
     }
 
     if ($dev_ministry) {
@@ -154,97 +186,313 @@ sub govern {
     }
 }
 
+sub do_post_priority {
+    my $self    = shift;
+    my $priority = shift;
+    $priority = lc $priority;
+
+    trace("Post Priority: $priority") if $self->{config}{verbosity}{trace};
+    my $postsub = "post_$priority";
+
+    if( $self->can($postsub) ){
+        $self->$postsub();
+        return;
+    }
+
+    ### Try to see if a plugin wants to run.
+    my $plugin = $self->_priority_to_plugin($priority);
+
+    return if not $plugin;
+    return if not $plugin->can('post_run');
+
+    $plugin->post_run($self, $priority);
+
+    return;
+}
+
+sub _priority_to_plugin {
+    my $self     = shift;
+    my $priority = shift;
+    $priority = lc $priority;
+
+    my $cased_name  = join q{::}, map { ucfirst } split qr/_/, $priority;
+    $cased_name     = "Games::Lacuna::Client::Governor::$cased_name";
+    my $file_name  .= "$cased_name.pm";
+    $file_name     =~ s{::}{/}g;
+
+    if( not $INC{$file_name} ){
+        ### Module is not loaded, try to load it.
+        eval qq{require "$file_name";$cased_name->import();};
+
+        if( $EVAL_ERROR and $EVAL_ERROR =~ m/Can't locate $file_name in \@INC/ ){
+            #trace(
+            #    "Unable to load priority module [$priority].",
+            #    " We were unable to find the module in \@INC, is it spelled correctly?"
+            #);
+            return;
+        }
+        elsif( $EVAL_ERROR ){
+            warning("Error occured while loading priority module [$priority => $file_name]: $EVAL_ERROR");
+            return;
+        }
+    }
+
+    return $cased_name;
+}
+
+sub do_priority {
+    my $self    = shift;
+    my $priority = shift;
+    trace("Priority: $priority") if ($self->{config}->{verbosity}->{trace});
+
+    $priority = lc $priority;
+
+    if( $self->can($priority) ){
+        $self->$priority();
+        return;
+    }
+    else {
+        ### Grab the module name and run it.
+        my $plugin = $self->_priority_to_plugin($priority);
+        return if not $plugin;
+        $plugin->run($self, $priority);
+    }
+    return;
+}
+
+sub post_pushes {
+    my $self = shift;
+    $self->coordinate_pushes();
+}
+
 sub coordinate_pushes {
     my $self = shift;
     my $info = $self->{push_info};
-    my $min  = $self->{config}->{push_minimum_load};
 
     $Data::Dumper::Sortkeys = 1;
     #print Dumper $info;
 
     delete $self->{trade_ships};
     $self->{sent_ships} = [];
-    trace("Requiring minimum load of $min x capacity to make a push") if ($self->{config}->{verbosity}->{trace});
-    $self->coordinate_push_mode($info,$min,1);  # Overload pushes
-    $self->coordinate_push_mode($info,$min);    # Request pushes
+    trace("Coordinating pushes...");
+    my @candidates;
+    push @candidates, $self->coordinate_push_mode($info,1);  # Overload pushes
+    push @candidates, $self->coordinate_push_mode($info,0);    # Request pushes
+    $self->send_pushes(@candidates);
 }
 
-sub coordinate_push_mode {
-    my ( $self, $info, $min, $mode ) = @_;    # $mode is true for overload
+sub send_pushes {
+    my $self = shift;
+    my $info = $self->{push_info};
+    my @candidates = @_;
+    my %partial_routes;
+    my %all_routes;
+    my @selected_routes;
 
+    for my $candidate (@candidates) {
+        my $ship = $candidate->{ship};
+        my $dest = $candidate->{dest};
+        push @{$partial_routes{$ship}->{$dest}},$candidate;
+    }
+
+    for my $ship (keys %partial_routes) {
+        
+        my @potential_destinations;
+        for my $dest ( keys %{$partial_routes{$ship}} ) {
+            my $first = $partial_routes{$ship}->{$dest}->[0];
+            my $trip_composite = {
+                trade       => $first->{trade},
+                orig        => $first->{orig},
+                dest        => $first->{dest},
+                name        => $first->{name},
+                ship        => $first->{ship},
+                travel_time => $first->{travel_time},
+                hold_size   => $first->{hold_size},
+            };
+            for my $trip_res ( @{$partial_routes{$ship}->{$dest}} ) {
+                push @{$trip_composite->{items}}, @{$trip_res->{items}};
+            }
+
+            # Scale down composite resources to fit available space, if needed.
+            my $composite_sum = sum(map { $_->{quantity} } @{$trip_composite->{items}});
+            if ($composite_sum > $trip_composite->{hold_size}) {
+                my $ratio = ($trip_composite->{hold_size} / $composite_sum);
+                $_->{quantity} = int($_->{quantity} * $ratio) for @{$trip_composite->{items}};
+            }
+            @{$trip_composite->{items}} = grep { $_->{quantity} > 0 } @{$trip_composite->{items}};
+            push @potential_destinations, $trip_composite;
+        }
+
+        push @{$all_routes{$ship}}, @potential_destinations;
+    }
+
+    for my $dest (keys %{$self->{cache}->{shipments}}) {
+        # Reduce space_left by project arrivals for shipments known to the governor
+        $self->{cache}->{shipments}->{$dest} = [grep { $_->{arrival} gt time } @{$self->{cache}->{shipments}->{dest}}];
+        for my $shipment (@{$self->{cache}->{shipments}->{$dest}}) {
+            $info->{$dest}->{$shipment->{resource}}->{space_left} -= $shipment->{quantity};
+        }
+    }
+
+    for my $ship (keys %all_routes) {
+        my $selected_route;
+        my $selected_metric = 0;
+        route: for my $route (@{$all_routes{$ship}}) {
+            my $dest = $route->{dest};
+            my @carrying = map { $_->{type} } @{$route->{items}};
+            my $load_size = sum(map { $_->{quantity} } @{$route->{items}});
+            $route->{load_size} = $load_size;
+
+            # Don't consider this route if the recipient planet can't store the load
+            # or if the source planet doesn't have the resources anymore.
+            for my $shipping_item (@{$route->{items}}) {            
+                my $type = $shipping_item->{type};
+                my $qty  = $shipping_item->{quantity};
+                my $res  = (any {$_ eq $type} $self->food_types) ? 'food' :
+                           (any {$_ eq $type} $self->ore_types)  ? 'ore'  :
+                            $type;
+                my $avail_res  = $info->{$route->{orig}}->{$res}->{available};
+                my $space_left = $info->{$route->{dest}}->{$res}->{space_left};
+
+                # Reduce space_left by projected usage at current production levels on target
+                $space_left -= int($self->{status}->{$dest}->{"$res\_hour"} * ($route->{travel_time}/3600));
+  
+                next route if ($avail_res < $qty);
+                next route if ($space_left < $qty);
+            }
+
+            # Don't consider this route if the hold is not full enough.
+            next if (($load_size / $route->{hold_size}) < $self->{config}->{push_minimum_load});
+
+            # Give large bonus to metric if the destination is actually requesting something.
+            my $carrying_food = any { my $x=$_; any { $x eq $_ } $self->food_types } @carrying;
+            my $carrying_ore = any { my $x=$_; any { $x eq $_ } $self->ore_types } @carrying;
+            my $metric = ($load_size / $route->{travel_time}) + 
+                (any { $info->{$dest}->{$_}->{requested} > 0 } @carrying) ? 10_000 :
+                (($info->{$dest}->{food}->{requested} > 0) && $carrying_food) ? 10_000 :
+                (($info->{$dest}->{ore}->{requested} > 0) && $carrying_ore) ? 10_000 : 0;
+            if ($selected_metric < $metric) {
+                $selected_route = $route;
+            }
+        }
+
+        next if not defined $selected_route;
+        push @selected_routes, $selected_route;
+
+        # Reduce the space_left at the target, and the availability at the source
+        for my $shipping_item (@{$selected_route->{items}}) {            
+            my $type = $shipping_item->{type};
+            my $qty  = $shipping_item->{quantity};
+            my $res  = (any {$_ eq $type} $self->food_types) ? 'food' :
+                       (any {$_ eq $type} $self->ore_types)  ? 'ore'  :
+                       $type;
+            $info->{$selected_route->{dest}}->{$res}->{space_left} -= $qty;
+            $info->{$selected_route->{orig}}->{$type}->{available} -= $qty;
+
+            # Cache data about this shipment and its arrival time for later invocations of governor
+            push @{$self->{cache}->{shipments}->{$selected_route->{dest}}}, {
+                resource => $res,
+                quantity => $qty,
+                arrival  => time + 60,
+                ship     => $selected_route->{name},
+            };
+        }
+    }
+
+    if (not scalar @selected_routes) {
+        trace("No suitable pushes found.") if ($self->{config}->{verbosity}->{trace});
+    }
+
+    for my $candidate (@selected_routes) {
+        action(
+            sprintf "Pushing from %s to %s with %s carrying: %s (%d/%d cargo)\n",
+            $self->{planet_names}->{ $candidate->{orig} },
+            $self->{planet_names}->{ $candidate->{dest} },
+            $candidate->{name}, join(q{, },map { $_->{quantity}." ".$_->{type} } @{$candidate->{items}}),
+            $candidate->{load_size},$candidate->{hold_size}
+        );
+        if (not $self->{config}->{dry_run}) {
+            $info->{ $candidate->{orig} }->{trade}->push_items( $candidate->{dest}, $candidate->{items}, { ship_id => $candidate->{ship} } );
+        }
+        push @{$self->{sent_ships}}, $candidate->{ship};
+    }
+
+    if ($self->{config}->{verbosity}->{en_route}) {
+        print "Shipments en route:\n";
+        print "-" x 78;
+        print "\n";
+        for my $dest (keys %{$self->{cache}->{shipments}}) {
+            for my $s (@{$self->{cache}->{shipments}->{$dest}}) {
+                printf "%15s %15s %8s %-15s %s\n",$dest,substr($s->{ship},0,15),$s->{quantity},$s->{resource},scalar localtime($s->{arrival});
+            }
+        }
+    }
+}
+
+
+sub coordinate_push_mode {
+    my ( $self, $info, $mode ) = @_;    # $mode is true for overload
+
+    my @candidates = ();
     for my $pid ( keys %$info ) {
         for my $res ( keys %{ $info->{$pid} } ) {
             next if ( $mode && $info->{$pid}->{$res}->{overload} == 0 );
             my $reqd = $info->{$pid}->{$res}->{ $mode ? 'overload' : 'requested' };
-            if ( $reqd > 0 ) {
-                trace(sprintf("%s would like to %s %s %s",
-                    $self->{planet_names}->{$pid},
-                    ($mode ? 'get rid of' : 'ask for'),
-                    $reqd,
-                    $res)) if ($self->{config}->{verbosity}->{trace});
-                my $candidate;
-                for my $other ( keys %$info ) {
-                    next if ( $other == $pid );
-                    my $orig = $mode ? $pid   : $other;
-                    my $dest = $mode ? $other : $pid;
+            next if ($reqd <= 0);
+            trace(sprintf("%s would like to %s %s %s",
+                $self->{planet_names}->{$pid},
+                ($mode ? 'get rid of' : 'ask for'),
+                int($reqd),
+                $res)) if ($self->{config}->{verbosity}->{trace});
+            for my $other ( keys %$info ) {
+                next if ( $other == $pid );
+                my $orig = $mode ? $pid   : $other;
+                my $dest = $mode ? $other : $pid;
 
-                    my $avail = $mode ? min( $info->{$other}->{$res}->{space_left}, $reqd ) : min( $info->{$other}->{$res}->{available} , $reqd ); 
-                    my @ships = defined $self->{trade_ships}->{$orig} 
+                my $avail = $mode ? min( $info->{$other}->{$res}->{space_left}, $reqd ) : min( $info->{$other}->{$res}->{available} , $reqd ); 
+                my @ships;
+                if( $info->{$orig}->{trade} ){
+                    @ships = defined $self->{trade_ships}->{$orig}
                         ? (grep { my $s=$_; not any { $s->{id} == $_ } @{$self->{sent_ships}} } @{$self->{trade_ships}->{$orig}})
                         : @{ $info->{$orig}->{trade}->get_trade_ships()->{ships} };
-                    $self->{trade_ships}->{$orig} = [@ships];
-
-                    if ( defined $self->{config}->{push_ships_named} ) {
-                        my $name_match = $self->{config}->{push_ships_named};
-                        @ships = grep { $_->{name} =~ /$name_match/i } @ships;
-                    }
-                    @ships = grep { ( $avail / $_->{hold_size} ) >= $min } @ships;
-                    for my $ship (@ships) {
-                        my $amt_to_ship = $avail > $ship->{hold_size} ? $ship->{hold_size} : $avail;
-
-                        my @items;
-                        if ($res eq 'food' or $res eq 'ore') {
-                            for my $spec ($res eq 'food' ? $self->food_types : $self->ore_types) {
-                                my $has = $mode ? $info->{$pid} : $info->{$other};
-                                push @items, { type => $spec, quantity => int(($has->{$spec}->{available} / $has->{$res}->{available}) * $amt_to_ship) };
-                            }
-                        } else {
-                            push @items, { type => $res, quantity => int($amt_to_ship) };
-                        }
-                        @items = grep { $_->{quantity} > 0 } @items;
-
-                        $ship->{estimated_travel_time} = $self->estimate_travel_time($orig,$dest,$ship->{speed});
-
-                        my $metric = $amt_to_ship / $ship->{estimated_travel_time};
-                        if ( $metric > $candidate->{metric} ) {    # Candidate metric is cargo amount / time to destination
-                            $candidate->{metric} = $metric;
-                            $candidate->{trade}  = $info->{$orig}->{trade};
-                            $candidate->{orig}   = $orig;
-                            $candidate->{dest}   = $dest;
-                            $candidate->{name}   = $ship->{name};
-                            $candidate->{ship}   = $ship->{id};
-                            $candidate->{items}  = [ @items ];
-                        }
-                    }
                 }
-                if ( defined $candidate ) {
-                    action(
-                        sprintf "Pushing from %s to %s with %s carrying: %s\n",
-                        $self->{planet_names}->{ $candidate->{orig} },
-                        $self->{planet_names}->{ $candidate->{dest} },
-                        $candidate->{name}, join(q{, },map { $_->{quantity}." ".$_->{type} } @{$candidate->{items}})
-                    );
-                    if (not $self->{config}->{dry_run}) {
-                        $info->{ $candidate->{orig} }->{trade}->push_items( $candidate->{dest}, $candidate->{items}, { ship_id => $candidate->{ship} } );
-                    }
-                    push @{$self->{sent_ships}}, $candidate->{ship};
+                $self->{trade_ships}->{$orig} = [@ships];
+
+                if ( defined $self->{config}->{push_ships_named} ) {
+                    my $name_match = $self->{config}->{push_ships_named};
+                    @ships = grep { $_->{name} =~ /$name_match/i } @ships;
                 }
-                else {
-                    trace("No suitable pushes found.") if ($self->{config}->{verbosity}->{trace});
+                for my $ship (@ships) {
+                    my $amt_to_ship = $avail > $ship->{hold_size} ? $ship->{hold_size} : $avail;
+
+                    my @items;
+                    if ($res eq 'food' or $res eq 'ore') {
+                        for my $spec ($res eq 'food' ? $self->food_types : $self->ore_types) {
+                            my $has = $mode ? $info->{$pid} : $info->{$other};
+                            next if not $has->{$res}{available};
+                            push @items, { type => $spec, quantity => int(($has->{$spec}->{available} / $has->{$res}->{available}) * $amt_to_ship) };
+                        }
+                    } else {
+                        push @items, { type => $res, quantity => int($amt_to_ship) };
+                    }
+                    @items = grep { $_->{quantity} > 0 } @items;
+
+                    next unless (scalar @items);
+                    push @candidates, {
+                        travel_time => $self->estimate_travel_time( $orig, $dest, $ship->{speed} ),
+                        trade       => $info->{$orig}->{trade},
+                        orig        => $orig,
+                        dest        => $dest,
+                        hold_size   => $ship->{hold_size},
+                        name        => $ship->{name},
+                        ship        => $ship->{id},
+                        items       => [@items],
+                    };
                 }
             }
         }
     }
+    return @candidates;
 }
 
 sub repairs {
@@ -284,7 +532,7 @@ sub resource_crisis {
             my $upgrade_succeeded = $self->attempt_upgrade_for($res, $type, 1 ); # 1 for override, this is a crisis.
 
             if ($upgrade_succeeded) {
-                my $bldg_data = $self->{building_cache}->{body}->{$status->{id}}->{$upgrade_succeeded};
+                my $bldg_data = $self->{cache}->{body}->{$status->{id}}->{$upgrade_succeeded};
                 action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
             } else {
                 warning("Could not find any suitable buildings to upgrade") if $self->{config}->{verbosity}->{warning};
@@ -348,7 +596,7 @@ sub _resource_upgrader {
         my $upgrade_succeeded = $self->attempt_upgrade_for($selected, $type ); # 1 for override, this is a crisis.
 
         if ($upgrade_succeeded) {
-            my $bldg_data = $self->{building_cache}->{body}->{$status->{id}}->{$upgrade_succeeded};
+            my $bldg_data = $self->{cache}->{body}->{$status->{id}}->{$upgrade_succeeded};
             action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
             last;
         } else {
@@ -589,19 +837,22 @@ sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes 
 sub building_details {
     my ($self, $pid, $bid) = @_;
 
-    if ((time - $self->{building_cache}->{cache_time} > $self->{config}->{cache_duration})
+    croak "Unable to retrieve building_details, require a valid planet_id and building_id"
+        if not $pid or not $bid;
+
+    if ((time - $self->{cache}->{cache_time} > $self->{config}->{cache_duration})
         or
-        ($self->{building_cache}->{body}->{$pid}->{$bid}->{level} ne $self->{building_cache}->{building}->{$bid}->{level})
+        ($self->{cache}->{body}->{$pid}->{$bid}->{level} ne $self->{cache}->{building}->{$bid}->{level})
         or
-        (not defined $self->{building_cache}->{building}->{$bid}->{pretty_type})) {
-        $self->refresh_building_details($self->{building_cache}->{body}->{$pid},$bid);
+        (not defined $self->{cache}->{building}->{$bid}->{pretty_type})) {
+        $self->refresh_building_details($self->{cache}->{body}->{$pid},$bid);
     }
-    delete $self->{building_cache}->{building}->{$bid}->{work};
-    delete $self->{building_cache}->{building}->{$bid}->{pending_build};
-    return merge($self->{building_cache}->{body}->{$pid}->{$bid},$self->{building_cache}->{building}->{$bid});
+    delete $self->{cache}->{building}->{$bid}->{work};
+    delete $self->{cache}->{building}->{$bid}->{pending_build};
+    return merge($self->{cache}->{body}->{$pid}->{$bid},$self->{cache}->{building}->{$bid});
 }
 
-sub load_building_cache {
+sub load_cache {
     my ($self) = shift;
     my $cache_file = $self->{config}->{cache_dir} . "/buildings.json";
     my $data;
@@ -618,19 +869,19 @@ sub load_building_cache {
         trace("No cache file found") if ($self->{config}->{verbosity}->{trace});
     } else {
         trace("Loading building cache") if ($self->{config}->{verbosity}->{trace});
-        $self->{building_cache} = $data;
+        $self->{cache} = $data;
     }
 }
 
-sub refresh_building_cache {
+sub refresh_cache {
     my ($self) = shift;
 
     for my $pid (keys %{$self->{status}->{empire}->{planets}}) {
         my $details = $self->{client}->body( id => $pid )->get_buildings()->{buildings};
-        $self->{building_cache}->{body}->{$pid} = $details;
+        $self->{cache}->{body}->{$pid} = $details;
         $self->refresh_building_details($details,$_) for ( keys %$details );
     }
-    $self->write_building_cache();
+    $self->write_cache();
 }
 
 sub refresh_building_details {
@@ -647,35 +898,38 @@ sub refresh_building_details {
         return;
     }
 
-    $self->{building_cache}->{building}->{$bldg_id} = $client->building( id => $bldg_id, type => $details->{$bldg_id}->{pretty_type} )->view()->{building};
-    $self->{building_cache}->{building}->{$bldg_id}->{pretty_type} = $details->{$bldg_id}->{pretty_type};
+    $self->{cache}->{building}->{$bldg_id} = $client->building( id => $bldg_id, type => $details->{$bldg_id}->{pretty_type} )->view()->{building};
+    $self->{cache}->{building}->{$bldg_id}->{pretty_type} = $details->{$bldg_id}->{pretty_type};
 }
 
-sub write_building_cache {
+sub write_cache {
     my ($self) = shift;
     
     my $cache_file = $self->{config}->{cache_dir} . "/buildings.json";
     
-    $self->{building_cache}->{cache_time} = time;
+    $self->{cache}->{cache_time} = time;
 
     if(open( my $fh, '>', $cache_file)) { 
-        print $fh to_json($self->{building_cache});
+        print $fh to_json($self->{cache});
         close $fh;
     }
 }
 
-sub attempt_upgrade_for {
-    my ($self,$resource,$type,$override) = @_;
+sub attempt_upgrade {
+    my ($self, $buildings, $override) = @ARG;
     my ($status, $pid, $cfg) = @{$self->{current}}{qw(status planet_id config)};
 
-    my @all_options = $self->resource_buildings($resource,$type);
+    croak "No buildings specified for upgrade attempt" if not $buildings;
+    croak "Current planet_id is not set" if not $pid;
+
+    my @all_options = ref $buildings eq 'ARRAY' ? @$buildings : $buildings;
 
     my %build_above = map { $_ => (($cfg->{profile}->{$_}->{build_above} > 0) ?
                 $cfg->{profile}->{$_}->{build_above} :
                 $cfg->{profile}->{_default_}->{build_above})
         } qw(food ore water energy);
 
-    Games::Lacuna::Client::PrettyPrint::upgrade_report(\%build_above,map { $self->building_details($pid,$_->{building_id}) } @all_options)
+    Games::Lacuna::Client::PrettyPrint::upgrade_report($status,\%build_above,map { $self->building_details($pid,$_->{building_id}) } @all_options)
         if ($self->{config}->{verbosity}->{upgrades});
 
     # Abort if an upgrade is in progress.
@@ -690,13 +944,14 @@ sub attempt_upgrade_for {
 
     my @options = part {
         my $bid = $_->{building_id};
-        (
-            not any { ($status->{"$_\_stored"} - $self->building_details($pid,$bid)->{upgrade}->{cost}->{$_}) 
+        my $insuff_resources = 
+            any { ($status->{"$_\_stored"} - $self->building_details($pid,$bid)->{upgrade}->{cost}->{$_}) 
                 < $build_above{$_} 
-            } qw(food ore water energy)
-            and (not ($status->{waste_stored} + $self->building_details($pid,$bid)->{upgrade}->{cost}->{waste})
-                > $status->{waste_capacity})
-        )+0;
+            } qw(food ore water energy);
+        my $waste_overflow = 
+            ($status->{waste_stored} + $self->building_details($pid,$bid)->{upgrade}->{cost}->{waste})
+                > $status->{waste_capacity};
+        return (not $insuff_resources and not $waste_overflow)+0;
     } @all_options;
 
     @options = map { ref $_ ? $_ : [] } @options[0,1];
@@ -708,9 +963,15 @@ sub attempt_upgrade_for {
     }
 
     my $upgrade_succeeded = 0;
+    UPGRADE:
     for my $upgrade (@upgrade_options) {
+        my $details = $self->building_details($pid,$upgrade->{building_id});
+        if (any { $_ eq $details->{pretty_type} } @{$cfg->{never_upgrade}}) {
+            trace(sprintf("Not allowed to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level})) if ($self->{config}->{verbosity}->{trace});
+            next;
+        }
+
         eval { 
-            my $details = $self->building_details($pid,$upgrade->{building_id});
             trace(sprintf("Attempting to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level})) if ($self->{config}->{verbosity}->{trace});
             if (not $self->{config}->{dry_run}) {
                $upgrade->upgrade();
@@ -722,12 +983,17 @@ sub attempt_upgrade_for {
                }
             }
         };
-        if (not $@) {
-            $upgrade_succeeded = $upgrade->{building_id};
-        } else {
-            trace("Upgrade failed: $@") if ($self->{config}->{verbosity}->{trace});
+        my $e = LacunaRPCException->caught;
+        if( $e and $e->code == '1010' ){
+            trace("This buildings already has an upgrade in progress!");
         }
-        last if $upgrade_succeeded;
+        elsif( $e = Exception::Class->caught ){
+            warning("Upgrade failed: $e");
+        }
+        else {
+            $upgrade_succeeded = $upgrade->{building_id};
+        }
+        last UPGRADE if $upgrade_succeeded;
     }
 
     # Decrement remaining build queue if upgrade succeeded.
@@ -735,12 +1001,21 @@ sub attempt_upgrade_for {
     return $upgrade_succeeded;
 }
 
+sub attempt_upgrade_for {
+    my ($self,$resource,$type,$override) = @_;
+    my ($status, $pid, $cfg) = @{$self->{current}}{qw(status planet_id config)};
+
+    my @all_options = $self->resource_buildings($resource,$type);
+
+    return $self->attempt_upgrade( \@all_options, $override );
+}
+
 sub resource_buildings {
     my ($self,$res,$type) = @_;
     my ($pid, $status, $cfg) = @{$self->{current}}{qw(planet_id status config)};
 
     my @pertinent_buildings;
-    for my $bid (keys %{$self->{building_cache}->{body}->{$pid}}) {
+    for my $bid (keys %{$self->{cache}->{body}->{$pid}}) {
         my $pertinent = 0;
         my $details = $self->building_details($pid,$bid);
         my $pretty_type = $details->{pretty_type};
@@ -766,8 +1041,8 @@ sub find_buildings {
     my $pid  = $self->{current}->{planet_id};
     my @retlist;
 
-    for my $bid (keys %{$self->{building_cache}->{body}->{$pid}}) {
-        my $pretty_type = $self->{building_cache}->{body}->{$pid}->{$bid}->{pretty_type};
+    for my $bid (keys %{$self->{cache}->{body}->{$pid}}) {
+        my $pretty_type = $self->{cache}->{body}->{$pid}->{$bid}->{pretty_type};
         push @retlist, $self->{client}->building( id => $bid, type => $pretty_type ) if $pretty_type eq $type;
     }
     return @retlist;
@@ -776,7 +1051,7 @@ sub find_buildings {
 sub pertinence_sort {
     my ($self,$res,$preference,$type,$left,$right) = @_;
     $preference = 'most_effective' if not defined ($preference);
-    my $cache = $self->{building_cache}->{building};
+    my $cache = $self->{cache}->{building};
 
     my $sort_types = {
         'most_effective' => {
@@ -1117,6 +1392,11 @@ triggered which forces production upgrades for those resources.
 If this is true for any particular colony which would otherwise be governed,
 the governor will skip this colony and perform no actions.
 
+=head2 never_upgrade
+
+If defined, buildings whose class name appear in this list will never be upgraded by the governor.
+Classnames are, for example, "MiningMinistry" or "Fusion".
+
 =head2 pcc_is_storage
 
 If true, the Planetary Command Center is considered a regular storage
@@ -1137,6 +1417,12 @@ Note: resource_upgrades performs both a production_upgrades and storage_upgrades
 To be implemented are:
 
 repairs, construction, other_upgrades
+
+B<Note: See the Games::Lacuna::Governor namespace for plugins.> Most plugins can be activated
+by simply including their names in the priority list.
+
+Known plugins: L<Games::Lacuna::Governor::Astronomy>, L<Games::Lacuna::Governor::Archaeology>,
+L<Games::Lacuna::Governor::Party>.
 
 =head2 profile
 
@@ -1325,12 +1611,12 @@ Pick whichever we produce least of
 
 =head1 SEE ALSO
 
-Games::Lacuna::Client, by Steffen Mueller on which this module is dependent.
+L<Games::Lacuna::Client>, by Steffen Mueller on which this module is dependent.
 
 Of course also, the Lacuna Expanse API docs themselves at L<http://us1.lacunaexpanse.com/api>. 
 
-The Games::Lacuna::Client distribution includes two files pertinent to this script. Well, three.  We need 
-Games::Lacuna::Client::PrettyPrint for output.
+The L<Games::Lacuna::Client distribution> includes two files pertinent to this script. Well, three.  We need 
+L<Games::Lacuna::Client::PrettyPrint> for output.
 
 Also, in F<examples>, you've got the example config file in governor.yml, and the example script in governor.pl.
 

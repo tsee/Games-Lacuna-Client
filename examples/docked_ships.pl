@@ -2,6 +2,8 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use List::Util            (qw(max));
 use Games::Lacuna::Client ();
 
@@ -45,10 +47,11 @@ foreach my $planet_id ( sort keys %$planets ) {
     print "=" x length $name;
     print "\n";
     
-    my $max_length = max map { length _prettify_name($_) } keys %$ships
+    my $max_length = max( map { length _prettify_name($_) } keys %$ships )
                    || 0;
     
-    $max_length = max $max_length, length $available;
+    $max_length = length($available) > $max_length ? length $available
+                :                                    $max_length;
     
     for my $type ( sort keys %$ships ) {
         printf "%${max_length}s: %d\n",
@@ -56,7 +59,7 @@ foreach my $planet_id ( sort keys %$planets ) {
             $ships->{$type};
     }
     
-    printf "%s: %d\n",
+    printf "%${max_length}s: %d\n",
         $available,
         $space_port->{docks_available};
     

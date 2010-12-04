@@ -1,8 +1,8 @@
-package Games::Lacuna::Client::Buildings::MiningMinistry;
+package Games::Lacuna::Client::Buildings::Capitol;
 use 5.0080000;
 use strict;
-use warnings;
 use Carp 'croak';
+use warnings;
 
 use Games::Lacuna::Client;
 use Games::Lacuna::Client::Buildings;
@@ -11,12 +11,9 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    view                    => { default_args => [qw(session_id building_id)] },
-    view_platforms          => { default_args => [qw(session_id building_id)] },
-    view_ships              => { default_args => [qw(session_id building_id)] },
-    abandon_platform        => { default_args => [qw(session_id building_id)] },
-    add_cargo_ship_to_fleet => { default_args => [qw(session_id building_id)] },
-    remove_cargo_ship_from_fleet => { default_args => [qw(session_id building_id)] },
+    view          => { default_args => [qw(session_id building_id)] },
+    rename_empire => { default_args => [qw(session_id building_id)] },
+
   };
 }
 
@@ -27,7 +24,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Buildings::MiningMinistry - The Mining Ministry building
+Games::Lacuna::Client::Buildings::Capitol - The Capitol building
 
 =head1 SYNOPSIS
 

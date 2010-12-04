@@ -1,4 +1,4 @@
-package Games::Lacuna::Client::Buildings::MiningMinistry;
+package Games::Lacuna::Client::Buildings::Entertainment;
 use 5.0080000;
 use strict;
 use warnings;
@@ -11,12 +11,8 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    view                    => { default_args => [qw(session_id building_id)] },
-    view_platforms          => { default_args => [qw(session_id building_id)] },
-    view_ships              => { default_args => [qw(session_id building_id)] },
-    abandon_platform        => { default_args => [qw(session_id building_id)] },
-    add_cargo_ship_to_fleet => { default_args => [qw(session_id building_id)] },
-    remove_cargo_ship_from_fleet => { default_args => [qw(session_id building_id)] },
+    view            => { default_args => [qw(session_id building_id)] },
+    duck_quack      => { default_args => [qw(session_id building_id)] },
   };
 }
 
@@ -27,7 +23,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Buildings::MiningMinistry - The Mining Ministry building
+Games::Lacuna::Client::Buildings::Entertainment - The Entertainment District building
 
 =head1 SYNOPSIS
 

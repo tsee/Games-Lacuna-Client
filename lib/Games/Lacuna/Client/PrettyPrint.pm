@@ -2,6 +2,7 @@ package Games::Lacuna::Client::PrettyPrint;
 use English qw(-no_match_vars);
 use List::Util qw(sum);
 use warnings;
+no warnings 'uninitialized';
 use Term::ANSIColor;
 
 use Exporter;
@@ -27,7 +28,7 @@ sub show_status {
         sprintf("%-10s %8s /%8s %11s %4s   %s",'Resource','Stored','Capacity','Production','Full','Hours (until full)'),
         _c_('reset'));
     for my $res (qw(food ore water energy waste happiness)) {
-        my $pct_full = $res eq 'happiness' ? 0 : ($status->{"$res\_stored"} / $status->{"$res\_capacity"})*100;
+        my $pct_full = !$status->{$res .'_capacity'} ? 0 : ($status->{"$res\_stored"} / $status->{"$res\_capacity"})*100;
         printf "%s%-10s%s:%s %7d %s/%s %7s %s(%s%6d%s/hr)%s %s %s %s%s\n",
             _c_('bold green'),
             ucfirst($res),
@@ -51,19 +52,22 @@ sub show_status {
 }
 
 sub upgrade_report {
-    my ($build_above,@buildings) = @_;
-
+    my ($status,$build_above,@buildings) = @_;
     show_bar('=');
     say(_c_('bold yellow'),"Upgrade Options Report",_c_('reset'));
     show_bar('-');
-               printf "%7s %20s %2s %3s %6s %6s %6s %6s\n","ID","Type","Lv","Can","Food","Ore","Water","Energy";
+    printf "%7s %15s %2s %3s %7s %7s %7s %7s %s\n","ID","Type","Lv","Can","Food","Ore","Water","Energy","Waste";
     show_bar('-');
-    printf "%s%-35s %6s %6s %6s %6s%s\n",_c_('bold green'),"Build Above",@{$build_above}{qw(food ore water energy)},_c_('reset');
+    printf "%s%-30s %7s %7s %7s %7s      --%s\n",_c_('bold green'),"Build Above",@{$build_above}{qw(food ore water energy)},_c_('reset');
+    printf "%s%-30s %7s %7s %7s %7s %7s%s\n",_c_('bold green'),"Avail. For Build",
+        (map { $status->{"$_\_stored"} - $build_above->{$_} } qw(food ore water energy)),
+        $status->{"waste_capacity"} - $status->{"waste_stored"},
+        _c_('reset');
     show_bar('-');
     for my $bldg (@buildings) {
         my $up = $bldg->{upgrade};
         print _c_('cyan');
-        printf "%7s %20s %2s %3s %6s %6s %6s %6s\n",$bldg->{id},$bldg->{pretty_type},$bldg->{level},$up->{can} ? 'YES' : 'NO',map {$up->{cost}->{$_} } qw(food ore water energy);
+        printf "%7s %15s %2s %3s %7s %7s %7s %7s %7s\n",$bldg->{id},substr($bldg->{pretty_type},0,15),$bldg->{level},$up->{can} ? 'YES' : 'NO',map {$up->{cost}->{$_} } qw(food ore water energy waste);
         print _c_('reset');
     }
     if (not scalar @buildings) {
@@ -133,6 +137,37 @@ sub ship_report {
     show_bar('=');
 }
 
+sub mission_list {
+    use Text::Wrap;
+    $Text::Wrap::columns = 78;
+    my ($planet,$terse,@missions) = @_;
+    show_bar('=','bold black');
+    say(_c_('bold yellow')."$planet Mission Command"._c_('reset'));
+    show_bar('-','bold black');
+    for (@missions) {
+        say(_c_('bold white').sprintf("[%d] %s",$_->{id},$_->{name}));
+        say(_c_('bold blue'),'Max Uni.: ',_c_('bold cyan'),$_->{max_university_level},
+            _c_('reset')._c_('bold blue'),', Posted: ',_c_('bold cyan'),$_->{date_posted});
+        my @objectives = @{$_->{objectives}};
+        my @rewards   = @{$_->{rewards}};
+        if (not $terse) {
+            say(_c_('reset').wrap('','',$_->{description}));
+            say(_c_('bold white')."\nObjectives:");
+            for (@objectives) {
+                say(_c_('bold yellow').$_);
+            }
+            say(_c_('bold white')."\nRewards:");
+            for (@rewards) {
+                say(_c_('bold green').$_);
+            }
+        } else {
+            say(_c_('bold white')."Objectives: "._c_('bold yellow').join(q{, },@objectives));
+            say(_c_('bold white')."Rewards: "._c_('bold green').join(q{, },@rewards));
+        }
+        show_bar('-','bold black');
+    }
+}   
+
 sub production_report { 
     # Takes a list of hashrefs, each is the "building" portion of view()
     my @buildings = @_; 
@@ -182,22 +217,24 @@ sub production_report {
 
 sub trade_list {
     show_bar('-','green');
-    printf("%15s %10s %15s %10s %s\n",
+    printf("%15s %10s %15s %10s %10s %s\n",
         'Empire',
         'Ratio',
         'Asking',
         'Offering',
+        'Quantity',
         'Description',
     );
-    for (@_) {
-        my $rt = $_->{real_type};
-        printf("%s%15s %s%10s %s%15s %s%10s %s\n",
+    for my $item (@_) {
+        my $rt = $item->{real_type};
+        my ($desc) = $item->{offer_description} =~ m/^(?:\d+\s)?(.+)/imxg;
+        printf("%s%15s %s%10s %s%15s %s%10s %10i %s\n",
             _c_('bold cyan'),
-            substr($_->{empire}->{name},0,15),
+            substr($item->{empire}->{name},0,15),
             _c_('reset')._c_('cyan'),
-            $_->{ratio},
+            $item->{ratio},
             _c_('reset'),
-            substr($_->{ask_description},0,15),
+            substr($item->{ask_description},0,15),
             _c_($rt eq 'food' ? 'bold green' :
                 $rt eq 'ore'  ? 'bold yellow' :
                 $rt eq 'water' ? 'bold blue' :
@@ -208,7 +245,8 @@ sub trade_list {
                 $rt eq 'ship' ? 'bold white' :
                 'reset'),
             $rt,
-            $_->{offer_description},
+            $item->{offer_quantity},
+            $desc,
         );
     }
     show_bar('-','green');
@@ -235,23 +273,23 @@ sub production_sum {
 }
 
 sub message {
-    my $message = shift;
-    say(_c_('bold blue'),' (*) ',_c_('cyan'),$message,_c_('reset'));
+    my @messages = @ARG;;
+    say(_c_('bold blue'),' (*) ',_c_('cyan'),@messages,_c_('reset'));
 }
 
 sub warning {
-    my $message = shift;
-    say(_c_('bold red'),' <!> ',_c_('yellow'),$message,_c_('reset'));
+    my @messages = @ARG;;
+    say(_c_('bold red'),' <!> ',_c_('yellow'),@messages,_c_('reset'));
 }
 
 sub action {
-    my $message = shift;
-    say(_c_('bold green'),' [+] ',_c_('white'),$message,_c_('reset'));
+    my @messages = @ARG;;
+    say(_c_('bold green'),' [+] ',_c_('white'),@messages,_c_('reset'));
 }
 
 sub trace {
-    my $message = shift;
-    say(_c_('blue'),'   .oO( ',_c_('cyan'),$message,_c_('blue'),' )',_c_('reset'));
+    my @messages = @ARG;;
+    say(_c_('blue'),'   .oO( ',_c_('cyan'),@messages,_c_('blue'),' )',_c_('reset'));
 }
 
 sub show_bar {
