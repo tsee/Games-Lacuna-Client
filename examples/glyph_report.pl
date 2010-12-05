@@ -383,7 +383,7 @@ Functional Recipes:
       - zircon
       - fluorite
     quantity:
-      flourite: 1
+      fluorite: 1
       methane: 1
       zircon: 1
   Kalavian Ruins:
@@ -405,7 +405,7 @@ Functional Recipes:
       - fluorite
       - kerogen
     quantity:
-      flourite: 1
+      fluorite: 1
       kerogen: 1
   Natural Spring:
     order:
@@ -432,7 +432,7 @@ Functional Recipes:
       - galena
       - fluorite
     quantity:
-      flourite: 1
+      fluorite: 1
       galena: 1
       methane: 1
       zircon: 1
