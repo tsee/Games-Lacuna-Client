@@ -6,7 +6,6 @@
 #  
 use strict;
 use warnings;
-use Games::Lacuna::Client;
 use Getopt::Long qw(GetOptions);
 use YAML;
 use Data::Dumper;

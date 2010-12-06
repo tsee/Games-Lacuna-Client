@@ -39,13 +39,13 @@ GetOptions(
   for my $pid (keys %$planets) {
     my $buildings = $client->body(id => $pid)->get_buildings()->{buildings};
     my $planet_name = $client->body(id => $pid)->get_status()->{body}->{name};
-    next unless ($planet_name eq "Reykjavik"); # Test Planet
+    next unless ($planet_name eq "Helsinki"); # Test Planet
     print "$planet_name\n";
 
-#    my @sybit = grep { $buildings->{$_}->{url} eq '/orestorage' } keys %$buildings;
+    my @sybit = grep { $buildings->{$_}->{url} eq '/orestorage' } keys %$buildings;
 #    my @sybit = grep { $buildings->{$_}->{url} eq '/foodreserve' } keys %$buildings;
 #    my @sybit = grep { $buildings->{$_}->{url} eq '/energyreserve' } keys %$buildings;
-    my @sybit = grep { $buildings->{$_}->{url} eq '/waterstorage' } keys %$buildings;
+#    my @sybit = grep { $buildings->{$_}->{url} eq '/waterstorage' } keys %$buildings;
     if (@sybit) {
       print "Storage!\n";
     }
@@ -61,7 +61,7 @@ GetOptions(
   for my $sy_id (@dump) {
     print "Trying to Dump\n";
 #    $em_bit = $client->building( id => $sy_id, type => 'OreStorage' )->view();
-#    $em_bit = $client->building( id => $sy_id, type => 'OreStorage' )->dump("beryl", "80");
+    $em_bit = $client->building( id => $sy_id, type => 'OreStorage' )->dump("fluorite", "50000");
 #    $em_bit = $client->building( id => $sy_id, type => 'FoodReserve' )->dump("wheat", "2000");
 #    $em_bit = $client->building( id => $sy_id, type => 'EnergyReserve' )->dump("2000");
 #    $em_bit = $client->building( id => $sy_id, type => 'WaterStorage' )->dump("2000");

@@ -14,6 +14,7 @@ our @BuildingTypes = (qw(
     Apple
     Bean
     Beeldeban
+    BeeldebanNest
     Bread
     Burger
     Capitol
@@ -57,6 +58,7 @@ our @BuildingTypes = (qw(
     OreRefinery
     Oversight
     Pancake
+    PantheonOfHagness
     Pie
     PilotTraining
     Potato
@@ -73,6 +75,7 @@ our @BuildingTypes = (qw(
     TempleOfTheDrajilites
     TerraformingLab
     TerraformingPlatform
+    ThemePark
     University
     Volcano
     WasteEnergy

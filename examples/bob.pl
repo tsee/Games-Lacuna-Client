@@ -9,8 +9,8 @@ my $refresh = $ARGV[0] || 0;
 #print "Refresh: $refresh \n";
 binmode STDOUT, ":utf8";
 
-my %opts = ('cfg_file' => "/path/to/lacuna.yml",
-            'cache_file' => "/path/to/.lac_cache.dat",
+my %opts = ('cfg_file' => "/home/lemming/mine/lacuna/bin/norway.yml",
+            'cache_file' => "/home/lemming/mine/lacuna/bin/cache/.lac_cache.dat",
             'refresh' => $refresh);
 
 

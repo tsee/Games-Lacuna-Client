@@ -8,10 +8,13 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client;
 use Getopt::Long qw(GetOptions);
 use YAML;
 use YAML::Dumper;
+use Games::Lacuna::Client::Buildings::Observatory;
 
   my $cfg_file = shift(@ARGV) || 'lacuna.yml';
   unless ( $cfg_file and -e $cfg_file ) {
@@ -19,8 +22,10 @@ use YAML::Dumper;
   }
 
 my $probe_file = "probe_data.yml";
+my $share = 0;
 GetOptions(
-  'o=s' => \$probe_file,
+  'output=s' => \$probe_file,
+  'share' => \$share
 );
   
   my $client = Games::Lacuna::Client->new(

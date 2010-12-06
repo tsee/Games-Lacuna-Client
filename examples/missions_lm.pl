@@ -5,6 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client;
+use Games::Lacuna::Client::Buildings::MissionCommand;
 use Getopt::Long qw(GetOptions);
 use YAML;
 use YAML::Dumper;
@@ -14,9 +15,9 @@ use YAML::Dumper;
     die "Did not provide a config file";
   }
 
-my $embassy_file = "data_embassy.yml";
+my $mission_file = "data_missions.yml";
 GetOptions(
-  'o=s' => \$embassy_file,
+  'o=s' => \$mission_file,
 );
   
   my $client = Games::Lacuna::Client->new(
@@ -26,7 +27,7 @@ GetOptions(
 
   my $dumper = YAML::Dumper->new;
   $dumper->indent_width(4);
-  open(OUTPUT, ">", "$embassy_file") || die "Could not open $embassy_file";
+  open(OUTPUT, ">", "$mission_file") || die "Could not open $mission_file";
 
   my $data = $client->empire->view_species_stats();
 
@@ -35,34 +36,28 @@ GetOptions(
   my $home_planet_id = $data->{status}->{empire}->{home_planet_id}; 
 
 # Get Embassies
-  my @embassy;
+  my @mission;
   for my $pid (keys %$planets) {
     my $buildings = $client->body(id => $pid)->get_buildings()->{buildings};
     my $planet_name = $client->body(id => $pid)->get_status()->{body}->{name};
 
-    my @sybit = grep { $buildings->{$_}->{name} eq 'Embassy' } keys %$buildings;
+    my @sybit = grep { $buildings->{$_}->{name} eq 'Mission Command' } keys %$buildings;
     
-    push @embassy, @sybit;
+    push @mission, @sybit;
   }
 
-  print "Embassy IDs: ".join(q{, },@embassy)."\n";
+  print "MC IDs: ".join(q{, },@mission)."\n";
 
-# Find embassy
+# Find mission
   my @builds;
-  my $em_bit;
-  my %donate_hash;
-  $donate_hash{"water"} = 500;
-#  my $donate =  {
-#      'water' => 5000,
-#      'monazite' => 30000,
-#      'shake' => 1000,
-#    };
-  for my $sy_id (@embassy) {
-    $em_bit = $client->building( id => $sy_id, type => 'Embassy' )->donate_to_stash(\%donate_hash);
-    $em_bit = $client->building( id => $sy_id, type => 'Embassy' )->view_stash();
-    push @builds, $em_bit;
+  my $mc_bit;
+  my $sy_id;
+  for $sy_id (@mission) {
+#    $mc_bit = $client->building( id => $sy_id, type => 'MissionCommand' )->skip_mission(18238);
+#    $mc_bit = $client->building( id => $sy_id, type => 'MissionCommand' )->skip_mission(19130);
+#    $mc_bit = $client->building( id => $sy_id, type => 'MissionCommand' )->skip_mission(14629);
+    $mc_bit = $client->building( id => $sy_id, type => 'MissionCommand' )->get_missions();
+    push @builds, $mc_bit;
   }
-
-print OUTPUT $dumper->dump(\@builds);
-close(OUTPUT);
-
+  print OUTPUT $dumper->dump(\@builds);
+  close(OUTPUT);
