@@ -39,6 +39,8 @@ foreach my $planet_id ( sort keys %$planets ) {
             $buildings->{$_}->{name} eq 'Space Port'
     } keys %$buildings;
     
+    next if !$space_port_id;
+    
     my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' )->view;
     
     my $ships = $space_port->{docked_ships};
