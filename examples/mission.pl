@@ -25,13 +25,6 @@ GetOptions(
     'complete=n' => \@complete,
 );
 
-my $cfg_file = shift(@ARGV) || 'lacuna.yml';
-unless ( $cfg_file and -e $cfg_file ) {
-	die "Did not provide a config file";
-}
-
-my $client = Games::Lacuna::Client->new( cfg_file => $cfg_file );
-
 if ($show_help) {
     print << 'END_USAGE';
 Usage: perl mission.pl [options]
@@ -54,6 +47,13 @@ Options:
 END_USAGE
     exit;
 }
+
+my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+unless ( $cfg_file and -e $cfg_file ) {
+	die "Did not provide a config file";
+}
+
+my $client = Games::Lacuna::Client->new( cfg_file => $cfg_file );
 
 $Games::Lacuna::Client::PrettyPrint::ansi_color = $use_color;
 my $data = $client->empire->view_species_stats();
