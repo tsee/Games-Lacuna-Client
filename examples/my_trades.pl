@@ -79,7 +79,8 @@ for my $name (sort keys %my_trades) {
         my $max_length = max map { length $_->{offer_description} } @trades;
         
         for my $trade (@trades) {
-            printf "Offering %-${max_length}s for %s\n",
+            printf "%s offered %-${max_length}s for %s\n",
+                $trade->{date_offered},
                 $trade->{offer_description},
                 $trade->{ask_description};
         }
@@ -105,7 +106,7 @@ sub get_trades {
     while ( $count > 0 ) {
         $page++;
         
-        push @trades, @{ $building->view_my_trades( $page )->{trades} };
+        push @trades, @{ $building->view_my_market( $page )->{trades} };
         
         $count -= $trades_per_page;
     }
