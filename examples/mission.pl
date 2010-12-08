@@ -7,8 +7,6 @@ use Games::Lacuna::Client::PrettyPrint qw(warning action);
 
 $| = 1;
 
-my $client_config   = '/path/to/your/config';
-my $client = Games::Lacuna::Client->new( cfg_file => $client_config );
 my $planet;
 my $use_color;
 my $show_help;
@@ -26,6 +24,13 @@ GetOptions(
     'skip=n'     => \@skip,
     'complete=n' => \@complete,
 );
+
+my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+unless ( $cfg_file and -e $cfg_file ) {
+	die "Did not provide a config file";
+}
+
+my $client = Games::Lacuna::Client->new( cfg_file => $cfg_file );
 
 if ($show_help) {
     print << 'END_USAGE';
