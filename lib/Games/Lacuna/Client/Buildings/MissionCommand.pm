@@ -11,9 +11,10 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    get_missions    => { default_args => [qw(session_id building_id)] },
-    view_missions   => { default_args => [qw(session_id building_id)] },
-    skip_mission    => { default_args => [qw(session_id building_id)] },
+    get_missions     => { default_args => [qw(session_id building_id)] },
+    view_missions    => { default_args => [qw(session_id building_id)] },
+    skip_mission     => { default_args => [qw(session_id building_id)] },
+    complete_mission => { default_args => [qw(session_id building_id)] },
   };
 }
 
