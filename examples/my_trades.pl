@@ -106,7 +106,7 @@ sub get_trades {
     while ( $count > 0 ) {
         $page++;
         
-        push @trades, @{ $building->view_my_market( $page )->{trades} };
+        push @trades, @{ $building->view_my_trades( $page )->{trades} };
         
         $count -= $trades_per_page;
     }
