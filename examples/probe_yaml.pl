@@ -22,12 +22,12 @@ use Games::Lacuna::Client::Buildings::Observatory;
   }
 
 my $probe_file = "probe_data.yml";
-my $share    = 0;
+my $clean    = 0;
 my $empire   = '';
 
 GetOptions(
   'output=s' => \$probe_file,
-  'share' => \$share,
+  'clean' => \$clean,
   'empire=s' => \$empire,
 );
   
@@ -76,12 +76,12 @@ GetOptions(
   my @bodies;
   for my $star (@stars) {
     my @tbod;
-    if (!$share or $ename ne '') {
+    if ($clean or $ename ne '') {
       for my $bod ( @{$star->{bodies}} ) {
         if ($empire ne '' and defined($bod->{empire})) {
           push @tbod, $bod if $bod->{empire}->{name} =~ /$empire/;
         }
-        elsif (defined($bod->{empire}) && (($share == 0) && ($bod->{empire}->{name} eq "$ename"))) {
+        elsif (defined($bod->{empire}) && ($clean && ($bod->{empire}->{name} eq "$ename"))) {
           delete $bod->{building_count};
 #          delete $bod->{empire};
           delete $bod->{energy_capacity};
@@ -113,11 +113,6 @@ GetOptions(
     }
     push @bodies, @tbod if (@tbod);
   }
-
-# Calculate some metadata
-#  for my $bod (@bodies) {
-#    $bod->{distance} = sqrt(($hx - $p->{x})**2 + ($hy - $p->{y})**2);
-#  }
 
 print OUTPUT $dumper->dump(\@bodies);
 close(OUTPUT);
