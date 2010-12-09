@@ -22,10 +22,13 @@ use Games::Lacuna::Client::Buildings::Observatory;
   }
 
 my $probe_file = "probe_data.yml";
-my $share = 0;
+my $share    = 0;
+my $empire   = '';
+
 GetOptions(
   'output=s' => \$probe_file,
-  'share' => \$share
+  'share' => \$share,
+  'empire=s' => \$empire,
 );
   
   my $client = Games::Lacuna::Client->new(
@@ -39,14 +42,12 @@ GetOptions(
 
   my $data = $client->empire->view_species_stats();
 
-# Get orbits
-  my $min_orbit = $data->{species}->{min_orbit};
-  my $max_orbit = $data->{species}->{max_orbit};
-
 # Get planets
   my $planets        = $data->{status}->{empire}->{planets};
   my $home_planet_id = $data->{status}->{empire}->{home_planet_id}; 
-  my ($hx,$hy)       = @{$client->body(id => $home_planet_id)->get_status()->{body}}{'x','y'};
+  my $home_stat      = $client->body(id => $home_planet_id)->get_status();
+  my $ename          = $home_stat->{body}->{empire}->{'name'};
+  my ($hx,$hy)       = @{$home_stat->{body}}{'x','y'};
 
 # Get obervatories;
   my @observatories;
@@ -55,7 +56,6 @@ GetOptions(
     push @observatories, grep { $buildings->{$_}->{url} eq '/observatory' } keys %$buildings;
   }
 
-  print "Orbits: $min_orbit through $max_orbit\n";
   print "Observatory IDs: ".join(q{, },@observatories)."\n";
 
 # Find stars
@@ -75,26 +75,50 @@ GetOptions(
 # Gather planet data
   my @bodies;
   for my $star (@stars) {
-    push @bodies, @{$star->{bodies}};
+    my @tbod;
+    if (!$share or $ename ne '') {
+      for my $bod ( @{$star->{bodies}} ) {
+        if ($empire ne '' and defined($bod->{empire})) {
+          push @tbod, $bod if $bod->{empire}->{name} =~ /$empire/;
+        }
+        elsif (defined($bod->{empire}) && (($share == 0) && ($bod->{empire}->{name} eq "$ename"))) {
+          delete $bod->{building_count};
+#          delete $bod->{empire};
+          delete $bod->{energy_capacity};
+          delete $bod->{energy_hour};
+          delete $bod->{energy_stored};
+          delete $bod->{food_capacity};
+          delete $bod->{food_hour};
+          delete $bod->{food_stored};
+          delete $bod->{happiness};
+          delete $bod->{happiness_hour};
+          delete $bod->{needs_surface_refresh};
+          delete $bod->{ore_capacity};
+          delete $bod->{ore_hour};
+          delete $bod->{ore_stored};
+          delete $bod->{plots_available};
+          delete $bod->{population};
+          delete $bod->{waste_capacity};
+          delete $bod->{waste_hour};
+          delete $bod->{waste_stored};
+          delete $bod->{water_capacity};
+          delete $bod->{water_hour};
+          delete $bod->{water_stored};
+          push @tbod, $bod;
+        }
+      }
+    }
+    else {
+      @tbod = @{$star->{bodies}};
+    }
+    push @bodies, @tbod if (@tbod);
   }
 
 # Calculate some metadata
 #  for my $bod (@bodies) {
 #    $bod->{distance} = sqrt(($hx - $p->{x})**2 + ($hy - $p->{y})**2);
 #  }
+
 print OUTPUT $dumper->dump(\@bodies);
 close(OUTPUT);
-
-#for my $bod (@bodies) {
-#  if (not defined($bod->{empire}->{name})) { $bod->{empire}->{name} = "unclaimed"; } 
-#  if (not defined($bod->{water})) { $bod->{water} = 0; } 
-#  $bod->{image} =~ s/-.//;
-#  print OUTPUT join(",", $bod->{star_name}, $bod->{star_id}, $bod->{orbit}, $bod->{image},
-#                         $bod->{name}, $bod->{x}, $bod->{y}, $bod->{empire}->{name},
-#                         $bod->{size}, $bod->{type}, $bod->{water});
-#  for my $ore (sort keys %{$bod->{ore}}) {
-#    print OUTPUT ",$ore,",$bod->{ore}->{$ore};
-#  }
-#  print OUTPUT "\n";
-#}
 
