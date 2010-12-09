@@ -12,16 +12,6 @@ use List::MoreUtils qw(any);
 
 $| = 1;
 
-my $cfg_file = shift(@ARGV) || 'lacuna.yml';
-unless ( $cfg_file and -e $cfg_file ) {
-	die "Did not provide a config file";
-}
-
-my $client = Games::Lacuna::Client->new(
-	cfg_file => $cfg_file,
-	# debug    => 1,
-);
-
 my $show_usage = 0;
 my $show_color = 0;
 my $use_sst = 0;
@@ -98,6 +88,16 @@ Example filter options:
    trade is included in the ratio calculation.
 __END_USAGE__
 exit(0) if $show_usage;
+
+my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+unless ( $cfg_file and -e $cfg_file ) {
+	die "Did not provide a config file";
+}
+
+my $client = Games::Lacuna::Client->new(
+	cfg_file => $cfg_file,
+	# debug    => 1,
+);
 
 $Games::Lacuna::Client::PrettyPrint::ansi_color = $show_color;
 my $data = $client->empire->view_species_stats();
