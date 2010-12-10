@@ -64,6 +64,12 @@ foreach my $planet_id ( sort keys %$planets ) {
 		my $left     = int( $storage  / $hour );
 		my $label    = ucfirst($type);
 
+		if ( $hour < 0 ) {
+			my $left = int( (0-$stored) / $hour );
+			print "$name - $label - Negative production - Reaches zero in ${left}h\n";
+			next;
+		}
+
 		# Is there a building we can upgrade?
 		my $building = {
 			food   => 'Food Reserve',
