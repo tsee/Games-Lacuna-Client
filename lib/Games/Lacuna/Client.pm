@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Carp 'croak';
 use File::Temp qw( tempfile );
+use Cwd        qw( abs_path );
 
 our $VERSION = '0.01';
 use constant DEBUG => 1;
@@ -155,6 +156,9 @@ sub write_cfg {
 
   eval {
     my $target = $self->cfg_file();
+
+    # preserve symlinks: operate directly at destination
+    $target = abs_path $target;
 
     # save data to a temporary, so we don't risk trashing the target
     my ($tfh, $tempfile) = tempfile("$target.XXXXXXX"); # croaks on err

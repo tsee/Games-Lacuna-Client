@@ -7,8 +7,6 @@ use Games::Lacuna::Client::PrettyPrint qw(warning action);
 
 $| = 1;
 
-my $client_config   = '/path/to/your/config';
-my $client = Games::Lacuna::Client->new( cfg_file => $client_config );
 my $planet;
 my $use_color;
 my $show_help;
@@ -49,6 +47,13 @@ Options:
 END_USAGE
     exit;
 }
+
+my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+unless ( $cfg_file and -e $cfg_file ) {
+	die "Did not provide a config file";
+}
+
+my $client = Games::Lacuna::Client->new( cfg_file => $cfg_file );
 
 $Games::Lacuna::Client::PrettyPrint::ansi_color = $use_color;
 my $data = $client->empire->view_species_stats();

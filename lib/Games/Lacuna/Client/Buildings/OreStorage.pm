@@ -1,4 +1,4 @@
-package Games::Lacuna::Client::Buildings::MissionCommand;
+package Games::Lacuna::Client::Buildings::OreStorage;
 use 5.0080000;
 use strict;
 use warnings;
@@ -11,10 +11,7 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    get_missions     => { default_args => [qw(session_id building_id)] },
-    view_missions    => { default_args => [qw(session_id building_id)] },
-    skip_mission     => { default_args => [qw(session_id building_id)] },
-    complete_mission => { default_args => [qw(session_id building_id)] },
+    dump => { default_args => [qw(session_id building_id)] },
   };
 }
 
@@ -25,7 +22,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Buildings::MissionCommand - The Mission Command building
+Games::Lacuna::Client::Buildings::OreStorage - The Ore Storage Tanks building
 
 =head1 SYNOPSIS
 

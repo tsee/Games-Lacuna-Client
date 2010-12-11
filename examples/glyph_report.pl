@@ -6,14 +6,16 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use List::Util            (qw(first));
 use Games::Lacuna::Client ();
-use Getopt::Long;
+use Getopt::Long          (qw(GetOptions));
 
 if ( $^O !~ /MSWin32/) {
     $Games::Lacuna::Client::PrettyPrint::ansi_color = 1;
 }
 
+my $planet_name;
 my $opt_update_yml = 0;
 GetOptions(
+    'planet=s' => \$planet_name,
     'c|color!' => \$Games::Lacuna::Client::PrettyPrint::ansi_color,
     'u|update' => \$opt_update_yml,
 );
@@ -47,6 +49,8 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 # Scan each planet
 my %all_glyphs;
 foreach my $name ( sort keys %planets ) {
+
+    next if defined $planet_name && $planet_name ne $name;
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );

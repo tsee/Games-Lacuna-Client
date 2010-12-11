@@ -8,6 +8,13 @@ use Games::Lacuna::Client;
 use Date::Parse;
 use Date::Format;
 use List::Util (qw(first));
+use Getopt::Long          (qw(GetOptions));
+
+my $planet_name;
+
+GetOptions(
+    'planet=s' => \$planet_name,
+);
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
@@ -22,6 +29,7 @@ my $client = Games::Lacuna::Client->new(
 my $empire = $client->empire;
 my $estatus = $empire->get_status->{empire};
 my %planets_by_name = map { ($estatus->{planets}->{$_} => $client->body(id => $_)) }
+                      grep { $planet_name ? $planet_name eq $_ : 1 }
                       keys %{$estatus->{planets}};
 # Beware. I think these might contain asteroids, too.
 # TODO: The body status has a 'type' field that should be listed as 'habitable planet'

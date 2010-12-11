@@ -3,7 +3,14 @@
 use strict;
 use warnings;
 use List::Util            qw( first max );
+use Getopt::Long          (qw(GetOptions));
 use Games::Lacuna::Client ();
+
+my $planet_name;
+
+GetOptions(
+    'planet=s' => \$planet_name,
+);
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
@@ -26,6 +33,8 @@ my %my_trades;
 # Scan each planet
 foreach my $planet_id ( sort keys %$planets ) {
     my $name = $planets->{$planet_id};
+
+    next if defined $planet_name && $planet_name ne $name;
 
     # Load planet data
     my $planet    = $client->body( id => $planet_id );
@@ -79,7 +88,8 @@ for my $name (sort keys %my_trades) {
         my $max_length = max map { length $_->{offer_description} } @trades;
         
         for my $trade (@trades) {
-            printf "Offering %-${max_length}s for %s\n",
+            printf "%s offered %-${max_length}s for %s\n",
+                $trade->{date_offered},
                 $trade->{offer_description},
                 $trade->{ask_description};
         }

@@ -5,18 +5,6 @@ use warnings;
 use List::Util            (qw(first));
 use Games::Lacuna::Client ();
 use Getopt::Long          (qw(GetOptions));
-my $cfg_file;
-
-if ( @ARGV && $ARGV[0] !~ /^--/) {
-	$cfg_file = shift @ARGV;
-}
-else {
-	$cfg_file = 'lacuna.yml';
-}
-
-unless ( $cfg_file and -e $cfg_file ) {
-	die "Did not provide a config file";
-}
 
 my @ship_names;
 my @ship_types;
@@ -41,6 +29,11 @@ usage() if !@ship_names && !@ship_types;
 usage() if !$from;
 
 usage() if !$star && !$planet;
+
+my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+unless ( $cfg_file and -e $cfg_file ) {
+    die "Did not provide a config file";
+}
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
