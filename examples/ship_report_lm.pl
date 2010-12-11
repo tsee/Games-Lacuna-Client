@@ -50,6 +50,7 @@ foreach my $planet (values %planets_by_name) {
     if (@ship_page) {
       foreach my $ship ( @ship_page ) {
         $ship->{planet} = $planet_name;
+        rename_ship($sp, $ship);
       }
       push @ships, @ship_page;
     }
@@ -70,12 +71,53 @@ foreach my $ship (sort byshipsort @ships) {
          $ship->{name}, $ship->{id};
 }
 
+sub rename_ship {
+  my ($sp, $ship) = @_;
+  
+  my $new_name = $ship->{name};
+  if ($ship->{task} eq "Mining") {
+    $new_name = "Miner ".$ship->{hold_size};
+  }
+  elsif ($ship->{type_human} eq "Cargo Ship") {
+    $new_name = "Cargo ".$ship->{hold_size};
+  }
+  elsif ($ship->{type_human} eq "Freighter") {
+    $new_name = "Freight ".$ship->{hold_size};
+  }
+  elsif ($ship->{type_human} eq "Smuggler Ship") {
+    $new_name = "Stealth ".$ship->{hold_size};
+  }
+  elsif ($ship->{type_human} eq "Dory") {
+    $new_name = "Dory ".$ship->{hold_size};
+  }
+  elsif ($ship->{type_human} eq "Snark") {
+    $new_name = "Snark ".$ship->{speed};
+  }
+  elsif ($ship->{type_human} eq "Scanner") {
+    $new_name = "Scan ".$ship->{speed};
+  }
+  elsif ($ship->{type_human} eq "Mining Platform Ship") {
+    $new_name = "Platform Mining";
+  }
+  elsif ($ship->{type_human} eq "Terraforming Platform Ship") {
+    $new_name = "Platform Terra";
+  }
+  elsif ($ship->{type_human} eq "Gas Giant Settlement Ship") {
+    $new_name = "Platform Gas";
+  }
+  if ($new_name ne $ship->{name}) {
+    $sp->name_ship($ship->{id}, $new_name);
+    $ship->{name} = $new_name;
+  }
+}
+
 sub byshipsort {
    $a->{planet} cmp $b->{planet} ||
     $a->{task} cmp $b->{task} ||
     $a->{type} cmp $b->{type} ||
     $b->{hold_size} <=> $a->{hold_size} ||
-    $b->{speed} <=> $a->{speed}; 
+    $b->{speed} <=> $a->{speed} ||
+    $a->{id} <=> $b->{id}; 
     
 }
 
