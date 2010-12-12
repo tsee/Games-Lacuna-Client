@@ -12,12 +12,15 @@ use Getopt::Long;
 use List::Util qw(first);
 
 my $cfg_file  = 'lacuna.yml';
-my ($help, $arg_planet_name);
+my ($help, $arg_planet_name, $clean_arg_planet_name);
 GetOptions(
     'cfg=s'    => \$cfg_file,
     'planet=s' => \$arg_planet_name,
     'h|help'   => \$help,
 ) or usage();
+if ($arg_planet_name) {
+    ($clean_arg_planet_name = lc($arg_planet_name)) =~ s/\W//g;
+}
 
 usage() if $help;
 
@@ -39,7 +42,8 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 # Scan each planet
 my ($planet_name, $emb);
 for my $name ( sort keys %planets ) {
-    next if defined $arg_planet_name and lc($name) ne lc($arg_planet_name);
+    (my $clean_name = lc($name)) =~ s/\W//g;
+    next if defined $clean_arg_planet_name and $clean_name ne $clean_arg_planet_name;
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );
