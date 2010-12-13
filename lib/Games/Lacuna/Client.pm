@@ -18,6 +18,7 @@ use Class::XSAccessor {
   getters => [qw(
     rpc
     uri name password api_key
+    cache_dir
   )],
   accessors => [qw(
     debug
@@ -51,7 +52,7 @@ sub new {
     $opt{name}     = defined $opt{name} ? $opt{name} : $yml->{empire_name};
     $opt{password} = defined $opt{password} ? $opt{password} : $yml->{empire_password};
     $opt{uri}      = defined $opt{uri} ? $opt{uri} : $yml->{server_uri};
-    for (qw(uri api_key session_start session_id session_persistent)) {
+    for (qw(uri api_key session_start session_id session_persistent cache_dir)) {
       if (exists $yml->{$_}) {
         $opt{$_} = defined $opt{$_} ? $opt{$_} : $yml->{$_};
       }
@@ -148,6 +149,7 @@ sub write_cfg {
                                            session_id
                                            session_timeout
                                            session_persistent
+                                           cache_dir
                                            api_key);
   $cfg{server_uri}      = $self->{uri};
   $cfg{empire_name}     = $self->{name};
