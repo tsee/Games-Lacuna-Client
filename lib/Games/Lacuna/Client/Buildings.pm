@@ -18,6 +18,7 @@ our @BuildingTypes = (qw(
     EnergyReserve
     Entertainment
     FoodReserve
+    GeneticsLab
     Intelligence
     MiningMinistry
     MissionCommand
@@ -30,6 +31,7 @@ our @BuildingTypes = (qw(
     Security
     Shipyard
     SpacePort
+    ThemePark
     Trade
     Transporter
     WasteRecycling

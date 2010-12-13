@@ -35,7 +35,6 @@ our @BuildingTypes = (qw(
     Fusion
     GasGiantLab
     GasGiantPlatform
-    GeneticsLab
     Geo
     GeoThermalVent
     Grove
@@ -74,7 +73,6 @@ our @BuildingTypes = (qw(
     TempleOfTheDrajilites
     TerraformingLab
     TerraformingPlatform
-    ThemePark
     University
     Volcano
     WasteEnergy
