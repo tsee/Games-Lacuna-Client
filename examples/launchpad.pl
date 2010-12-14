@@ -1,10 +1,22 @@
 #!/usr/bin/perl
+
 use strict;
 use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+
 use Games::Lacuna::Cache;
+
 use Data::Dumper;
+use Getopt::Long;
 
 binmode STDOUT, ":utf8";
+
+my $opts = {};
+GetOptions($opts,
+    'planet=s'
+);
 
 my $refresh = $ARGV[0];
 my $shiptype = $ARGV[1];
@@ -30,6 +42,8 @@ foreach my $planet (keys %{$empire_data->{'planets'}}){
     my $ship_count = 0;
     my $name = $status->{'name'};
     utf8::decode($name);
+
+    next if $opts->{planet} and lc($opts->{planet}) ne lc($name);
 
     print "\n+=========== $name ============\n";
 
