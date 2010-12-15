@@ -13,6 +13,7 @@ my $max;
 my $from;
 my $star;
 my $planet;
+my $dryrun;
 
 GetOptions(
     'ship=s@'  => \@ship_names,
@@ -22,6 +23,7 @@ GetOptions(
     'from=s'   => \$from,
     'star=s'   => \$star,
     'planet=s' => \$planet,
+    'dryrun!'  => \$dryrun,
 );
 
 usage() if !@ship_names && !@ship_types;
@@ -122,7 +124,14 @@ for my $ship ( @$available ) {
     next if @ship_types && !grep { $ship->{type} eq $_ } @ship_types;
     next if $speed && $speed != $ship->{speed};
     
-    $space_port->send_ship( $ship->{id}, { $target_type => $target_id } );
+    if ($dryrun)
+    {
+      print qq{DRYRUN: };
+    }
+    else
+    {
+      $space_port->send_ship( $ship->{id}, { $target_type => $target_id } );
+    }
     
     printf "Sent %s to %s\n", $ship->{name}, $target_name;
     
@@ -141,6 +150,7 @@ Usage: $0 send_ship.yml
        --from       NAME  (required)
        --star       NAME
        --planet     NAME
+       --dryrun
 
 Either of --ship_name or --type is required.
 
@@ -157,6 +167,9 @@ sent. Default behaviour is to send all matching ships.
 If --star is missing, the planet is assumed to be one of your own colonies.
 
 At least one of --star or --planet is required.
+
+If --dryrun is specified, nothing will be sent, but all actions that WOULD
+happen are reported
 
 END_USAGE
 
