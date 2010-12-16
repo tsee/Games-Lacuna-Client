@@ -290,6 +290,16 @@ sub send_pushes {
     my @selected_routes;
 
     for my $candidate (@candidates) {
+        # Cull trade push candidates whose travel time is greater than 
+        # configured maximum travel time.
+        my $max_travel_time = $self->{config}->{push_max_travel_time};
+        if (defined $max_travel_time) {
+            if (($max_travel_time*3600) < $candidate->{travel_time}) {
+                #trace('Not considering route with travel time: '.$candidate->{travel_time});
+                next;
+            }
+        }
+
         my $ship = $candidate->{ship};
         my $dest = $candidate->{dest};
         push @{$partial_routes{$ship}->{$dest}},$candidate;
@@ -1293,6 +1303,12 @@ queue will be empty before the keepalive window expires, the script will
 not terminate, but will instead sleep and wait for that build queue to empty
 before once again governing that colony.  Setting this to 0 will
 effectively disable this behavior.
+
+=head2 push_max_travel_time
+
+This is the maximum time, in hours, that a push should take (one-way) to
+be considered a valid candidate.  This can be used to prevent pushes between
+very distant colonies.  If not defined, there is no restriction.
 
 =head2 push_minimum_load
 

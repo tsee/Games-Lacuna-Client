@@ -381,6 +381,61 @@ Functional Recipes:
     quantity:
       chalcopyrite: 1
       sulfur: 1
+  Halls of Vrbansk (A):
+    order:
+      - goethite
+      - halite
+      - gypsum
+      - trona
+    quantity:
+      goethite: 1
+      halite: 1
+      gypsum: 1
+      trona: 1
+  Halls of Vrbansk (B):
+    order:
+      - gold
+      - anthracite
+      - uraninite
+      - bauxite
+    quantity:
+      gold: 1
+      anthracite: 1
+      uraninite: 1
+      bauxite: 1
+  Halls of Vrbansk (C):
+    order:
+      - kerogen
+      - methane
+      - sulfur
+      - zircon
+    quantity:
+      kerogen: 1
+      methane: 1
+      sulfur: 1
+      zircon: 1
+  Halls of Vrbansk (D):
+    order:
+      - monazite
+      - fluorite
+      - beryl
+      - magnetite
+    quantity:
+      monazite: 1
+      fluorite: 1
+      beryl: 1
+      magnetite: 1
+  Halls of Vrbasnk (E):
+    order:
+      - rutile
+      - chromite
+      - chalcopyrite
+      - galena
+    quantity:
+      rutile: 1
+      chromite: 1
+      chalcopyrite: 1
+      galena: 1
   Interdimensional Rift:
     order:
       - methane
