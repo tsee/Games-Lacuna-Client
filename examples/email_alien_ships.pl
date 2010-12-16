@@ -2,6 +2,8 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use List::Util            ();
 use MIME::Lite            ();
 use YAML::Any             (qw(DumpFile LoadFile));
