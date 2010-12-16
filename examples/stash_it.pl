@@ -95,16 +95,17 @@ given ($action) {
                 print "Ore:\n";
                 for my $type (sort keys %ore_types) {
                     my $cnt = delete $stash->{stash}->{$type};
-                    if (defined $cnt) {
+                    if ($cnt) {
                         print "  $cnt $type\n";
                     }
                 }
             }
 
-            if (keys %{$stash->{stash}}) {
+            if (grep { $stash->{stash}->{$_} } keys %{$stash->{stash}}) {
                 print "Food:\n";
                 for my $type (sort keys %{$stash->{stash}}) {
                     my $cnt = delete $stash->{stash}->{$type};
+                    next unless $cnt;
                     print "  $cnt $type\n";
                 }
             }
