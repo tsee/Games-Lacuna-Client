@@ -9,6 +9,7 @@ use List::Util qw(sum max min);
 use List::MoreUtils qw(any part uniq);
 use Hash::Merge qw(merge);
 use JSON qw(to_json from_json);
+require YAML::Any;
 use Carp;
 
 use Data::Dumper;
