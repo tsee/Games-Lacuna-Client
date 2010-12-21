@@ -1,0 +1,158 @@
+---
+resource:
+
+  food:
+    - algae
+    - apple
+    - bean
+    - beetle
+    - bread
+    - burger
+    - chip
+    - cheese
+    - cider
+    - corn
+    - fungus
+    - lapis
+    - meal
+    - milk
+    - pancake
+    - pie
+    - potato
+    - root
+    - shake
+    - soup
+    - syrup
+    - wheat
+
+  ore:
+    - anthracite
+    - bauxite
+    - beryl
+    - chalcopyrite
+    - chromite
+    - fluorite
+    - galena
+    - goethite
+    - gold
+    - gypsum
+    - halite
+    - kerogen
+    - magnetite
+    - methane
+    - monazite
+    - rutile
+    - sulfur
+    - trona
+    - uraninite
+    - zircon
+
+building_meta:
+
+  command:
+    - Archaeology
+    - Development
+    - Embassy
+    - Intelligence
+    - Network19
+    - Observatory
+    - Park
+    - PlanetaryCommand
+    - Security
+    - Shipyard
+    - SpacePort
+    - Trade
+    - Transporter
+    - Capitol
+    - CloakingLab
+    - Espionage
+    - GasGiantLab
+    - GasGiantPlatform
+    - GeneticsLab
+    - MissionCommand
+    - MunitionsLab
+    - Oversight
+    - PilotTraining
+    - Propulsion
+    - Stockpile
+    - TerraformingLab
+    - TerraformingPlatform
+    - University
+
+  happiness:
+    - Entertainment
+    - LuxuryHousing
+
+  food:
+    - Algae
+    - Apple
+    - Bean
+    - Beeldeban
+    - Bread
+    - Burger
+    - Cheese
+    - Chip
+    - Cider
+    - Corn
+    - CornMeal
+    - Dairy
+    - Denton
+    - Lapis
+    - Malcud
+    - Pancake
+    - Pie
+    - Potato
+    - Shake
+    - Soup
+    - Syrup
+    - Wheat
+
+  glyph:
+    - Crater
+    - CrashedShipSite
+    - EssentiaVein
+    - GeoThermalVent
+    - InterDimensionalRift
+    - KalavianRuins
+    - Lake
+    - Lagoon
+    - LibraryOfJith
+    - Grove
+    - MassadsHenge
+    - NaturalSpring
+    - OracleOfAnid
+    - RockyOutcrop
+    - Ravine
+    - Sand
+    - TempleOfTheDrajilites
+    - Volcano
+
+  energy:
+    - Fission
+    - Fusion
+    - Geo
+    - HydroCarbon
+    - Singularity
+    - WasteEnergy
+
+  ore:
+    - Mine
+    - OreRefinery
+    - WasteDigester
+    - MiningMinistry
+
+  waste:
+    - WasteTreatment
+    - WasteRecycling
+
+  water:
+    - WaterProduction
+    - WaterPurification
+    - WaterReclamation
+
+  storage:
+    - WasteSequestration
+    - EnergyReserve
+    - WaterStorage
+    - FoodReserve
+    - OreStorage
