@@ -5,6 +5,7 @@ use English qw(-no_match_vars);
 no warnings 'uninitialized'; # Yes, I count on undef to be zero.  Cue admonishments.
 
 use Games::Lacuna::Client::PrettyPrint qw(trace message warning action ptime phours);
+use Games::Lacuna::Client::Types;
 use List::Util qw(sum max min);
 use List::MoreUtils qw(any part uniq);
 use Hash::Merge qw(merge);
@@ -1088,135 +1089,6 @@ sub upgrade_cost {
     my $hash = shift;
     return sum(@{$hash}{qw(food ore water energy waste)});
 }
-
-sub food_types {
-    return qw(algae apple bean beetle bread burger chip cheese cider corn fungus lapis meal milk pancake pie potato root shake soup syrup wheat);
-}
-
-sub ore_types {
-    return qw(anthracite bauxite beryl chalcopyrite chromite fluorite galena goethite gold gypsum halite kerogen magnetite methane monazite rutile sulfur trona uraninite zircon);
-}
-
-sub meta_type {
-    my $type = shift;
-    my $meta_types = {
-        command => [qw{
-            Archaeology
-            Development
-            Embassy
-            Intelligence
-            Network19
-            Observatory
-            Park
-            PlanetaryCommand
-            Security
-            Shipyard
-            SpacePort
-            Trade
-            Transporter
-            Capitol
-            CloakingLab
-            Espionage
-            GasGiantLab
-            GasGiantPlatform
-            GeneticsLab
-            MissionCommand
-            MunitionsLab
-            Oversight
-            PilotTraining
-            Propulsion
-            Stockpile
-            TerraformingLab
-            TerraformingPlatform
-            University
-        }],
-        happiness => [qw{
-            Entertainment
-            LuxuryHousing
-        }],
-        food => [qw{
-            Algae
-            Apple
-            Bean
-            Beeldeban
-            Bread
-            Burger
-            Cheese
-            Chip
-            Cider
-            Corn
-            CornMeal
-            Dairy
-            Denton
-            Lapis
-            Malcud
-            Pancake
-            Pie
-            Potato
-            Shake
-            Soup
-            Syrup
-            Wheat
-        }],
-
-        glyph => [qw{
-            Crater
-            CrashedShipSite
-            EssentiaVein
-            GeoThermalVent
-            InterDimensionalRift
-            KalavianRuins
-            Lake
-            Lagoon
-            LibraryOfJith
-            Grove
-            MassadsHenge
-            NaturalSpring
-            OracleOfAnid
-            RockyOutcrop
-            Ravine
-            Sand
-            TempleOfTheDrajilites
-            Volcano
-        }],
-        energy => [qw{
-            Fission
-            Fusion
-            Geo
-            HydroCarbon
-            Singularity
-            WasteEnergy
-        }],
-        ore => [qw{
-            Mine
-            OreRefinery
-            WasteDigester
-            MiningMinistry
-        }],
-        waste => [qw{
-            WasteTreatment
-            WasteRecycling
-        }],
-        water => [qw{
-            WaterProduction
-            WaterPurification
-            WaterReclamation
-        }],
-        storage => [qw{
-            WasteSequestration
-            EnergyReserve
-            WaterStorage
-            FoodReserve
-            OreStorage
-        }],
-    };
-    for my $k (keys %$meta_types) {
-        if (any {$_ eq $type} @{$meta_types->{$k}}) {
-            return $k;
-        }
-    }
-}
-
 
 1;
 
