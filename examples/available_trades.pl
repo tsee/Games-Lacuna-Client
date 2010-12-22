@@ -8,6 +8,7 @@ use Getopt::Long qw(GetOptions);
 use Data::Dumper;
 use Games::Lacuna::Client;
 use Games::Lacuna::Client::PrettyPrint;
+use Games::Lacuna::Client::Types ':list';
 use List::MoreUtils qw(any);
 
 $| = 1;
@@ -216,12 +217,4 @@ sub real_type {
     else {
         return $type;
     }
-}
-
-sub food_types {
-    return qw(algae apple bean beetle bread burger chip cheese cider corn fungus lapis meal milk pancake pie potato root shake soup syrup wheat);
-}
-
-sub ore_types {
-    return qw(anthracite bauxite beryl chalcopyrite chromite fluorite galena goethite gold gypsum halite kerogen magnetite methane monazite rutile sulfur trona uraninite zircon);
 }
