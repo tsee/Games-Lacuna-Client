@@ -5,7 +5,15 @@
 # followed by running [% generator %]
 #
 ###################################################
-
+[%
+    list_functions = [];
+    FOREACH resource;
+        list_functions.push("${key}_types");
+    END;
+    functions = ['meta_type'];
+    # shh!
+    !functions.import(list_functions);
+%]
 package [% package %];
 
 use strict;
@@ -15,12 +23,11 @@ use List::MoreUtils qw(any);
 require Exporter;
 
 our @ISA = qw(Exporter);
-[%
-    functions = ['meta_type'];
-    FOREACH resource;
-        functions.push( "${key}_types" );
-    END
-%]our @EXPORT = qw( [% functions.join(' ') %] );
+our @EXPORT = qw( [% functions.join(' ') %] );
+our %EXPORT_TAGS = (
+    list => [qw( [% list_functions.join(' ') %] )],
+    all  => [@EXPORT],
+);
 [% FOREACH resource %]
 {
     my @[% key %] = qw( [% value.join(' ') %] );

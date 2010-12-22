@@ -16,6 +16,10 @@ require Exporter;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw( meta_type food_types ore_types );
+our %EXPORT_TAGS = (
+    list => [qw( food_types ore_types )],
+    all  => [@EXPORT],
+);
 
 {
     my @food = qw( algae apple bean beetle bread burger chip cheese cider corn fungus lapis meal milk pancake pie potato root shake soup syrup wheat );
