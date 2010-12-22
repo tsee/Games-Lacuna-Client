@@ -144,6 +144,7 @@ our %EXPORT_TAGS = (
             WaterProduction
             WaterPurification
             WaterReclamation
+            AtmosphericEvaporator
         )],
     );
 
