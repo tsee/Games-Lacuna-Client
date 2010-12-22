@@ -12,6 +12,7 @@ our @BuildingTypes = (qw(
     Algae
     AlgaePond
     Apple
+    AtmosphericEvaporator
     Bean
     Beeldeban
     Bread
@@ -37,9 +38,11 @@ our @BuildingTypes = (qw(
     Geo
     GeoThermalVent
     GratchsGauntlet
+    GreatBallOfJunk
     Grove
     HydroCarbon
     InterDimensionalRift
+    JunkHengeSculpture
     KalavianRuins
     KasternsKeep
     Lake
@@ -51,6 +54,7 @@ our @BuildingTypes = (qw(
     Malcud
     MalcudField
     MassadsHenge
+    MetalJunkArches
     Mine
     MunitionsLab
     NaturalSpring
@@ -62,12 +66,15 @@ our @BuildingTypes = (qw(
     PilotTraining
     Potato
     Propulsion
+    PyramidJunkSculpture
     Ravine
     RockyOutcrop
     Sand
+    SAW
     Shake
     Singularity
     Soup
+    SpaceJunkPark
     Stockpile
     Syrup
     TerraformingLab
