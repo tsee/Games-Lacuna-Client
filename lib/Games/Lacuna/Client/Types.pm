@@ -15,14 +15,15 @@ use List::MoreUtils qw(any);
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw( meta_type food_types ore_types );
+our @EXPORT = qw( meta_type food_types ore_types get_tags tag_list );
 our %EXPORT_TAGS = (
     list => [qw( food_types ore_types )],
+    tag  => [qw( get_tags tag_list )],
     all  => [@EXPORT],
 );
 
 {
-    my @food = qw( algae apple bean beetle bread burger chip cheese cider corn fungus lapis meal milk pancake pie potato root shake soup syrup wheat );
+    my @food = qw( algae apple bean beetle bread burger cheese chip cider corn fungus lapis meal milk pancake pie potato root shake soup syrup wheat );
     sub food_types {
         return @food;
     }
@@ -165,6 +166,117 @@ our %EXPORT_TAGS = (
         return;
     }
 }
+{
+    my @tags = qw(alliance colony command decoration energy essentia food glyph happiness ore sculpture ship storage trade waste water);
+    sub tag_list {
+        return @tags;
+    }
+}
+{
+    my %tags = (
+        Algae => [qw(food)],
+        Apple => [qw(food)],
+        Archaeology => [qw(command glyph)],
+        AtmosphericEvaporator => [qw(water)],
+        Bean => [qw(food)],
+        Beeldeban => [qw(food)],
+        Bread => [qw(food)],
+        Burger => [qw(food)],
+        Capitol => [qw(command)],
+        Cheese => [qw(food)],
+        Chip => [qw(food)],
+        Cider => [qw(food)],
+        CloakingLab => [qw(command ship)],
+        Corn => [qw(food)],
+        CornMeal => [qw(food)],
+        CrashedShipSite => [qw(glyph ship)],
+        Crater => [qw(decoration glyph)],
+        Dairy => [qw(food)],
+        Denton => [qw(food)],
+        Development => [qw(command)],
+        Embassy => [qw(alliance command)],
+        EnergyReserve => [qw(energy storage)],
+        Entertainment => [qw(happiness)],
+        Espionage => [qw(command)],
+        EssentiaVein => [qw(essentia glyph)],
+        Fission => [qw(energy)],
+        FoodReserve => [qw(food storage)],
+        Fusion => [qw(energy)],
+        GasGiantLab => [qw(command ship)],
+        GasGiantPlatform => [qw(command ship)],
+        GeneticsLab => [qw(command)],
+        Geo => [qw(energy)],
+        GeoThermalVent => [qw(energy glyph)],
+        GreatBallOfJunk => [qw(happiness sculpture waste)],
+        Grove => [qw(glyph)],
+        HydroCarbon => [qw(energy)],
+        Intelligence => [qw(command)],
+        InterDimensionalRift => [qw(glyph storage)],
+        JunkHengeSculpture => [qw(happiness sculpture waste)],
+        KalavianRuins => [qw(glyph)],
+        Lagoon => [qw(glyph)],
+        Lake => [qw(decoration glyph)],
+        Lapis => [qw(food)],
+        LibraryOfJith => [qw(glyph)],
+        LuxuryHousing => [qw(happiness)],
+        Malcud => [qw(food)],
+        MassadsHenge => [qw(glyph)],
+        MetalJunkArches => [qw(happiness sculpture waste)],
+        Mine => [qw(ore)],
+        MiningMinistry => [qw(ore ship)],
+        MissionCommand => [qw(command)],
+        MunitionsLab => [qw(command ship)],
+        NaturalSpring => [qw(glyph water)],
+        Network19 => [qw(command happiness)],
+        Observatory => [qw(command)],
+        OracleOfAnid => [qw(glyph)],
+        OreRefinery => [qw(ore)],
+        OreStorage => [qw(ore storage)],
+        Oversight => [qw(command)],
+        Pancake => [qw(food)],
+        Park => [qw(command happiness)],
+        Pie => [qw(food)],
+        PilotTraining => [qw(command ship)],
+        PlanetaryCommand => [qw(command)],
+        Potato => [qw(food)],
+        Propulsion => [qw(command ship)],
+        PyramidJunkSculpture => [qw(happiness sculpture waste)],
+        Ravine => [qw(glyph storage waste)],
+        RockyOutcrop => [qw(decoration glyph)],
+        SAW => [qw(command)],
+        Sand => [qw(decoration glyph)],
+        Security => [qw(command)],
+        Shake => [qw(food)],
+        Shipyard => [qw(command ship)],
+        Singularity => [qw(energy)],
+        Soup => [qw(food)],
+        SpaceJunkPark => [qw(happiness sculpture waste)],
+        SpacePort => [qw(command ship)],
+        Stockpile => [qw(command storage)],
+        Syrup => [qw(food)],
+        TempleOfTheDrajilites => [qw(glyph)],
+        TerraformingLab => [qw(colony command)],
+        TerraformingPlatform => [qw(colony command)],
+        Trade => [qw(command ship trade)],
+        Transporter => [qw(command trade)],
+        University => [qw(command)],
+        Volcano => [qw(glyph ore)],
+        WasteDigester => [qw(ore waste)],
+        WasteEnergy => [qw(energy waste)],
+        WasteRecycling => [qw(waste)],
+        WasteSequestration => [qw(storage waste)],
+        WasteTreatment => [qw(waste)],
+        WaterProduction => [qw(water)],
+        WaterPurification => [qw(water)],
+        WaterReclamation => [qw(water)],
+        WaterStorage => [qw(storage water)],
+        Wheat => [qw(food)],
+    );
+    sub get_tags{
+        my( $building ) = @_;
+        return @{ $tags{$building} };
+    }
+}
 1;
 
 __END__
@@ -186,6 +298,10 @@ Games::Lacuna::Client::Types
 =item food_types
 
 =item ore_types
+
+=item get_tags
+
+=item tag_list
 
 =back
 

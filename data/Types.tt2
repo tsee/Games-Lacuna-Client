@@ -10,9 +10,10 @@
     FOREACH resource;
         list_functions.push("${key}_types");
     END;
+    tag_functions = ['get_tags','tag_list'];
     functions = ['meta_type'];
     # shh!
-    !functions.import(list_functions);
+    !functions.import(list_functions,tag_functions);
 %]
 package [% package %];
 
@@ -26,6 +27,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw( [% functions.join(' ') %] );
 our %EXPORT_TAGS = (
     list => [qw( [% list_functions.join(' ') %] )],
+    tag  => [qw( [%  tag_functions.join(' ') %] )],
     all  => [@EXPORT],
 );
 [% FOREACH resource %]
@@ -55,6 +57,23 @@ our %EXPORT_TAGS = (
             }
         }
         return;
+    }
+}
+{
+    my @tags = qw([% building_data.tag_list.join(' ') %]);
+    sub tag_list {
+        return @tags;
+    }
+}
+{
+    my %tags = (
+    [%- FOREACH building_data.tags %]
+        [% key %] => [qw([% value.join(' ') %])],
+    [%- END %]
+    );
+    sub get_tags{
+        my( $building ) = @_;
+        return @{ $tags{$building} };
     }
 }
 1;
