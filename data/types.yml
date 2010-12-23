@@ -51,37 +51,44 @@ building_meta:
 
   command:
     - Archaeology
-    - Development
-    - Embassy
-    - Intelligence
-    - Network19
-    - Observatory
-    - Park
-    - PlanetaryCommand
-    - Security
-    - Shipyard
-    - SpacePort
-    - Trade
-    - Transporter
     - Capitol
     - CloakingLab
+    - Development
+    - Embassy
     - Espionage
     - GasGiantLab
     - GasGiantPlatform
     - GeneticsLab
+    - Intelligence
     - MissionCommand
     - MunitionsLab
+    - Network19
+    - Observatory
     - Oversight
+    - Park
     - PilotTraining
+    - PlanetaryCommand
     - Propulsion
+    - Security
+    - Shipyard
+    - SpacePort
     - Stockpile
     - TerraformingLab
     - TerraformingPlatform
+    - Trade
+    - Transporter
     - University
 
-  happiness:
-    - Entertainment
-    - LuxuryHousing
+  defense:
+    - SAW
+
+  energy:
+    - Fission
+    - Fusion
+    - Geo
+    - HydroCarbon
+    - Singularity
+    - WasteEnergy
 
   food:
     - Algae
@@ -108,51 +115,53 @@ building_meta:
     - Wheat
 
   glyph:
-    - Crater
     - CrashedShipSite
+    - Crater
     - EssentiaVein
     - GeoThermalVent
+    - Grove
     - InterDimensionalRift
     - KalavianRuins
-    - Lake
     - Lagoon
+    - Lake
     - LibraryOfJith
-    - Grove
     - MassadsHenge
     - NaturalSpring
     - OracleOfAnid
-    - RockyOutcrop
     - Ravine
+    - RockyOutcrop
     - Sand
     - TempleOfTheDrajilites
     - Volcano
 
-  energy:
-    - Fission
-    - Fusion
-    - Geo
-    - HydroCarbon
-    - Singularity
-    - WasteEnergy
+  happiness:
+    - Entertainment
+    - GreatBallOfJunk
+    - JunkHengeSculpture
+    - LuxuryHousing
+    - MetalJunkArches
+    - PyramidJunkSculpture
+    - SpaceJunkPark
 
   ore:
     - Mine
+    - MiningMinistry
     - OreRefinery
     - WasteDigester
-    - MiningMinistry
+
+  storage:
+    - EnergyReserve
+    - FoodReserve
+    - OreStorage
+    - WasteSequestration
+    - WaterStorage
 
   waste:
-    - WasteTreatment
     - WasteRecycling
+    - WasteTreatment
 
   water:
+    - AtmosphericEvaporator
     - WaterProduction
     - WaterPurification
     - WaterReclamation
-
-  storage:
-    - WasteSequestration
-    - EnergyReserve
-    - WaterStorage
-    - FoodReserve
-    - OreStorage

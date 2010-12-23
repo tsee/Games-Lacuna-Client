@@ -40,7 +40,7 @@ our %EXPORT_TAGS = (
     my %meta_types = (
         [%~ FOREACH building_type IN building_meta.keys.sort %]
         [% building_type %] => [qw(
-            [%~ FOREACH building IN building_meta.$building_type %]
+            [%~ FOREACH building IN building_meta.$building_type.sort %]
             [% building ; END %]
         )],
         [%~ END %]

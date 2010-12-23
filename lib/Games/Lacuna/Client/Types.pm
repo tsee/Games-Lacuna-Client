@@ -39,33 +39,36 @@ our %EXPORT_TAGS = (
     my %meta_types = (
         command => [qw(
             Archaeology
-            Development
-            Embassy
-            Intelligence
-            Network19
-            Observatory
-            Park
-            PlanetaryCommand
-            Security
-            Shipyard
-            SpacePort
-            Trade
-            Transporter
             Capitol
             CloakingLab
+            Development
+            Embassy
             Espionage
             GasGiantLab
             GasGiantPlatform
             GeneticsLab
+            Intelligence
             MissionCommand
             MunitionsLab
+            Network19
+            Observatory
             Oversight
+            Park
             PilotTraining
+            PlanetaryCommand
             Propulsion
+            Security
+            Shipyard
+            SpacePort
             Stockpile
             TerraformingLab
             TerraformingPlatform
+            Trade
+            Transporter
             University
+        )],
+        defense => [qw(
+            SAW
         )],
         energy => [qw(
             Fission
@@ -100,51 +103,56 @@ our %EXPORT_TAGS = (
             Wheat
         )],
         glyph => [qw(
-            Crater
             CrashedShipSite
+            Crater
             EssentiaVein
             GeoThermalVent
+            Grove
             InterDimensionalRift
             KalavianRuins
-            Lake
             Lagoon
+            Lake
             LibraryOfJith
-            Grove
             MassadsHenge
             NaturalSpring
             OracleOfAnid
-            RockyOutcrop
             Ravine
+            RockyOutcrop
             Sand
             TempleOfTheDrajilites
             Volcano
         )],
         happiness => [qw(
             Entertainment
+            GreatBallOfJunk
+            JunkHengeSculpture
             LuxuryHousing
+            MetalJunkArches
+            PyramidJunkSculpture
+            SpaceJunkPark
         )],
         ore => [qw(
             Mine
+            MiningMinistry
             OreRefinery
             WasteDigester
-            MiningMinistry
         )],
         storage => [qw(
-            WasteSequestration
             EnergyReserve
-            WaterStorage
             FoodReserve
             OreStorage
+            WasteSequestration
+            WaterStorage
         )],
         waste => [qw(
-            WasteTreatment
             WasteRecycling
+            WasteTreatment
         )],
         water => [qw(
+            AtmosphericEvaporator
             WaterProduction
             WaterPurification
             WaterReclamation
-            AtmosphericEvaporator
         )],
     );
 
