@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use YAML::Tiny;
+use YAML qw'LoadFile';
 use File::Spec::Functions qw' abs2rel catfile ';
 use Template;
 
@@ -18,7 +18,7 @@ my $generator      = "data/${FindBin::Script}";
 
 my $template = abs2rel catfile $FindBin::Bin, 'Types.tt2';
 
-my $yaml = YAML::Tiny->read($input);
+my $yaml = LoadFile($input);
 unless( $yaml ){
   die "Can't load file '$input'\n";
 }
@@ -31,7 +31,7 @@ my $types = LoadBuilding->Load($building_input)->types;
 my $vars = {
   generator     => $generator,
   package       => $package,
-  resource      => $yaml->[0]{resource},
+  resource      => $yaml->{resource},
   building_meta => $types,
   template_name => $template_name,
 };
