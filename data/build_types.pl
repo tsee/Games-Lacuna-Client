@@ -7,7 +7,7 @@ use Template;
 
 use FindBin;
 use lib "${FindBin::Bin}";
-require LoadBuilding;
+use LoadBuilding ();
 
 my $input          = "${FindBin::Bin}/types.yml";
 my $building_input = "${FindBin::Bin}/building.yml";
@@ -26,13 +26,15 @@ unless( $yaml ){
 my $tt = Template->new({
 });
 
-my $types = LoadBuilding->Load($building_input)->types;
+my $building_data = LoadBuilding->Load($building_input);
+my $types = $building_data->types;
 
 my $vars = {
   generator     => $generator,
   package       => $package,
   resource      => $yaml,
   building_meta => $types,
+  building_data => $building_data,
   template_name => $template_name,
 };
 
