@@ -1,0 +1,486 @@
+---
+Algae:
+  produces: food
+  tags:
+    - food
+  type: food
+Apple:
+  produces: food
+  tags:
+    - food
+  type: food
+Archaeology:
+  tags:
+    - command
+    - glyph
+  type: command
+AtmosphericEvaporator:
+  produces: water
+  tags:
+    - water
+  type: water
+Bean:
+  produces: food
+  tags:
+    - food
+  type: food
+Beeldeban:
+  produces: food
+  tags:
+    - food
+  type: food
+Bread:
+  produces: food
+  tags:
+    - food
+  type: food
+Burger:
+  produces: food
+  tags:
+    - food
+  type: food
+Capitol:
+  tags:
+    - command
+  type: command
+Cheese:
+  produces: food
+  tags:
+    - food
+  type: food
+Chip:
+  produces: food
+  tags:
+    - food
+  type: food
+Cider:
+  produces: food
+  tags:
+    - food
+  type: food
+CloakingLab:
+  tags:
+    - command
+    - ship
+  type: command
+Corn:
+  produces: food
+  tags:
+    - food
+  type: food
+CornMeal:
+  produces: food
+  tags:
+    - food
+  type: food
+CrashedShipSite:
+  tags:
+    - glyph
+    - ship
+  type: glyph
+Crater:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Dairy:
+  produces: food
+  tags:
+    - food
+  type: food
+Denton:
+  produces: food
+  tags:
+    - food
+  type: food
+Development:
+  tags:
+    - command
+  type: command
+Embassy:
+  tags:
+    - alliance
+    - command
+  type: command
+EnergyReserve:
+  tags:
+    - energy
+    - storage
+  type: storage
+Entertainment:
+  produces: happiness
+  tags:
+    - happiness
+  type: happiness
+Espionage:
+  tags:
+    - command
+  type: command
+EssentiaVein:
+  produces: essentia
+  tags:
+    - essentia
+    - glyph
+  type: glyph
+Fission:
+  produces: energy
+  tags:
+    - energy
+  type: energy
+FoodReserve:
+  tags:
+    - food
+    - storage
+  type: storage
+Fusion:
+  produces: energy
+  tags:
+    - energy
+  type: energy
+GasGiantLab:
+  tags:
+    - command
+    - ship
+  type: command
+GasGiantPlatform:
+  tags:
+    - command
+    - ship
+  type: command
+GeneticsLab:
+  tags:
+    - command
+  type: command
+Geo:
+  produces: energy
+  tags:
+    - energy
+  type: energy
+GeoThermalVent:
+  produces: energy
+  tags:
+    - energy
+    - glyph
+  type: glyph
+GreatBallOfJunk:
+  produces: happiness
+  tags:
+    - happiness
+    - sculpture
+    - waste
+  type: happiness
+Grove:
+  tags:
+    - glyph
+  type: glyph
+HydroCarbon:
+  produces: energy
+  tags:
+    - energy
+  type: energy
+Intelligence:
+  tags:
+    - command
+  type: command
+InterDimensionalRift:
+  tags:
+    - glyph
+    - storage
+  type: glyph
+JunkHengeSculpture:
+  produces: happiness
+  tags:
+    - happiness
+    - sculpture
+    - waste
+  type: happiness
+KalavianRuins:
+  tags:
+    - glyph
+  type: glyph
+Lagoon:
+  tags:
+    - glyph
+  type: glyph
+Lake:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Lapis:
+  produces: food
+  tags:
+    - food
+  type: food
+LibraryOfJith:
+  tags:
+    - glyph
+  type: glyph
+LuxuryHousing:
+  produces: happiness
+  tags:
+    - happiness
+  type: happiness
+Malcud:
+  produces: food
+  tags:
+    - food
+  type: food
+MassadsHenge:
+  tags:
+    - glyph
+  type: glyph
+MetalJunkArches:
+  produces: happiness
+  tags:
+    - happiness
+    - sculpture
+    - waste
+  type: happiness
+Mine:
+  produces: ore
+  tags:
+    - ore
+  type: ore
+MiningMinistry:
+  produces: ore
+  tags:
+    - ore
+    - ship
+  type: ore
+MissionCommand:
+  tags:
+    - command
+  type: command
+MunitionsLab:
+  tags:
+    - command
+    - ship
+  type: command
+NaturalSpring:
+  produces: water
+  tags:
+    - glyph
+    - water
+  type: glyph
+Network19:
+  produces: happiness
+  tags:
+    - command
+    - happiness
+  type: command
+Observatory:
+  tags:
+    - command
+  type: command
+OracleOfAnid:
+  tags:
+    - glyph
+  type: glyph
+OreRefinery:
+  produces: ore
+  tags:
+    - ore
+  type: ore
+OreStorage:
+  tags:
+    - ore
+    - storage
+  type: storage
+Oversight:
+  tags:
+    - command
+  type: command
+Pancake:
+  produces: food
+  tags:
+    - food
+  type: food
+Park:
+  produces: happiness
+  tags:
+    - command
+    - happiness
+  type: command
+Pie:
+  produces: food
+  tags:
+    - food
+  type: food
+PilotTraining:
+  tags:
+    - command
+    - ship
+  type: command
+PlanetaryCommand:
+  tags:
+    - command
+  type: command
+Potato:
+  produces: food
+  tags:
+    - food
+  type: food
+Propulsion:
+  tags:
+    - command
+    - ship
+  type: command
+PyramidJunkSculpture:
+  produces: happiness
+  tags:
+    - happiness
+    - sculpture
+    - waste
+  type: happiness
+Ravine:
+  tags:
+    - glyph
+    - storage
+    - waste
+  type: glyph
+RockyOutcrop:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+SAW:
+  tags:
+    - command
+  type: command
+Sand:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Security:
+  tags:
+    - command
+  type: command
+Shake:
+  produces: food
+  tags:
+    - food
+  type: food
+Shipyard:
+  tags:
+    - command
+    - ship
+  type: command
+Singularity:
+  produces: energy
+  tags:
+    - energy
+  type: energy
+Soup:
+  produces: food
+  tags:
+    - food
+  type: food
+SpaceJunkPark:
+  produces: happiness
+  tags:
+    - happiness
+    - sculpture
+    - waste
+  type: happiness
+SpacePort:
+  tags:
+    - command
+    - ship
+  type: command
+Stockpile:
+  tags:
+    - command
+    - storage
+  type: command
+Syrup:
+  produces: food
+  tags:
+    - food
+  type: food
+TempleOfTheDrajilites:
+  tags:
+    - glyph
+  type: glyph
+TerraformingLab:
+  tags:
+    - colony
+    - command
+  type: command
+TerraformingPlatform:
+  tags:
+    - colony
+    - command
+  type: command
+Trade:
+  tags:
+    - command
+    - ship
+    - trade
+  type: command
+Transporter:
+  tags:
+    - command
+    - trade
+  type: command
+University:
+  tags:
+    - command
+  type: command
+Volcano:
+  produces: ore
+  tags:
+    - glyph
+    - ore
+  type: glyph
+WasteDigester:
+  produces: ore
+  tags:
+    - ore
+    - waste
+  type: ore
+WasteEnergy:
+  produces: energy
+  tags:
+    - energy
+    - waste
+  type: energy
+WasteRecycling:
+  tags:
+    - waste
+  type: waste
+WasteSequestration:
+  tags:
+    - storage
+    - waste
+  type: storage
+WasteTreatment:
+  tags:
+    - waste
+  type: waste
+WaterProduction:
+  produces: water
+  tags:
+    - water
+  type: water
+WaterPurification:
+  produces: water
+  tags:
+    - water
+  type: water
+WaterReclamation:
+  produces: water
+  tags:
+    - water
+  type: water
+WaterStorage:
+  tags:
+    - storage
+    - water
+  type: storage
+Wheat:
+  produces: food
+  tags:
+    - food
+  type: food
