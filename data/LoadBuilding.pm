@@ -7,7 +7,7 @@ use Scalar::Util qw'reftype blessed';
 require Exporter;
 
 our @ISA = 'Exporter';
-our @EXPORT = qw'LoadBuilding';
+our @EXPORT_OK = qw'LoadBuilding';
 
 use 5.12.2;
 
@@ -48,4 +48,30 @@ sub types{
     push @{$type{$type}}, $building;
   }
   return \%type;
+}
+
+sub tags{
+  my($self) = @_;
+  my %tags;
+  my $yaml = $self->{yaml};
+  for my $building ( sort keys %$yaml ){
+    my $tags = $yaml->{$building}{tags};
+    push @{ $tags{$building} }, @$tags;
+  }
+  return \%tags;
+}
+
+sub tag_list{
+  my($self) = @_;
+  my %tags;
+  my $yaml = $self->{yaml};
+  for my $building ( sort keys %$yaml ){
+    my $tags = $yaml->{$building}{tags};
+    for my $tag ( @$tags ){
+      $tags{$tag} = undef;
+    }
+  }
+  my @tags = sort keys %tags;
+  return @tags if wantarray;
+  return \@tags;
 }
