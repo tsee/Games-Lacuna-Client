@@ -69,6 +69,7 @@ building_meta:
     - PilotTraining
     - PlanetaryCommand
     - Propulsion
+    - SAW
     - Security
     - Shipyard
     - SpacePort
@@ -78,9 +79,6 @@ building_meta:
     - Trade
     - Transporter
     - University
-
-  defense:
-    - SAW
 
   energy:
     - Fission

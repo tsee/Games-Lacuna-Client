@@ -57,6 +57,7 @@ our %EXPORT_TAGS = (
             PilotTraining
             PlanetaryCommand
             Propulsion
+            SAW
             Security
             Shipyard
             SpacePort
@@ -66,9 +67,6 @@ our %EXPORT_TAGS = (
             Trade
             Transporter
             University
-        )],
-        defense => [qw(
-            SAW
         )],
         energy => [qw(
             Fission
