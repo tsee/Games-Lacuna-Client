@@ -31,7 +31,7 @@ my $types = LoadBuilding->Load($building_input)->types;
 my $vars = {
   generator     => $generator,
   package       => $package,
-  resource      => $yaml->{resource},
+  resource      => $yaml,
   building_meta => $types,
   template_name => $template_name,
 };
