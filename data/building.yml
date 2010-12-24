@@ -13,6 +13,7 @@ Archaeology:
   tags:
     - command
     - glyph
+    - infrastructure
   type: command
 AtmosphericEvaporator:
   produces: water
@@ -42,6 +43,7 @@ Burger:
 Capitol:
   tags:
     - command
+    - infrastructure
   type: command
 Cheese:
   produces: food
@@ -61,6 +63,7 @@ Cider:
 CloakingLab:
   tags:
     - command
+    - infrastructure
     - ship
   type: command
 Corn:
@@ -96,11 +99,13 @@ Denton:
 Development:
   tags:
     - command
+    - infrastructure
   type: command
 Embassy:
   tags:
     - alliance
     - command
+    - infrastructure
   type: command
 EnergyReserve:
   tags:
@@ -111,10 +116,13 @@ Entertainment:
   produces: happiness
   tags:
     - happiness
+    - infrastructure
   type: happiness
 Espionage:
   tags:
     - command
+    - infrastructure
+    - intelligence
   type: command
 EssentiaVein:
   produces: essentia
@@ -140,16 +148,19 @@ Fusion:
 GasGiantLab:
   tags:
     - command
+    - infrastructure
     - ship
   type: command
 GasGiantPlatform:
   tags:
     - command
+    - infrastructure
     - ship
   type: command
 GeneticsLab:
   tags:
     - command
+    - infrastructure
   type: command
 Geo:
   produces: energy
@@ -166,6 +177,7 @@ GreatBallOfJunk:
   produces: happiness
   tags:
     - happiness
+    - infrastructure
     - sculpture
     - waste
   type: happiness
@@ -181,6 +193,8 @@ HydroCarbon:
 Intelligence:
   tags:
     - command
+    - infrastructure
+    - intelligence
   type: command
 InterDimensionalRift:
   tags:
@@ -191,6 +205,7 @@ JunkHengeSculpture:
   produces: happiness
   tags:
     - happiness
+    - infrastructure
     - sculpture
     - waste
   type: happiness
@@ -215,11 +230,13 @@ Lapis:
 LibraryOfJith:
   tags:
     - glyph
+    - infrastructure
   type: glyph
 LuxuryHousing:
   produces: happiness
   tags:
     - happiness
+    - infrastructure
   type: happiness
 Malcud:
   produces: food
@@ -234,6 +251,7 @@ MetalJunkArches:
   produces: happiness
   tags:
     - happiness
+    - infrastructure
     - sculpture
     - waste
   type: happiness
@@ -251,10 +269,12 @@ MiningMinistry:
 MissionCommand:
   tags:
     - command
+    - infrastructure
   type: command
 MunitionsLab:
   tags:
     - command
+    - infrastructure
     - ship
   type: command
 NaturalSpring:
@@ -268,14 +288,17 @@ Network19:
   tags:
     - command
     - happiness
+    - infrastructure
   type: command
 Observatory:
   tags:
     - command
+    - infrastructure
   type: command
 OracleOfAnid:
   tags:
     - glyph
+    - infrastructure
   type: glyph
 OreRefinery:
   produces: ore
@@ -290,6 +313,7 @@ OreStorage:
 Oversight:
   tags:
     - command
+    - infrastructure
   type: command
 Pancake:
   produces: food
@@ -301,6 +325,7 @@ Park:
   tags:
     - command
     - happiness
+    - infrastructure
   type: command
 Pie:
   produces: food
@@ -310,11 +335,13 @@ Pie:
 PilotTraining:
   tags:
     - command
+    - infrastructure
     - ship
   type: command
 PlanetaryCommand:
   tags:
     - command
+    - infrastructure
   type: command
 Potato:
   produces: food
@@ -324,12 +351,14 @@ Potato:
 Propulsion:
   tags:
     - command
+    - infrastructure
     - ship
   type: command
 PyramidJunkSculpture:
   produces: happiness
   tags:
     - happiness
+    - infrastructure
     - sculpture
     - waste
   type: happiness
@@ -347,6 +376,8 @@ RockyOutcrop:
 SAW:
   tags:
     - command
+    - defense
+    - infrastructure
   type: command
 Sand:
   tags:
@@ -356,6 +387,7 @@ Sand:
 Security:
   tags:
     - command
+    - infrastructure
   type: command
 Shake:
   produces: food
@@ -365,6 +397,7 @@ Shake:
 Shipyard:
   tags:
     - command
+    - infrastructure
     - ship
   type: command
 Singularity:
@@ -381,6 +414,7 @@ SpaceJunkPark:
   produces: happiness
   tags:
     - happiness
+    - infrastructure
     - sculpture
     - waste
   type: happiness
@@ -407,26 +441,31 @@ TerraformingLab:
   tags:
     - colony
     - command
+    - infrastructure
   type: command
 TerraformingPlatform:
   tags:
     - colony
     - command
+    - infrastructure
   type: command
 Trade:
   tags:
     - command
+    - infrastructure
     - ship
     - trade
   type: command
 Transporter:
   tags:
     - command
+    - infrastructure
     - trade
   type: command
 University:
   tags:
     - command
+    - infrastructure
   type: command
 Volcano:
   produces: ore
