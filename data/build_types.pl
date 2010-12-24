@@ -11,6 +11,7 @@ use LoadBuilding ();
 
 my $input          = "${FindBin::Bin}/types.yml";
 my $building_input = "${FindBin::Bin}/building.yml";
+my @data_files     = ( qw' data/types.yml data/building.yml ' );
 my $output         = "${FindBin::Bin}/../lib/Games/Lacuna/Client/Types.pm";
 my $package        = 'Games::Lacuna::Client::Types';
 my $template_name  = 'data/Types.tt2';
@@ -36,6 +37,7 @@ my $vars = {
   building_meta => $types,
   building_data => $building_data,
   template_name => $template_name,
+  data_files    => \@data_files,
 };
 
 $tt->process($template, $vars, $output)
