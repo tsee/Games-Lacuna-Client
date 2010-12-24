@@ -175,6 +175,8 @@ Embassy:
     - infrastructure
   type: command
 EnergyReserve:
+  stores:
+    - energy
   tags:
     - energy
     - storage
@@ -207,6 +209,8 @@ Fission:
     - energy
   type: energy
 FoodReserve:
+  stores:
+    - food
   tags:
     - food
     - storage
@@ -400,6 +404,8 @@ OreRefinery:
     - ore
   type: ore
 OreStorage:
+  stores:
+    - ore
   tags:
     - ore
     - storage
@@ -442,6 +448,11 @@ PilotTraining:
     - ship
   type: command
 PlanetaryCommand:
+  stores:
+    - ore
+    - food
+    - energy
+    - plans
   tags:
     - command
     - infrastructure
@@ -471,6 +482,8 @@ PyramidJunkSculpture:
     - waste
   type: happiness
 Ravine:
+  stores:
+    - waste
   tags:
     - glyph
     - storage
@@ -536,6 +549,8 @@ SpaceJunkPark:
     - waste
   type: happiness
 SpacePort:
+  stores:
+    - ships
   tags:
     - command
     - ship
