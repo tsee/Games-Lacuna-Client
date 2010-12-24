@@ -1,11 +1,17 @@
 ---
 Algae:
   produces: food
+  requires:
+    university: 2
   tags:
     - food
   type: food
 Apple:
   produces: food
+  requires:
+    orbit:
+      - 3
+    phosphorus: ~
   tags:
     - food
   type: food
@@ -22,41 +28,82 @@ AtmosphericEvaporator:
   type: water
 Bean:
   produces: food
+  requires:
+    orbit:
+      - 4
+    phosphorus: ~
   tags:
     - food
   type: food
 Beeldeban:
   produces: food
+  requires:
+    Denton: 5
+    orbit:
+      - 5
+      - 6
   tags:
     - food
   type: food
 Bread:
   produces: food
+  requires:
+    Wheat: 5
+    orbit:
+      - 2
+      - 3
+      - 4
+    phosphorus: ~
   tags:
     - food
   type: food
 Burger:
   produces: food
+  requires:
+    Fungus: 5
+    orbit:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
   tags:
     - food
   type: food
 Capitol:
+  requires:
+    PlanetaryCommand: 10
   tags:
     - command
     - infrastructure
   type: command
 Cheese:
   produces: food
+  requires:
+    Dairy: 5
+    orbit:
+      - 3
   tags:
     - food
   type: food
 Chip:
   produces: food
+  requires:
+    Denton: 5
+    orbit:
+      - 5
+      - 6
   tags:
     - food
   type: food
 Cider:
   produces: food
+  requires:
+    Apple: 5
+    orbit:
+      - 3
   tags:
     - food
   type: food
@@ -68,11 +115,21 @@ CloakingLab:
   type: command
 Corn:
   produces: food
+  requires:
+    orbit:
+      - 2
+      - 3
+    phosphorus: ~
   tags:
     - food
   type: food
 CornMeal:
   produces: food
+  requires:
+    Corn: 5
+    orbit:
+      - 2
+      - 3
   tags:
     - food
   type: food
@@ -88,11 +145,21 @@ Crater:
   type: glyph
 Dairy:
   produces: food
+  requires:
+    Corn: 5
+    orbit:
+      - 3
+    trona: ~
   tags:
     - food
   type: food
 Denton:
   produces: food
+  requires:
+    orbit:
+      - 5
+      - 6
+    phosphorus: ~
   tags:
     - food
   type: food
@@ -119,6 +186,8 @@ Entertainment:
     - infrastructure
   type: happiness
 Espionage:
+  requires:
+    Intelligence: 1
   tags:
     - command
     - infrastructure
@@ -132,6 +201,8 @@ EssentiaVein:
   type: glyph
 Fission:
   produces: energy
+  requires:
+    university: 6
   tags:
     - energy
   type: energy
@@ -142,6 +213,8 @@ FoodReserve:
   type: storage
 Fusion:
   produces: energy
+  requires:
+    university: 9
   tags:
     - energy
   type: energy
@@ -164,6 +237,8 @@ GeneticsLab:
   type: command
 Geo:
   produces: energy
+  requires:
+    university: 0
   tags:
     - energy
   type: energy
@@ -187,10 +262,14 @@ Grove:
   type: glyph
 HydroCarbon:
   produces: energy
+  requires:
+    university: 1
   tags:
     - energy
   type: energy
 Intelligence:
+  requires:
+    university: 2
   tags:
     - command
     - infrastructure
@@ -224,6 +303,10 @@ Lake:
   type: glyph
 Lapis:
   produces: food
+  requires:
+    orbit:
+      - 2
+    phosphorus: ~
   tags:
     - food
   type: food
@@ -240,6 +323,15 @@ LuxuryHousing:
   type: happiness
 Malcud:
   produces: food
+  requires:
+    orbit:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
   tags:
     - food
   type: food
@@ -257,6 +349,8 @@ MetalJunkArches:
   type: happiness
 Mine:
   produces: ore
+  requires:
+    university: 0
   tags:
     - ore
   type: ore
@@ -317,6 +411,11 @@ Oversight:
   type: command
 Pancake:
   produces: food
+  requires:
+    Potato: 5
+    orbit:
+      - 2
+      - 3
   tags:
     - food
   type: food
@@ -329,6 +428,10 @@ Park:
   type: command
 Pie:
   produces: food
+  requires:
+    Lapis: 5
+    orbit:
+      - 2
   tags:
     - food
   type: food
@@ -345,6 +448,11 @@ PlanetaryCommand:
   type: command
 Potato:
   produces: food
+  requires:
+    orbit:
+      - 3
+      - 4
+    phosphorus: ~
   tags:
     - food
   type: food
@@ -391,6 +499,11 @@ Security:
   type: command
 Shake:
   produces: food
+  requires:
+    Beeldeban: 5
+    orbit:
+      - 5
+      - 6
   tags:
     - food
   type: food
@@ -407,6 +520,10 @@ Singularity:
   type: energy
 Soup:
   produces: food
+  requires:
+    Bean: 5
+    orbit:
+      - 4
   tags:
     - food
   type: food
@@ -430,6 +547,16 @@ Stockpile:
   type: command
 Syrup:
   produces: food
+  requires:
+    Algae: 5
+    orbit:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
   tags:
     - food
   type: food
@@ -520,6 +647,12 @@ WaterStorage:
   type: storage
 Wheat:
   produces: food
+  requires:
+    orbit:
+      - 2
+      - 3
+      - 4
+    phosphorus: ~
   tags:
     - food
   type: food
