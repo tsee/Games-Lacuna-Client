@@ -9,6 +9,9 @@ use Games::Lacuna::Client::Module;
 our @ISA = qw(Games::Lacuna::Client::Module);
 
 require Games::Lacuna::Client::Buildings::Simple;
+Intelligence.pm    MissionCommand.pm  OreStorage.pm    Security.pm  SpacePort.pm          ThemePark.pm    WasteRecycling.pm
+GeneticsLab.pm     LibraryOfJith.pm   Network19.pm       Park.pm      Shipyard.pm  SubspaceSupplyDepot.pm    Trade.pm
+HallsOfVrbansk.pm  MiningMinistry.pm  Observatory.pm     PlanetaryCommand.pm  Simple.pm    TempleOfTheDrajilites.pm  Transporter.pm
 
 our @BuildingTypes = (qw(
     Archaeology
@@ -19,6 +22,9 @@ our @BuildingTypes = (qw(
     Entertainment
     FoodReserve
     Intelligence
+    GeneticsLab
+    HallsOfVrbansk
+    LibraryOfJith
     MiningMinistry
     MissionCommand
     Network19
@@ -29,6 +35,9 @@ our @BuildingTypes = (qw(
     Security
     Shipyard
     SpacePort
+    SubspaceSupplyDepot
+    TempleOfTheDrajilites
+    ThemePark
     Trade
     Transporter
     WasteRecycling

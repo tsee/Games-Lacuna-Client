@@ -49,7 +49,6 @@ our @BuildingTypes = (qw(
     Lagoon
     Lapis
     LapisForest
-    LibraryOfJith
     LuxuryHousing
     Malcud
     MalcudField
@@ -62,6 +61,7 @@ our @BuildingTypes = (qw(
     OreRefinery
     Oversight
     Pancake
+    PantheonOfHagness
     Pie
     PilotTraining
     Potato
