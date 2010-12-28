@@ -23,7 +23,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Buildings::FoodReserve - The Halls Of Vrbansk
+Games::Lacuna::Client::Buildings::HallsOfVrbansk - The Halls Of Vrbansk
 
 =head1 SYNOPSIS
 
