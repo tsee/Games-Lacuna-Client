@@ -22,9 +22,18 @@
         list_functions.push("${key}_types");
     END;
     tag_functions = ['get_tags','tag_list'];
-    functions = ['meta_type'];
+    meta_functions = [
+        'meta_building_list',
+        'meta_type',
+        'meta_type_list'
+    ];
+    functions = [];
     # shh!
-    !functions.import(list_functions,tag_functions);
+    !functions.import(
+        list_functions,
+        tag_functions,
+        meta_functions
+    );
 %]
 package [% package %];
 
@@ -39,6 +48,7 @@ our @EXPORT = qw( [% functions.join(' ') %] );
 our %EXPORT_TAGS = (
     list => [qw( [% list_functions.join(' ') %] )],
     tag  => [qw( [%  tag_functions.join(' ') %] )],
+    meta => [qw( [% meta_functions.join(' ') %] )],
     all  => [@EXPORT],
 );
 [% FOREACH resource %]
@@ -60,14 +70,25 @@ our %EXPORT_TAGS = (
     );
 
     sub meta_type {
-        my( $type ) = @_;
-        return unless $type;
+        my( $building ) = @_;
+        return unless $building;
         for my $k ( keys %meta_types ){
-            if( any {$_ eq $type} @{$meta_types{$k}} ){
+            if( any {$_ eq $building} @{$meta_types{$k}} ){
                 return $k;
             }
         }
         return;
+    }
+    sub meta_type_list{
+        return keys %meta_types if wantarray;
+        return [keys %meta_types];
+    }
+    sub meta_building_list {
+        my( $type ) = @_;
+        return unless $type;
+        my $buildings = $meta_types{$type};
+        return @$buildings if wantarray;
+        return [@$buildings];
     }
 }
 {
