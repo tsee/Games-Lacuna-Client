@@ -235,14 +235,20 @@ sub available_trades{
         return 'food';
       }elsif( any { $_ eq $type } ore_types() ){
         return 'ore';
-      }elsif( any { $_ eq $type } qw'waste water energy glyph plan' ){
+      }elsif( any { $_ eq $type } qw'waste water energy' ){
         return $type;
       }
-    }elsif( $$self =~ /prisoner/ ){
+    }
+    if( $$self =~ /prisoner/ ){
       return 'prisoner';
     }
 
     return;
+  }
+
+  sub sub_type{
+    my($self) = @_;
+    my($type) = $$self =~ / (.*)$/;
   }
 
   sub size{
@@ -250,6 +256,11 @@ sub available_trades{
     my($amount) = $$self =~ /(.*)\s/;
     $amount =~ s/,//;
     return $amount;
+  }
+
+  sub quantity{
+    my($self) = @_;
+    return $self->size;
   }
 
   sub desc{
@@ -262,7 +273,10 @@ sub available_trades{
   our @ISA = 'Games::Lacuna::Client::Market::Trade::SimpleItem';
   use Games::Lacuna::Client::Types ':meta';
 
-  sub size{ return 10_000 }
+  sub type{ 'plan' }
+  sub size{ 10_000 }
+  sub quantity{ 1 }
+
   sub plan_type{
     my($self) = @_;
     my($name) = $$self =~ /^(.*?) \(/;
@@ -279,14 +293,17 @@ sub available_trades{
   package Games::Lacuna::Client::Market::Trade::Glyph;
   our @ISA = 'Games::Lacuna::Client::Market::Trade::SimpleItem';
 
-  sub size{ return 100 }
+  sub type{ 'glyph' }
+  sub size{ 100 }
+  sub quantity{ 1 }
 }
 {
   package Games::Lacuna::Client::Market::Trade::Ship;
   our @ISA = 'Games::Lacuna::Client::Market::Trade::SimpleItem';
 
-  sub type{ return 'ship' }
-  sub size{ return 50_000 }
+  sub type{ 'ship' }
+  sub size{ 50_000 }
+  sub quantity{ 1 }
 
   sub ship_type{
     my($self) = @_;
