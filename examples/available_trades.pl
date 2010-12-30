@@ -14,7 +14,7 @@ $| = 1;
 my $show_color = 0;
 my $use_sst = 0;
 my $planet = '';
-my @filters = ();
+my $filter;
 my @sorts = ();
 my $sort_descending = 0;
 my $max_pages = 20;
@@ -24,7 +24,7 @@ GetOptions(
     'sst'       => \$use_sst,
     'color'     => \$show_color,
     'planet=s'  => \$planet,
-    'filter=s'  => \@filters,
+    'filter=s'  => \$filter,
     'sort=s'    => \@sorts,
     'desc'      => \$sort_descending,
     'max-pages=n' => \$max_pages
@@ -50,6 +50,10 @@ Valid options:
   --planet         specify the planet (by name) to use for the listing.
                    If not specified, the script scans your empire for
                    a planet with a suitable building.
+  --filter <type>  Only show trades that are offering something of this type
+                   Can be one of:
+                     food ore water waste energy glyph prisoner ship plan
+                   
 __END_USAGE__
 exit(0);
 }
@@ -64,6 +68,7 @@ my $market = Games::Lacuna::Client::Market->new(
   building => ($use_sst ? 'Transporter' : 'Trade'),
   call_limit => $max_pages,
   planet_name => $planet,
+  filter => $filter,
 );
 
 use Perl6::Form;
