@@ -36,7 +36,7 @@ sub new{
   }, $class;
 
   @$self{@opt} = @opt{@opt};
-  
+
   if( my $filter = $opt{filter} ){
     my($package, $filename, $line) = caller;
     die "Invalid filter $filter at $filename line $line\n"
@@ -83,10 +83,9 @@ sub available_trades{
   my $client = $self->{client};
   my $status = $client->empire->get_status();
   my $planets = $status->{empire}{planets};
-  my $home = $status->{empire}{home_planet_id};
 
   %arg = $self->_args(\@opt,\%arg);
-  
+
   if( my $filter = $arg{filter} ){
     my($package, $filename, $line) = caller;
     die "Invalid filter $filter at $filename line $line\n"
@@ -97,6 +96,7 @@ sub available_trades{
   if( $arg{planet_name} and not $arg{planet_id} ){
     my $planet = $arg{planet_name};
     ($p_id) = grep { $planets->{$_} eq $planet } keys %$planets;
+    die "Unable to find planet named '$planet'\n" unless defined $p_id;
   }elsif( $arg{planet_id} ){
     $p_id = $arg{planet_id};
   }
@@ -104,6 +104,11 @@ sub available_trades{
   my $type = $arg{building};
   # $type should be Trade or Transporter
   $type = 'Trade' unless $type;
+
+  unless( $type eq 'Trade' or $type eq 'Transporter' ){
+    die "Invalid trade building: $type\n"
+  }
+
   my($class,%opt) = @_;
   $class = blessed $class || $class;
 
@@ -114,11 +119,11 @@ sub available_trades{
   }else{
     for $p_id ( keys %$planets ){
       $b_id = $self->_search_for_building($p_id,$type);
-      last if $b_id;
+      last if defined $b_id;
     }
   }
 
-  die "Unable to find appropriate building" unless $b_id;
+  die "Unable to find appropriate building" unless defined $b_id;
 
   my $building = $client->building( id => $b_id, type => $type );
   my $filter = $arg{filter};
@@ -233,10 +238,8 @@ sub available_trades{
       }elsif( any { $_ eq $type } qw'waste water energy glyph plan' ){
         return $type;
       }
-    }elsif( ($type) = $$self =~ /^([\w-]+) / ){
-      if( $$self =~ /^(?:spy|prisoner)/i ){
-        return 'prisoner';
-      }
+    }elsif( $$self =~ /prisoner/ ){
+      return 'prisoner';
     }
 
     return;
@@ -248,7 +251,7 @@ sub available_trades{
     $amount =~ s/,//;
     return $amount;
   }
-  
+
   sub desc{
     my($self) = @_;
     return $$self;
