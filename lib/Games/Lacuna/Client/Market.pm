@@ -4,13 +4,23 @@ use warnings;
 
 use Games::Lacuna::Client;
 use Scalar::Util qw'blessed';
+use List::MoreUtils qw'any';
 
 our @opt = qw{
   call_limit
   building
   planet_id
   planet_name
+  filter
 };
+
+{
+  my @filter = qw'food ore water waste energy glyph prisoner ship plan';
+  sub _valid_filter{
+    my($filter) = @_;
+    return any { $_ eq $filter } @filter;
+  }
+}
 
 sub new{
   my($class,%opt) = @_;
@@ -26,6 +36,12 @@ sub new{
   }, $class;
 
   @$self{@opt} = @opt{@opt};
+  
+  if( my $filter = $opt{filter} ){
+    my($package, $filename, $line) = caller;
+    die "Invalid filter $filter at $filename line $line\n"
+      unless _valid_filter($filter);
+  }
 
   return $self;
 }
@@ -69,7 +85,13 @@ sub available_trades{
   my $planets = $status->{empire}{planets};
   my $home = $status->{empire}{home_planet_id};
 
-  %arg = $self->_args([qw'planet_id planet_name call_limit building'],\%arg);
+  %arg = $self->_args(\@opt,\%arg);
+  
+  if( my $filter = $arg{filter} ){
+    my($package, $filename, $line) = caller;
+    die "Invalid filter $filter at $filename line $line\n"
+      unless _valid_filter($filter);
+  }
 
   my $p_id;
   if( $arg{planet_name} and not $arg{planet_id} ){
@@ -99,6 +121,7 @@ sub available_trades{
   die "Unable to find appropriate building" unless $b_id;
 
   my $building = $client->building( id => $b_id, type => $type );
+  my $filter = $arg{filter};
   my $page_num = 1;
   my $trades_per_page = 25;
   my $max_pages = $arg{call_limit} || 20;
@@ -107,7 +130,7 @@ sub available_trades{
 
   while ($page_num <= $max_pages and (not defined $trade_count
    or $trade_count > ($page_num * $trades_per_page ))) {
-      my $result = $building->view_market($page_num);
+      my $result = $building->view_market($page_num, $filter);
       $page_num++;
       $trade_count = $result->{trade_count};
       push @trades, map{
