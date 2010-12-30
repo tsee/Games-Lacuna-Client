@@ -222,37 +222,42 @@ sub production_report {
 
 sub trade_list {
     show_bar('-','green');
-    printf("%15s %10s %15s %10s %10s %s\n",
+    printf("%15s %6s %10s %10s %s\n",
         'Empire',
-        'Ratio',
         'Asking',
         'Offering',
         'Quantity',
         'Description',
     );
-    for my $item (@_) {
-        my $rt = $item->{real_type};
-        my ($desc) = $item->{offer_description} =~ m/^(?:\d+\s)?(.+)/imxg;
-        printf("%s%15s %s%10s %s%15s %s%10s %10i %s\n",
-            _c_('bold cyan'),
-            substr($item->{empire}->{name},0,15),
-            _c_('reset')._c_('cyan'),
-            $item->{ratio},
-            _c_('reset'),
-            substr($item->{ask_description},0,15),
-            _c_($rt eq 'food' ? 'bold green' :
-                $rt eq 'ore'  ? 'bold yellow' :
-                $rt eq 'water' ? 'bold blue' :
-                $rt eq 'energy' ? 'bold cyan' :
-                $rt eq 'glyph' ? 'bold magenta' :
-                $rt eq 'plan' ? 'magenta' :
-                $rt eq 'waste' ? 'bold red' :
-                $rt eq 'ship' ? 'bold white' :
-                'reset'),
-            $rt,
-            $item->{offer_quantity},
-            $desc,
-        );
+    for my $trade (@_) {
+        my(@offer) = $trade->offer;
+        my $empire = $trade->empire;
+        my $cost   = $trade->cost;
+
+        for my $item ( @offer ){
+            my $rt     = $item->type;
+            printf("%s%15s %s%6s %s%10s %10i %s\n",
+                _c_('bold cyan'),
+                substr($empire,0,15),
+                _c_('reset'),
+                substr($cost,0,15),
+                _c_($rt eq 'food' ? 'bold green' :
+                    $rt eq 'ore'  ? 'bold yellow' :
+                    $rt eq 'water' ? 'bold blue' :
+                    $rt eq 'energy' ? 'bold cyan' :
+                    $rt eq 'glyph' ? 'bold magenta' :
+                    $rt eq 'plan' ? 'magenta' :
+                    $rt eq 'waste' ? 'bold red' :
+                    $rt eq 'ship' ? 'bold white' :
+                    'reset'),
+                $rt,
+                $item->quantity,
+                $item->sub_type,
+            );
+            $empire = '';
+            $cost   = '';
+        }
+        print "\n";
     }
     show_bar('-','green');
 }
