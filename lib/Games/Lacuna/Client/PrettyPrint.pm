@@ -89,7 +89,11 @@ sub ship_report {
         my $result;
         for my $s (@$sort) {
             my $reverse = $s =~ s/^-//g;
-            if ($s eq 'speed' || $s eq 'hold_size' || $s eq 'stealth') {
+            if ( $s eq 'speed'
+              || $s eq 'hold_size'
+              || $s eq 'stealth'
+              || $s eq 'combat'
+            ) {
                 $result = $a->{$s} <=> $b->{$s};
             } else {
                 $result = $a->{$s} cmp $b->{$s};
@@ -102,7 +106,7 @@ sub ship_report {
     show_bar('=');
     say(_c_('bold green'),"Ship Report",_c_('reset'));
     show_bar('-');
-    printf("%-12s %-12s %-12s %7s %5s %5s  %s\n",qw(Name Type Location Cargo Speed Stlh Status));
+    printf("%-12s %-12s %-12s %7s %5s %5s %6s  %s\n",qw(Name Type Location Cargo Speed Stlh combat Status));
     for my $ship (@ships) {
          my $task = $ship->{task};
          my $status_string;
@@ -124,13 +128,14 @@ sub ship_report {
          }
          $status_string .= _c_('reset');
 
-         printf("%s%-12s %s%-12s %s%-12s %s%7s %5s %5s  %s\n",
+         printf("%s%-12s %s%-12s %s%-12s %s%7s %5s %5s %6s  %s\n",
              _c_('bold yellow'),substr($ship->{name},    0,12),
              _c_('bold green') ,substr($ship->{type},    0,12),
              _c_('bold cyan')  ,substr($ship->{location},0,12),
              _c_('reset')      ,$ship->{hold_size},
              $ship->{speed},
              $ship->{stealth},
+             $ship->{combat},
              $status_string
          );
     }

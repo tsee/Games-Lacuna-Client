@@ -5,10 +5,12 @@ use English qw(-no_match_vars);
 no warnings 'uninitialized'; # Yes, I count on undef to be zero.  Cue admonishments.
 
 use Games::Lacuna::Client::PrettyPrint qw(trace message warning action ptime phours);
+use Games::Lacuna::Client::Types;
 use List::Util qw(sum max min);
 use List::MoreUtils qw(any part uniq);
 use Hash::Merge qw(merge);
 use JSON qw(to_json from_json);
+require YAML::Any;
 use Carp;
 
 use Data::Dumper;
@@ -290,6 +292,16 @@ sub send_pushes {
     my @selected_routes;
 
     for my $candidate (@candidates) {
+        # Cull trade push candidates whose travel time is greater than 
+        # configured maximum travel time.
+        my $max_travel_time = $self->{config}->{push_max_travel_time};
+        if (defined $max_travel_time) {
+            if (($max_travel_time*3600) < $candidate->{travel_time}) {
+                #trace('Not considering route with travel time: '.$candidate->{travel_time});
+                next;
+            }
+        }
+
         my $ship = $candidate->{ship};
         my $dest = $candidate->{dest};
         push @{$partial_routes{$ship}->{$dest}},$candidate;
@@ -1079,135 +1091,6 @@ sub upgrade_cost {
     return sum(@{$hash}{qw(food ore water energy waste)});
 }
 
-sub food_types {
-    return qw(algae apple bean beetle bread burger chip cheese cider corn fungus lapis meal milk pancake pie potato root shake soup syrup wheat);
-}
-
-sub ore_types {
-    return qw(anthracite bauxite beryl chalcopyrite chromite fluorite galena goethite gold gypsum halite kerogen magnetite methane monazite rutile sulfur trona uraninite zircon);
-}
-
-sub meta_type {
-    my $type = shift;
-    my $meta_types = {
-        command => [qw{
-            Archaeology
-            Development
-            Embassy
-            Intelligence
-            Network19
-            Observatory
-            Park
-            PlanetaryCommand
-            Security
-            Shipyard
-            SpacePort
-            Trade
-            Transporter
-            Capitol
-            CloakingLab
-            Espionage
-            GasGiantLab
-            GasGiantPlatform
-            GeneticsLab
-            MissionCommand
-            MunitionsLab
-            Oversight
-            PilotTraining
-            Propulsion
-            Stockpile
-            TerraformingLab
-            TerraformingPlatform
-            University
-        }],
-        happiness => [qw{
-            Entertainment
-            LuxuryHousing
-        }],
-        food => [qw{
-            Algae
-            Apple
-            Bean
-            Beeldeban
-            Bread
-            Burger
-            Cheese
-            Chip
-            Cider
-            Corn
-            CornMeal
-            Dairy
-            Denton
-            Lapis
-            Malcud
-            Pancake
-            Pie
-            Potato
-            Shake
-            Soup
-            Syrup
-            Wheat
-        }],
-
-        glyph => [qw{
-            Crater
-            CrashedShipSite
-            EssentiaVein
-            GeoThermalVent
-            InterDimensionalRift
-            KalavianRuins
-            Lake
-            Lagoon
-            LibraryOfJith
-            Grove
-            MassadsHenge
-            NaturalSpring
-            OracleOfAnid
-            RockyOutcrop
-            Ravine
-            Sand
-            TempleOfTheDrajilites
-            Volcano
-        }],
-        energy => [qw{
-            Fission
-            Fusion
-            Geo
-            HydroCarbon
-            Singularity
-            WasteEnergy
-        }],
-        ore => [qw{
-            Mine
-            OreRefinery
-            WasteDigester
-            MiningMinistry
-        }],
-        waste => [qw{
-            WasteTreatment
-            WasteRecycling
-        }],
-        water => [qw{
-            WaterProduction
-            WaterPurification
-            WaterReclamation
-        }],
-        storage => [qw{
-            WasteSequestration
-            EnergyReserve
-            WaterStorage
-            FoodReserve
-            OreStorage
-        }],
-    };
-    for my $k (keys %$meta_types) {
-        if (any {$_ eq $type} @{$meta_types->{$k}}) {
-            return $k;
-        }
-    }
-}
-
-
 1;
 
 __END__
@@ -1293,6 +1176,12 @@ queue will be empty before the keepalive window expires, the script will
 not terminate, but will instead sleep and wait for that build queue to empty
 before once again governing that colony.  Setting this to 0 will
 effectively disable this behavior.
+
+=head2 push_max_travel_time
+
+This is the maximum time, in hours, that a push should take (one-way) to
+be considered a valid candidate.  This can be used to prevent pushes between
+very distant colonies.  If not defined, there is no restriction.
 
 =head2 push_minimum_load
 

@@ -18,8 +18,10 @@ our @BuildingTypes = (qw(
     EnergyReserve
     Entertainment
     FoodReserve
-    GeneticsLab
     Intelligence
+    GeneticsLab
+    HallsOfVrbansk
+    LibraryOfJith
     MiningMinistry
     MissionCommand
     Network19
@@ -31,6 +33,8 @@ our @BuildingTypes = (qw(
     Security
     Shipyard
     SpacePort
+    SubspaceSupplyDepot
+    TempleOfTheDrajilites
     ThemePark
     Trade
     Transporter

@@ -27,7 +27,7 @@ sub new {
     $self->{'EMPIRE'} = $self->{'CLIENT'}->empire;
     $self->{'DATA'} = (); # Stores the "empire" block from a status response.
     $self->{'SESSION_CALLS'} = 0;
-    bless($self);
+    bless($self,$class);
     $self->debug("Using cache file: $self->{'CACHE_FILE'}");
 
     $self->load_data($refresh);

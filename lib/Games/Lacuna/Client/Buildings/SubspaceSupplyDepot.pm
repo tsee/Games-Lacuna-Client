@@ -1,4 +1,4 @@
-package Games::Lacuna::Client::Buildings::GeneticsLab;
+package Games::Lacuna::Client::Buildings::SubspaceSupplyDepot;
 use 5.0080000;
 use strict;
 use warnings;
@@ -11,8 +11,11 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    prepare_experiment => { default_args => [qw(session_id building_id)] },
-    run_experiment     => { default_args => [qw(session_id building_id)] },
+    transmit_food        => { default_args => [qw(session_id building_id)] },
+    transmit_energy      => { default_args => [qw(session_id building_id)] },
+    transmit_ore         => { default_args => [qw(session_id building_id)] },
+    transmit_water       => { default_args => [qw(session_id building_id)] },
+    complete_build_queue => { default_args => [qw(session_id building_id)] },
   };
 }
 
@@ -23,7 +26,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Buildings::GeneticsLab - The Genetics Lab
+Games::Lacuna::Client::Buildings::FoodReserve - The Subspace Supply Depot
 
 =head1 SYNOPSIS
 

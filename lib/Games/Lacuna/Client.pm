@@ -18,6 +18,7 @@ use Class::XSAccessor {
   getters => [qw(
     rpc
     uri name password api_key
+    cache_dir
   )],
   accessors => [qw(
     debug
@@ -51,7 +52,7 @@ sub new {
     $opt{name}     = defined $opt{name} ? $opt{name} : $yml->{empire_name};
     $opt{password} = defined $opt{password} ? $opt{password} : $yml->{empire_password};
     $opt{uri}      = defined $opt{uri} ? $opt{uri} : $yml->{server_uri};
-    for (qw(uri api_key session_start session_id session_persistent)) {
+    for (qw(uri api_key session_start session_id session_persistent cache_dir)) {
       if (exists $yml->{$_}) {
         $opt{$_} = defined $opt{$_} ? $opt{$_} : $yml->{$_};
       }
@@ -140,7 +141,7 @@ sub DESTROY {
 sub write_cfg {
   my $self = shift;
   if ($self->debug) {
-    print "DEBUG: Writing configuration to disk";
+    print STDERR "DEBUG: Writing configuration to disk";
   }
   croak("No config file")
     if not defined $self->cfg_file;
@@ -148,6 +149,7 @@ sub write_cfg {
                                            session_id
                                            session_timeout
                                            session_persistent
+                                           cache_dir
                                            api_key);
   $cfg{server_uri}      = $self->{uri};
   $cfg{empire_name}     = $self->{name};
@@ -187,16 +189,16 @@ sub assert_session {
   my $now = time();
   if (!$self->session_id || $now - $self->session_start > $self->session_timeout) {
     if ($self->debug) {
-      print "DEBUG: Logging in since there is no session id or it timed out.\n";
+      print STDERR "DEBUG: Logging in since there is no session id or it timed out.\n";
     }
     my $res = $self->empire->login($self->{name}, $self->{password}, $self->{api_key});
     $self->{session_id} = $res->{session_id};
     if ($self->debug) {
-      print "DEBUG: Set session id to $self->{session_id} and updated session start time.\n";
+      print STDERR "DEBUG: Set session id to $self->{session_id} and updated session start time.\n";
     }
   }
   elsif ($self->debug) {
-      print "DEBUG: Using existing session.\n";
+      print STDERR "DEBUG: Using existing session.\n";
   }
   $self->{session_start} = $now; # update timeout
   return $self->session_id;

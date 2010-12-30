@@ -1,4 +1,4 @@
-package Games::Lacuna::Client::Buildings::GeneticsLab;
+package Games::Lacuna::Client::Buildings::HallsOfVrbansk;
 use 5.0080000;
 use strict;
 use warnings;
@@ -11,8 +11,8 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    prepare_experiment => { default_args => [qw(session_id building_id)] },
-    run_experiment     => { default_args => [qw(session_id building_id)] },
+    get_upgradable_buildings => { default_args => [qw(session_id building_id)] },
+    sacrifice_to_upgrade     => { default_args => [qw(session_id building_id)] },
   };
 }
 
@@ -23,7 +23,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Buildings::GeneticsLab - The Genetics Lab
+Games::Lacuna::Client::Buildings::HallsOfVrbansk - The Halls Of Vrbansk
 
 =head1 SYNOPSIS
 

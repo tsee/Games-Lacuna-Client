@@ -11,18 +11,26 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    add_trade             => { default_args => [qw(session_id building_id)] },
+    add_to_market         => { default_args => [qw(session_id building_id)] },
     get_ships             => { default_args => [qw(session_id building_id)] },
     get_prisoners         => { default_args => [qw(session_id building_id)] },
     get_plans             => { default_args => [qw(session_id building_id)] },
     get_glyphs            => { default_args => [qw(session_id building_id)] },
+    withdraw_from_market  => { default_args => [qw(session_id building_id)] },
+    accept_from_market    => { default_args => [qw(session_id building_id)] },
+    view_market           => { default_args => [qw(session_id building_id)] },
+    view_my_market        => { default_args => [qw(session_id building_id)] },
+    get_trade_ships       => { default_args => [qw(session_id building_id)] },
+    get_stored_resources  => { default_args => [qw(session_id building_id)] },
+    push_items            => { default_args => [qw(session_id building_id)] },
+    report_abuse          => { default_args => [qw(session_id building_id)] },
+    
+    # deprecated - old trade system
+    add_trade             => { default_args => [qw(session_id building_id)] },
     withdraw_trade        => { default_args => [qw(session_id building_id)] },
     accept_trade          => { default_args => [qw(session_id building_id)] },
     view_available_trades => { default_args => [qw(session_id building_id)] },
     view_my_trades        => { default_args => [qw(session_id building_id)] },
-    get_stored_resources  => { default_args => [qw(session_id building_id)] },
-    push_items            => { default_args => [qw(session_id building_id)] },
-    get_trade_ships       => { default_args => [qw(session_id building_id)] },
   };
 }
 

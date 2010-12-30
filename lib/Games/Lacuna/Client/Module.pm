@@ -74,11 +74,11 @@ sub _generate_method_per_spec {
     ];
     
     if ($client->debug) {
-      print "DEBUG: " . __PACKAGE__ . " request " . Data::Dumper::Dumper([$self->uri, $method_name, $params]);
+      print STDERR "DEBUG: " . __PACKAGE__ . " request " . Data::Dumper::Dumper([$self->uri, $method_name, $params]);
     }
     my $ret = $client->rpc->call($self->uri, $method_name, $params);
     if ($client->debug) {
-      print "DEBUG: " . __PACKAGE__ . " result " . Data::Dumper::Dumper($ret);
+      print STDERR "DEBUG: " . __PACKAGE__ . " result " . Data::Dumper::Dumper($ret);
     }
     return $ret->{result};
   };

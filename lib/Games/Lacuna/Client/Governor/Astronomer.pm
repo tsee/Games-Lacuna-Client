@@ -47,6 +47,7 @@ use Data::Dumper;
 
         ### Now find Spaceports.
         my (@spaceports) = $gov->find_buildings('SpacePort');
+        my @all_probes;
         my @ships;
         my @traveling;
         my @probe_to_port;
@@ -55,6 +56,7 @@ use Data::Dumper;
             while( $page <= 4 ){
                 $page++;
                 my $data = $sp->view_all_ships($page);
+                push @all_probes, grep { $_->{type} eq 'probe' } @{$data->{ships}};
                 push @ships, grep { $_->{task} eq 'Docked' and $_->{type} eq 'probe' } @{$data->{ships}};
                 push @probe_to_port, map {; $_->{id} => $sp } @ships;
                 push @traveling, grep { $_->{task} eq 'Travelling' and $_->{type} eq 'probe' } @{$data->{ships}};
@@ -62,25 +64,23 @@ use Data::Dumper;
             }
         }
 
-#        ### Now find Shipyards.
-#        my (@shipyards) = $gov->find_buildings('Shipyard');
-#        my @yard_queue;
-#        for my $yard ( @shipyards ){
-#            my $page = 0;
-#            while( $page <= 4 ){
-#                $page++;
-#                my $yard_queue = $yard->view_build_queue($page);
-#                push @yard_queue, $yard_queue;
-#                last if $page * $SHIPS_PER_PAGE >= $yard_queue->{number_of_ships_building};
-#            }
-#        }
+        # Build more probes if directed
+        my (@shipyards) = $gov->find_buildings('Shipyard');
+        my $build_probes = $config->{build_probes} || 0;
+        my $probes_to_build = $build_probes - scalar @all_probes;
+        trace(sprintf("Found %d probes, configured to build if less than %d found.",scalar @all_probes,$build_probes));
+        while ($probes_to_build > 0) {
+            eval {
+                $shipyards[0]->build_ship('probe');
+                action("Building new probe");
+                $probes_to_build--;
+            };
+            if ($@) {
+                $probes_to_build = 0; # Stop trying...
+                warning("Unable to build probe: $@");
+            }
+        }
 
-
-
-#        $gov->{_observatory_plugin}{yards}{$pid} = {
-#            yards => \@shipyards,
-#            queue => \@yard_queue,
-#        };
         $gov->{_observatory_plugin}{ports}{$pid} = {
             ports => \@spaceports,
             docked => \@ships,
@@ -372,6 +372,14 @@ Games::Lacuna::Client::Governor::Astronomer - A rudimentary plugin for Governor 
 This module examines each colony and the probes currently available (as well as in transit)
 to determine what stars the available probes should be sent to. It is a fast-and-dirty first-fit
 algorithm, intended merely do expand the observatory's scan in an every increasing radius.
+
+This module looks for the build_probes colony-level configuration key in the governor config.
+If it's a positive number, and there are fewer than that number of probes currently in any
+state at the SpacePort of the given body, then it will attempt to build probes to make up
+the difference.
+
+NOTE: Having ships auto-build can cause ship loss if it happens when you don't expect it, and you
+push ships to a location where a probe build is later initiated.  Be careful!
 
 =head1 DEPENDENCIES
 
