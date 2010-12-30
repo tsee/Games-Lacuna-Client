@@ -71,23 +71,10 @@ my $market = Games::Lacuna::Client::Market->new(
   filter => $filter,
 );
 
-use Perl6::Form;
-
 my @trades = $market->available_trades;
 
-print
-    "Empire         cost offering\n\n";
-for my $trade (@trades){
-  my $empire = $trade->empire;
-  my $cost = $trade->cost;
-  my @offer = map{
-      $_->type eq 'ship'
-    ? $_->ship_type
-    : $_->desc
-  } $trade->offer;
-  print form(
-    '{<<<<<<<<<<<<<} {>} {[[[{40}[[[}',
-    $empire, $cost, \@offer,
-  );
-}
+use Games::Lacuna::Client::PrettyPrint;
+$Games::Lacuna::Client::PrettyPrint::ansi_color = $show_color;
+
+Games::Lacuna::Client::PrettyPrint::trade_list(@trades);
 
