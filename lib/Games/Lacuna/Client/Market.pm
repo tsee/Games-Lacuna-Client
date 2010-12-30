@@ -260,8 +260,20 @@ sub available_trades{
 {
   package Games::Lacuna::Client::Market::Trade::Plan;
   our @ISA = 'Games::Lacuna::Client::Market::Trade::SimpleItem';
+  use Games::Lacuna::Client::Types ':meta';
 
   sub size{ return 10_000 }
+  sub plan_type{
+    my($self) = @_;
+    my($name) = $$self =~ /^(.*?) \(/;
+    return meta_type($name);
+  }
+  sub sub_type{ plan_type(@_) }
+  sub level{
+    my($self) = @_;
+    my($level) = $$self =~ /\((\d+)\)/;
+    return $level || 1;
+  }
 }
 {
   package Games::Lacuna::Client::Market::Trade::Glyph;
@@ -281,6 +293,7 @@ sub available_trades{
     my($type) = $$self =~ /^([^\(]+?) \(.*\)/;
     return $type;
   }
+  sub sub_type{ ship_type(@_) }
 
   sub info{
     my($self) = @_;
