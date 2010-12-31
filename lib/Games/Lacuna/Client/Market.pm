@@ -171,6 +171,10 @@ sub available_trades{
     my($self) = @_;
     return $self->{ask};
   }
+  sub price{
+    my($self) = @_;
+    return $self->{ask};
+  }
   sub cost{
     # Asking price plus Transporter "tax"
     my($self) = @_;
