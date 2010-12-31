@@ -130,17 +130,19 @@ sub available_trades{
   my $page_num = 1;
   my $trades_per_page = 25;
   my $max_pages = $arg{call_limit} || 20;
-  my $trade_count;
   my @trades;
 
-  while ($page_num <= $max_pages and (not defined $trade_count
-   or $trade_count > ($page_num * $trades_per_page ))) {
-      my $result = $building->view_market($page_num, $filter);
-      $page_num++;
-      $trade_count = $result->{trade_count};
-      push @trades, map{
-        Games::Lacuna::Client::Market::Trade->new($_,$type);
-      } @{$result->{trades}};
+  while(
+    my $result = $building->view_market($page_num, $filter)
+  ){
+    push @trades, map{
+      Games::Lacuna::Client::Market::Trade->new($_,$type);
+    } @{$result->{trades}};
+
+    # stop if this is the last page
+    last if $result->{trade_count} <= $page_num * $trades_per_page;
+    # stop if the next page will be past the limit
+    last if ++$page_num > $max_pages;
   }
 
   return @trades if wantarray;
@@ -300,6 +302,11 @@ sub available_trades{
   sub type{ 'glyph' }
   sub size{ 100 }
   sub quantity{ 1 }
+  sub sub_type{
+    my($self) = @_;
+    my($type) = $$self =~ /^(.*) glyph$/;
+    return $type;
+  }
 }
 {
   package Games::Lacuna::Client::Market::Trade::Ship;
