@@ -14,10 +14,12 @@ if ( $^O !~ /MSWin32/) {
 
 my $planet_name;
 my $opt_update_yml = 0;
+my $opt_glyph_type = {};
 GetOptions(
     'planet=s' => \$planet_name,
     'c|color!' => \$Games::Lacuna::Client::PrettyPrint::ansi_color,
     'u|update' => \$opt_update_yml,
+    't|type=s' => sub { $opt_glyph_type->{$_[1]} = 1; },
 );
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
@@ -95,9 +97,13 @@ sub creation_summary {
     use List::Util qw(reduce);
     use YAML::Any qw(LoadFile);
     my $yml = LoadFile( \*DATA );
-        my %ready;
-        my %remaining;
-    for my $title ( keys %$yml ){
+    my %ready;
+    my %remaining;
+    my @keys = ( keys %$yml );
+    @keys = grep { $opt_glyph_type->{$_} } @keys if keys %$opt_glyph_type;
+
+    for my $title ( @keys )
+    {
         print _c_('bold white'), "\n$title\n", "=" x length $title, "\n", _c_('reset');
         printf qq{%-30s%-10s%s\n}, "Building", "Missing", "Glyph Combine Order";
         print q{-} x 80, "\n";
