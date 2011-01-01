@@ -10,13 +10,16 @@ use Games::Lacuna::Client;
 use Getopt::Long qw(GetOptions);
 use YAML;
 use YAML::Dumper;
+use Exception::Class;
+
+  my $test_planet = "Tester";
 
   my $cfg_file = shift(@ARGV) || 'lacuna.yml';
   unless ( $cfg_file and -e $cfg_file ) {
     die "Did not provide a config file";
   }
 
-my $dump_file = "data_genetic.yml";
+my $dump_file = "data/data_genetic.yml";
 GetOptions(
   'o=s' => \$dump_file,
 );
@@ -36,12 +39,12 @@ GetOptions(
   my $planets        = $data->{status}->{empire}->{planets};
   my $home_planet_id = $data->{status}->{empire}->{home_planet_id}; 
 
-# Get Theme Park
+# Get Genetic Lab
   my @genetic;
   for my $pid (keys %$planets) {
     my $buildings = $client->body(id => $pid)->get_buildings()->{buildings};
     my $planet_name = $client->body(id => $pid)->get_status()->{body}->{name};
-    next unless ($planet_name eq "Vinland"); # Test Planet
+    next unless ($planet_name eq "$test_planet"); # We only do one planet, set it above
     print "$planet_name\n";
 
     my @sybit = grep { $buildings->{$_}->{url} eq '/geneticslab' } keys %$buildings;
@@ -54,15 +57,53 @@ GetOptions(
 
   print "Lab: ".join(q{, },@genetic)."\n";
 
-  my @builds;
   my $em_bit;
-  for my $sy_id (@genetic) {
-    print "Stay awhile\n";
-    $em_bit = $client->building( id => $sy_id, type => 'GeneticsLab' )->prepare_experiment();
-#    $em_bit = $client->building( id => $sy_id, type => 'ThemePark' )->operate();
-    push @builds, $em_bit;
+  my $spy_id = "0"; # Deception, Farming, Management, Political, Research
+  my $aff_id =  "deception_affinity";
+#  my $aff_id =  "enviromental_affinity";
+#  my $aff_id =  "mining_affinity";
+#  my $aff_id =  "max_orbit";
+#  my $aff_id =  "research_affinity";
+#  my $aff_id =  "farming_affinity";
+#  my $aff_id =  "management_affinity";
+#  my $aff_id =  "science_affinity";
+#  my $aff_id =  "political_affinity";
+#  my $aff_id =  "trade_affinity";
+#  my $aff_id =  "growth_affinity";
+  my $sy_id = $genetic[0];
+  print "Stay awhile in lab $sy_id\n";
+  my $ok = eval {
+    if ($spy_id == 0) {
+      $em_bit = $client->building( id => $sy_id, type => 'GeneticsLab' )->prepare_experiment();
+    }
+    else {
+      $em_bit = $client->building( id => $sy_id, type => 'GeneticsLab' )->run_experiment($spy_id, $aff_id);
+    }
+    return 1;
+  };
+  unless ($ok) {
+    if (my $e =  Exception::Class->caught('LacunaRPCException')) {
+      print "Code: ", $e->code, "\n";
+    }
+    else {
+      print "Non-OK result\n";
+    }
   }
 
-print OUTPUT $dumper->dump(\@builds);
+print OUTPUT $dumper->dump(\$em_bit);
 close(OUTPUT);
+
+  if ($ok) {
+    if ($spy_id == 0) {
+      print "here is where we would give out the spy info\n";
+    }
+    else {
+      if ($em_bit->{"experiment"}->{"graft"}) {
+        print "Success with $aff_id! ",$em_bit->{"experiment"}->{"message"},"\n";
+      }
+      else {
+        print "Failure with $aff_id! ",$em_bit->{"experiment"}->{"message"},"\n";
+      }
+    }
+  }
 

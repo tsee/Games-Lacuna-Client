@@ -11,14 +11,16 @@ use Getopt::Long qw(GetOptions);
 use YAML;
 use YAML::Dumper;
 
-  my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+  my $cfg_file = shift(@ARGV) || 'norway.yml';
   unless ( $cfg_file and -e $cfg_file ) {
     die "Did not provide a config file";
   }
 
-my $dump_file = "data_theme.yml";
+my $dump_file = "data/data_theme.yml";
+my $theme_file = "data/theme.yml";
 GetOptions(
   'o=s' => \$dump_file,
+  'i=s' => \$theme_file,
 );
   
   my $client = Games::Lacuna::Client->new(
@@ -56,11 +58,14 @@ GetOptions(
 
   my @builds;
   my $em_bit;
-  for my $sy_id (@theme) {
-    print "Lets ride the Bargletron\n";
+#my $sy_id = 719065;
+  for (1) {
+    for my $sy_id (sort {$a <=> $b} @theme) {
+      print "Lets ride the Bargletron: $sy_id\n";
 #    $em_bit = $client->building( id => $sy_id, type => 'ThemePark' )->view();
-    $em_bit = $client->building( id => $sy_id, type => 'ThemePark' )->operate();
-    push @builds, $em_bit;
+      $em_bit = $client->building( id => $sy_id, type => 'ThemePark' )->operate();
+      push @builds, $em_bit;
+    }
   }
 
 print OUTPUT $dumper->dump(\@builds);

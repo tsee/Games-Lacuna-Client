@@ -117,7 +117,38 @@
 - name: Halls of Vrbansk
   class: resource
   types:
-      - unknown
+      - goethite
+      - halite
+      - gypsum
+      - trona
+- name: Halls of Vrbansk
+  class: resource
+  types:
+      - gold
+      - anthracite
+      - uraninite
+      - bauxite
+- name: Halls of Vrbansk
+  class: resource
+  types:
+      - kerogen
+      - methane
+      - sulfur
+      - zircon
+- name: Halls of Vrbansk
+  class: resource
+  types:
+      - monazite
+      - fluorite
+      - beryl
+      - magnetite
+- name: Halls of Vrbansk
+  class: resource
+  types:
+      - rutile
+      - chromite
+      - chalcopyrite
+      - galena
 - name: Interdimensional Rift
   class: resource
   types:
