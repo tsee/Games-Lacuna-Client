@@ -58,7 +58,6 @@ GetOptions(
 
   my @builds;
   my $em_bit;
-#my $sy_id = 719065;
   for (1) {
     for my $sy_id (sort {$a <=> $b} @theme) {
       print "Lets ride the Bargletron: $sy_id\n";
