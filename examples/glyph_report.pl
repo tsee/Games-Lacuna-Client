@@ -13,28 +13,16 @@ if ( $^O !~ /MSWin32/) {
 }
 
 my $planet_name;
-my $opt_update_yml = 0;
 my $opt_glyph_type = {};
 GetOptions(
     'planet=s' => \$planet_name,
     'c|color!' => \$Games::Lacuna::Client::PrettyPrint::ansi_color,
-    'u|update' => \$opt_update_yml,
     't|type=s' => sub { $opt_glyph_type->{$_[1]} = 1; },
 );
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
 	die "Did not provide a config file";
-}
-
-if( $opt_update_yml ){
-    warn "This web-scraping function requires HTML::TableExtract and a helluva lot of luck.\n";
-    eval { require HTML::TableExtract };
-    die "Sorry, unable to load HTML::TableExtract, please install. Error: $@" if $@;
-    warn "Replace the DATA block in this script with the following STDOUT content.\n";
-    generate_yaml();
-    warn "Complete.\n";
-    exit;
 }
 
 my $client = Games::Lacuna::Client->new(
@@ -151,70 +139,6 @@ sub creation_summary {
 sub _c_ {
     use Games::Lacuna::Client::PrettyPrint;
     Games::Lacuna::Client::PrettyPrint::_c_(@_);
-}
-
-sub generate_yaml {
-    my @headers = qw(
-        Plan Anthracite Bauxite Beryl Chalcopyrite Chromite Flourite Galena Goethite Gold Gypsum Halite Kerogen Magnetite Methane Monazite Rutile Sulfur Trona Uraninite Zircon
-    );
-
-    my $te = HTML::TableExtract->new(headers => \@headers);
-    $te->parse(glyph_html());
-    my $functional_recipes = $te->table(0,1);
-    my $decorative_recipes = $te->table(0,2);
-    display_table( 'Functional Recipes', $functional_recipes );
-    display_table( 'Decorative Recipes', $decorative_recipes );
-}
-
-### Generates the YAML doc.
-sub display_table {
-    my $title = shift;
-    my $table = shift;
-
-    my %colhead = do{ my $i = -1; map {; $_ =~ s/\W//g; $i++ => $_; } $table->hrow(); };
-
-    print "\n$title:\n";
-
-    foreach my $row ( $table->rows() ){
-        my ($recipe, @used) = @$row;
-        print "\t$recipe:\n";
-        print "\t\tquantity:\n";
-        for(my $i = 0; $i < @used; $i++){
-            my $head = lc $colhead{$i};
-            my $cnt  = $used[$i] || '';
-            $cnt =~ s/\D+//g;
-            next if not $cnt;
-            print "\t\t\t$head: ", $cnt, "\n";
-        }
-        my $url = lc $recipe;
-        $url =~ s/\s*\(.+\)//g;
-        $url =~ s/\s+/-/g;
-        my @order = get_order($url, {reverse %colhead});
-        print "\n";
-    }
-}
-
-sub glyph_html {
-    use LWP::UserAgent;
-    my $lwp = LWP::UserAgent->new;
-    my $res = $lwp->get('http://community.lacunaexpanse.com/wiki/glyph-recipes');
-    die "Unable to download glyph recipes: ", $res->status_line if $res->is_error;
-    return $res->decoded_content;
-}
-
-sub get_order {
-    my $name = shift;
-    my $glyphs = shift;
-    $name = "${name}2" if $name =~ m/lapis|malcud/;
-    my $lwp = LWP::UserAgent->new;
-    my $res = $lwp->get("http://community.lacunaexpanse.com/wiki/$name");
-    die "Unable to download glyph for $name: ", $res->status_line if $res->is_error;
-    my $content = $res->decoded_content;
-    my @images = $content =~ m{<img alt="(.+?)\.png"|<img src=".+?" alt="(.+?)\.png" />}img;
-    my @filtered = grep { defined and $glyphs->{ucfirst $_} } @images;
-    die "Building $name was found to have no glyph order, this is unlikely. Regex fail!\n"
-        if not @filtered;
-    print "\t\torder:\n", map { qq{\t\t\t- $_\n} } @filtered;
 }
 
 __DATA__
