@@ -12,8 +12,24 @@ use YAML;
 use YAML::Dumper;
 use Exception::Class;
 
-  my $test_planet = "Tester";
+exit; # you need to edit some stuff first, Look for the ZZZ comments
 
+  my $test_planet = "genetic planet"; # ZZZ Put your planet that has genetics here
+  # ZZZ edit in your affinities.  It would be better if it just downloaded them, but I haven't gotten there.
+  my %my_aff = (
+       "max_orbit" => 0,               
+       "manufacturing_affinity" => 0,
+       "deception_affinity" => 0,
+       "research_affinity" => 0,
+       "management_affinity" => 0,
+       "farming_affinity" => 0,
+       "mining_affinity" => 0,
+       "science_affinity" => 0,
+       "environmental_affinity" => 0,
+       "political_affinity" => 0,
+       "trade_affinity" => 0,
+       "growth_affinity" => 0,
+  );
   my $cfg_file = shift(@ARGV) || 'lacuna.yml';
   unless ( $cfg_file and -e $cfg_file ) {
     die "Did not provide a config file";
@@ -57,10 +73,12 @@ GetOptions(
 
   print "Lab: ".join(q{, },@genetic)."\n";
 
+# ZZZ Run it first with $spy_id = 0, this will tell you which are available from your test subjects
   my $em_bit;
-  my $spy_id = "0"; # Deception, Farming, Management, Political, Research
+  my $spy_id = 0;
+# ZZZ What affinity do you want to try
   my $aff_id =  "deception_affinity";
-#  my $aff_id =  "enviromental_affinity";
+#  my $aff_id =  "environmental_affinity";
 #  my $aff_id =  "mining_affinity";
 #  my $aff_id =  "max_orbit";
 #  my $aff_id =  "research_affinity";
@@ -71,12 +89,13 @@ GetOptions(
 #  my $aff_id =  "trade_affinity";
 #  my $aff_id =  "growth_affinity";
   my $sy_id = $genetic[0];
-  print "Stay awhile in lab $sy_id\n";
   my $ok = eval {
     if ($spy_id == 0) {
+      print "Checking stats in lab $sy_id\n";
       $em_bit = $client->building( id => $sy_id, type => 'GeneticsLab' )->prepare_experiment();
     }
     else {
+      print "Under the knife in lab $sy_id\n";
       $em_bit = $client->building( id => $sy_id, type => 'GeneticsLab' )->run_experiment($spy_id, $aff_id);
     }
     return 1;
@@ -90,12 +109,21 @@ GetOptions(
     }
   }
 
-print OUTPUT $dumper->dump(\$em_bit);
+print OUTPUT $dumper->dump($em_bit);
 close(OUTPUT);
 
   if ($ok) {
     if ($spy_id == 0) {
-      print "here is where we would give out the spy info\n";
+      print "Survival Odds: ", $em_bit->{"survival_odds"},"\n";
+      print "Graft Odds: ", $em_bit->{"graft_odds"},"\n";
+      for my $spy ( @{$em_bit->{"grafts"}}) {
+        print "Spy ", $spy->{"spy"}->{"name"}, ": ", $spy->{"spy"}->{"id"},"\n";
+        for my $taff (sort keys %my_aff) {
+          if ( $spy->{"species"}->{$taff} > $my_aff{$taff} ) {
+            print "  $taff: ", $my_aff{$taff}, "->", $spy->{"species"}->{$taff}, "\n";
+          }
+        }
+      }
     }
     else {
       if ($em_bit->{"experiment"}->{"graft"}) {
