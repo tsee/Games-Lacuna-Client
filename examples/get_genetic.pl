@@ -12,24 +12,7 @@ use YAML;
 use YAML::Dumper;
 use Exception::Class;
 
-exit; # you need to edit some stuff first, Look for the ZZZ comments
-
-  my $test_planet = "genetic planet"; # ZZZ Put your planet that has genetics here
-  # ZZZ edit in your affinities.  It would be better if it just downloaded them, but I haven't gotten there.
-  my %my_aff = (
-       "max_orbit" => 0,               
-       "manufacturing_affinity" => 0,
-       "deception_affinity" => 0,
-       "research_affinity" => 0,
-       "management_affinity" => 0,
-       "farming_affinity" => 0,
-       "mining_affinity" => 0,
-       "science_affinity" => 0,
-       "environmental_affinity" => 0,
-       "political_affinity" => 0,
-       "trade_affinity" => 0,
-       "growth_affinity" => 0,
-  );
+  my $test_planet = "Test Planet"; #ZZZ Change this to your genetic lab planet
   my $cfg_file = shift(@ARGV) || 'lacuna.yml';
   unless ( $cfg_file and -e $cfg_file ) {
     die "Did not provide a config file";
@@ -54,6 +37,10 @@ GetOptions(
 # Get planets
   my $planets        = $data->{status}->{empire}->{planets};
   my $home_planet_id = $data->{status}->{empire}->{home_planet_id}; 
+  my $my_aff         = $data->{species};
+  delete $data->{species}->{description}; # Non-number, not important
+  delete $data->{species}->{name};      # Non-number, not important
+  delete $data->{species}->{min_orbit}; # Can not change this
 
 # Get Genetic Lab
   my @genetic;
@@ -73,12 +60,10 @@ GetOptions(
 
   print "Lab: ".join(q{, },@genetic)."\n";
 
-# ZZZ Run it first with $spy_id = 0, this will tell you which are available from your test subjects
   my $em_bit;
-  my $spy_id = 0;
-# ZZZ What affinity do you want to try
-  my $aff_id =  "deception_affinity";
-#  my $aff_id =  "environmental_affinity";
+  my $spy_id = 0; # Run first as this, then put in the spy ID you want with appropriate aff uncommented below
+#  my $aff_id =  "deception_affinity";
+  my $aff_id =  "environmental_affinity";
 #  my $aff_id =  "mining_affinity";
 #  my $aff_id =  "max_orbit";
 #  my $aff_id =  "research_affinity";
@@ -95,7 +80,7 @@ GetOptions(
       $em_bit = $client->building( id => $sy_id, type => 'GeneticsLab' )->prepare_experiment();
     }
     else {
-      print "Under the knife in lab $sy_id\n";
+      print "Under the knife in lab $sy_id trying for $aff_id\n";
       $em_bit = $client->building( id => $sy_id, type => 'GeneticsLab' )->run_experiment($spy_id, $aff_id);
     }
     return 1;
@@ -114,13 +99,16 @@ close(OUTPUT);
 
   if ($ok) {
     if ($spy_id == 0) {
+      for my $taff (sort keys %$my_aff) {
+         printf "%22s : %s\n", $taff,$my_aff->{$taff};
+      }
       print "Survival Odds: ", $em_bit->{"survival_odds"},"\n";
       print "Graft Odds: ", $em_bit->{"graft_odds"},"\n";
       for my $spy ( @{$em_bit->{"grafts"}}) {
         print "Spy ", $spy->{"spy"}->{"name"}, ": ", $spy->{"spy"}->{"id"},"\n";
-        for my $taff (sort keys %my_aff) {
-          if ( $spy->{"species"}->{$taff} > $my_aff{$taff} ) {
-            print "  $taff: ", $my_aff{$taff}, "->", $spy->{"species"}->{$taff}, "\n";
+        for my $taff (sort keys %$my_aff) {
+          if ( defined($spy->{"species"}->{$taff}) && $spy->{"species"}->{$taff} > $my_aff->{$taff} ) {
+            print "  $taff: ", $my_aff->{$taff}, "->", $spy->{"species"}->{$taff}, "\n";
           }
         }
       }
