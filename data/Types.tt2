@@ -17,9 +17,9 @@
 #
 ###################################################
 [%
-    list_functions = [];
+    resource_lists = [];
     FOREACH resource;
-        list_functions.push("${key}_types");
+        resource_lists.push("${key}_types");
     END;
     tag_functions = ['get_tags','tag_list'];
     meta_functions = [
@@ -27,10 +27,14 @@
         'meta_type',
         'meta_type_list'
     ];
+    list_functions = [];
+    !list_functions.import(
+        resource_lists,
+    );
     functions = [];
     # shh!
     !functions.import(
-        list_functions,
+        resource_lists,
         tag_functions,
         meta_functions
     );
@@ -46,10 +50,11 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw( [% functions.join(' ') %] );
 our %EXPORT_TAGS = (
-    list => [qw( [% list_functions.join(' ') %] )],
-    tag  => [qw( [%  tag_functions.join(' ') %] )],
-    meta => [qw( [% meta_functions.join(' ') %] )],
-    all  => [@EXPORT],
+    list     => [qw( [% list_functions.join(' ') %] )],
+    resource => [qw( [% resource_lists.join(' ') %] )],
+    tag      => [qw( [%  tag_functions.join(' ') %] )],
+    meta     => [qw( [% meta_functions.join(' ') %] )],
+    all      => [@EXPORT],
 );
 [% FOREACH resource %]
 {

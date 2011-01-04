@@ -27,10 +27,11 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw( food_types ore_types get_tags tag_list meta_building_list meta_type meta_type_list );
 our %EXPORT_TAGS = (
-    list => [qw( food_types ore_types )],
-    tag  => [qw( get_tags tag_list )],
-    meta => [qw( meta_building_list meta_type meta_type_list )],
-    all  => [@EXPORT],
+    list     => [qw( food_types ore_types )],
+    resource => [qw( food_types ore_types )],
+    tag      => [qw( get_tags tag_list )],
+    meta     => [qw( meta_building_list meta_type meta_type_list )],
+    all      => [@EXPORT],
 );
 
 {
