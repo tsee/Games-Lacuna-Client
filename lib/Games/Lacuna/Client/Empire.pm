@@ -35,7 +35,7 @@ sub api_methods {
     get_status            => { default_args => [qw(session_id)] },
     view_profile          => { default_args => [qw(session_id)] },
     edit_profile          => { default_args => [qw(session_id)] },
-    view_public_profile   => { default_args => [qw(session_id empire_id)] },
+    view_public_profile   => { default_args => [qw(session_id)] },
     find                  => { default_args => [qw(session_id)] },
     set_status_message    => { default_args => [qw(session_id)] },
     view_boosts           => { default_args => [qw(session_id)] },
