@@ -308,7 +308,7 @@ sub subtotals {
 
 sub usage {
   die <<"END_USAGE";
-Usage: $0 push_all.yml CONFIG_FILE
+Usage: $0 CONFIG_FILE
        --from       PLANET_NAME
        --to         PLANET_NAME
        --ship_type  SHIP_NAME
