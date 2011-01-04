@@ -330,7 +330,7 @@ FILL_RATIO defaults to 0.5, meaning a ship is only sent if it can be filled 50%
 MIN_LEVEL defaults to 100,000, meaning at least that many units of each of
 food, ore, water and energy will be left on the sending planet.
 
-MAX_SHIPS is not det by default. If set, limits the number of ships used to
+MAX_SHIPS is not set by default. If set, limits the number of ships used to
 push resources.
 
 END_USAGE
