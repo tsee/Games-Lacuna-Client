@@ -67,11 +67,18 @@ foreach my $name ( sort keys %planets ) {
     
     @$glyphs = sort { $a->{type} cmp $b->{type} } @$glyphs;
     
+    my %glyphs;
+    
     for my $glyph (@$glyphs) {
+        $glyphs{$glyph->{type}}++;
+        
         $all_glyphs{$glyph->{type}} = 0 if not $all_glyphs{$glyph->{type}};
         $all_glyphs{$glyph->{type}}++;
-        printf "%s\n", ucfirst( $glyph->{type} );
     }
+    
+    map {
+        printf "%s (%d)\n", ucfirst( $_ ), $glyphs{$_};
+    } sort keys %glyphs;
     
     print "\n";
 }
