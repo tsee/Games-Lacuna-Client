@@ -119,6 +119,12 @@ BUILD_CONFIG_FILE defaults to 'build_plan.yml' in the current directory.
 
 See the examples/build_plan.yml for an example BUILD_CONFIG_FILE.
 
+TO-DO
+=====
+Adding checks for resource and waste levels.
+Currently it will die if trying to build/upgrade with insufficient resources.
+It will also overflow your waste stores with total disregard for hygiene.
+
 END_USAGE
 
 }
