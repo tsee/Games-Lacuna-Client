@@ -2,6 +2,8 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use List::Util            (qw(first));
 use Games::Lacuna::Client ();
 use Getopt::Long          (qw(GetOptions));
