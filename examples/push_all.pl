@@ -6,6 +6,7 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use List::Util            (qw(first sum));
 use Games::Lacuna::Client ();
+use Games::Lacuna::Client::Types qw(:resource);
 use Getopt::Long          (qw(GetOptions));
 use YAML::Any             (qw(LoadFile Dump));
 use POSIX                  qw( floor );
@@ -47,53 +48,9 @@ GetOptions(
 usage() if !$from || !$to;
 
 
-my @foods = qw(
-    algae
-    apple
-    bean
-    beetle
-    bread
-    burger
-    cheese
-    chip
-    cider
-    corn
-    fungus
-    lapis
-    meal
-    milk
-    pancake
-    pie
-    potato
-    root
-    shake
-    soup
-    syrup
-    wheat
-);
+my @foods = food_types;
 
-my @ores = qw(
-    anthracite
-    bauxite
-    beryl
-    chalcopyrite
-    chromite
-    flourite
-    galena
-    goethite
-    gold
-    gypsum
-    halite
-    kerogen
-    magnetite
-    methane
-    monazite
-    rutile
-    sulfur
-    trona
-    uraninite
-    zircon
-);
+my @ores = ore_types;
 
 
 my $client = Games::Lacuna::Client->new(
