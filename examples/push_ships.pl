@@ -8,7 +8,6 @@ use List::Util            (qw(first));
 use Games::Lacuna::Client ();
 use Getopt::Long          (qw(GetOptions));
 use POSIX                 (qw(floor));
-use YAML::Any             (qw(LoadFile));
 my $cfg_file;
 
 if ( @ARGV && $ARGV[0] !~ /^--/) {
