@@ -25,7 +25,7 @@ unless ( $cfg_file && -e $cfg_file ) {
 
 my $from;
 my $to;
-my $ship_type  = 'barge|cargo|galleon|freighter';
+my $ship_type;
 my $fill_ratio = 0.5;
 my $min_level  = 100_000;
 my $max_ships;
@@ -268,7 +268,7 @@ sub usage {
 Usage: $0 CONFIG_FILE
        --from       PLANET_NAME
        --to         PLANET_NAME
-       --ship_type  SHIP_NAME
+       --ship_type  SHIP_TYPE
        --fill_ratio FILL_RATIO
        --min_level  MIN_LEVEL
        --max_ships  MAX_SHIPS
@@ -280,7 +280,8 @@ Resources are pushed in proportion to the stored levels.
 
 CONFIG_FILE  defaults to 'lacuna.yml'
 
-SHIP_TYPE is a regex, and defaults to 'barge|cargo|galleon|freighter'
+SHIP_TYPE is a regex used to decide which ships to use to push.
+By default, is not set, so all trade ships will be used.
 
 FILL_RATIO defaults to 0.5, meaning a ship is only sent if it can be filled 50%
 
