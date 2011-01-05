@@ -69,10 +69,10 @@ for my $trade ( @trades ){
 print STDERR "\r".(' 'x20)."\r";
 
 # separator for our table
-my $sep = '+'.('-'x14).( ('+'.('-'x7))x4 )."+\n";
+my $sep = '+'.('-'x14).( ('+'.('-'x7))x5 )."+\n";
 
 print $sep;
-print "| glyph        |  min  | min_s |  avg  |  max  |\n";
+print "| glyph        |  min  | min_s |  avg  |  max  | count |\n";
 print $sep;
 
 my(@glyph,@totals);
@@ -89,7 +89,7 @@ for my $glyph ( keys %glyph_prices ){
   my $sum   = sum @prices;
   my $mean = $sum / @prices;
   
-  push @glyph, [$glyph,$min,$min_s,$mean,$max];
+  push @glyph, [$glyph,$min,$min_s,$mean,$max,scalar @prices];
   $totals[0] += $min;
   $totals[1] += $min_s;
   $totals[2] += $max;
@@ -106,17 +106,25 @@ for my $arr ( @glyph ){
   my $pad = ' 'x((12 - length $glyph) / 2);
   
   printf '| %-12s | ', $glyph;
-  print join ' | ', map {stringify($_)} @n;
+  my $count = sprintf '%4i ', pop @n;
+  @n = map {stringify($_)} @n;
+  print join ' | ', @n, $count;
   print " |\n";
 }
 print $sep;
 
+my $total_glyphs;
+$total_glyphs += $_->[5] for @glyph;
+
 # print the averages of each of the columns
 print '| averages     | ';
-print join ' | ', map {
-  stringify( $_ / @glyph )
-} @totals;
-print " |\n";
+{
+  my @prn = map{
+    stringify( $_ / @glyph )
+  } @totals;
+  print join ' | ', @prn, ' --- ';
+  print " |\n";
+}
 print $sep;
 
 # done printing table
