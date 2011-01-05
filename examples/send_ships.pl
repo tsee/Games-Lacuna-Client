@@ -116,7 +116,7 @@ my $space_port_id = first {
 
 my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
 
-my $ships = $space_port->get_ships_for( $from_id, { body_id => $target_id}  );
+my $ships = $space_port->get_ships_for( $from_id, { $target_type => $target_id}  );
 
 my $available = $ships->{available};
 my $sent = 0;
