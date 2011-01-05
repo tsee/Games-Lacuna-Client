@@ -10,7 +10,6 @@ use Getopt::Long          (qw(GetOptions));
 use POSIX                 (qw(floor));
 use YAML::Any             (qw(LoadFile));
 my $cfg_file;
-my $push_file;
 
 if ( @ARGV && $ARGV[0] !~ /^--/) {
 	$cfg_file = shift @ARGV;
