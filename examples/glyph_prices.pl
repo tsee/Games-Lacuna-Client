@@ -11,14 +11,9 @@ use lib "${FindBin::Bin}/../lib";
 use Games::Lacuna::Client::Market;
 use Games::Lacuna::Client::Types qw'ore_types';
 
+use Pod::Usage;
 if( @ARGV && $ARGV[0] eq '--help' ){
-  print <<HELP;
-usage: ${FindBin::Script} [config_file]
-  prints out a table of currently available glyphs.
-
-( config_file defaults to lacuna.yml )
-HELP
-exit(0);
+  pod2usage qw'-verbose 2';
 }
 
 sub stringify;
@@ -91,7 +86,14 @@ for my $glyph ( keys %glyph_prices ){
   
   push @glyph, [$glyph,$min,$min_s,$mean,$max,scalar @prices];
   $totals[0] += $min;
-  $totals[1] += $min_s;
+
+  # this isn't quite accurate, but at least it's closer
+  if( $min_s ){
+    $totals[1] += $min_s;
+  }else{
+    $totals[1] += $min;
+  }
+
   $totals[2] += $max;
   $totals[3] += $mean;
 }
@@ -164,4 +166,63 @@ sub stringify{
     return $str;
   }
 }
+__END__
+
+=head1 NAME
+
+glyph_prices.pl - Reports the prices of glyphs found at the Transporter and Trade Ministry
+
+=head1 SYNOPSIS
+
+glyph_prices.pl [options] [config_file]
+
+[config_file]  is optional and defaults to lacuna.yml
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help>
+
+Print a brief help message and exits.
+
+=item B<--man>
+
+Prints the manual page and exits.
+
+=back
+
+=head1 DESCRIPTION
+
+This program searches through available trades to find glyphs.
+
+Then it reports several pieces of information that it collected.
+
+=head2 Columns
+
+=over 8
+
+=item B<min>
+
+The minumum amount this glyph costs.
+
+=item B<min_s>
+
+The minimum amount this glyph costs B<by itself>.
+
+=item B<avg>
+
+The average price that this glyph goes for.
+
+=item B<max>
+
+The maximum price that was asked for this glyph.
+
+=item B<count>
+
+How many of this particular glyph is available.
+
+=back
+
+=cut
 
