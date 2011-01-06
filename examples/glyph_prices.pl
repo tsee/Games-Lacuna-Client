@@ -91,7 +91,7 @@ for my $glyph ( keys %glyph_prices ){
   
   push @glyph, [$glyph,$min,$min_s,$mean,$max,scalar @prices];
   $totals[0] += $min;
-  $totals[1] += $min_s;
+  $totals[1] += $min_s if $min_s;
   $totals[2] += $max;
   $totals[3] += $mean;
 }
