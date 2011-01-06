@@ -291,7 +291,7 @@ sub available_trades{
   sub sub_type{ plan_type(@_) }
   sub level{
     my($self) = @_;
-    my($level) = $$self =~ /\((\d+)\)/;
+    my($level) = $$self =~ /\((\d*[+]?\d*)\)/;
     return $level || 1;
   }
 }
