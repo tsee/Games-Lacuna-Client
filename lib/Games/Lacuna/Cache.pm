@@ -514,147 +514,154 @@ Games::Lacuna::Cache - a caching mechanism for Games::Lacuna::Client
 
 =head1 SYNOPSIS
 
-use Games::Lacuna::Cache;
-my $lacuna = Games::Lacuna::Cache->new(
-                                       'cfg_file' => "/path/to/lacuna.yml",
-                                       'cache_file' => "/path/to/lac_cache.dat",
-                                       'cache_debug' => 1,
-                                       'refresh' => 0
-                                      );
+    use Games::Lacuna::Cache;
+    my $lacuna = Games::Lacuna::Cache->new(
+                                           'cfg_file' => "/path/to/lacuna.yml",
+                                           'cache_file' => "/path/to/lac_cache.dat",
+                                           'cache_debug' => 1,
+                                           'refresh' => 0
+                                          );
 
-my $empire_data = $lacuna->empire_data();
-my $planet_data = $lacuna->planet_data($planet_id, $refresh);
-
+    my $empire_data = $lacuna->empire_data();
+    my $planet_data = $lacuna->planet_data($planet_id, $refresh);
 
 =head1 DESCRIPTION
-This module provides a caching mechanism for the Games::Lacuna::Client
+
+This module provides a caching mechanism for the C<L<Games::Lacuna::Client>>
 package.
 
 =head1 METHODS
 
-=head2 new
+=head2 C<new>
 
-my $lacuna = Games::Lacuna::Cache->new( $refresh );
+    my $lacuna = Games::Lacuna::Cache->new( $refresh );
 
-If $refresh is defined, the Cache will force a refresh of the data.
+If C<$refresh> is defined, the Cache will force a refresh of the data.
 
-=head2 empire_data([$refresh])
-    Returns top level empire data
+=head2 C<empire_data([$refresh])>
 
-=head2 planet_data([$planet_id], [$refresh])
-    Returns planet data for $planet_id, or all bodies if you leave off the id.
-    At the moment, 
+Returns top level empire data
 
-    =head2 body_data([$body_id], [$refresh])
-    Ditto.
+=head2 C<planet_data([$planet_id], [$refresh])>
 
-    These should work pretty much as you expect. Cache stores partial 
-    information if it has it, and full information if you request it. 
-    That's because a lot of high level calls return a bit of data about 
-    the next level down (Empire gives planets, Body gives buildings, etc). 
-    So we store the partial to avoid hitting up a full call when all you 
-    want is the id. So empire_data will give you full empire data and partial
-    planets (just ID and name). Planet_data will give you full data on the
-    planet and partial (though fairly good) data on the buildings.
-    ->building_data will give you full info on the building. 
+Returns planet data for C<$planet_id>, or all bodies if you leave off the id.
+At the moment,
 
+=head2 C<body_data([$body_id], [$refresh])>
 
+Ditto.
 
-=head2 building_data([$building_id], [$refresh])
-    This might not work as you expect. By default, when we call body_data, 
-    we store partial info on buildings from a body->get_buildings() request. 
-    That's generally enough for pending build, recycling, etc. Calling
-    building data with the refresh flag set will give you full info on that
-    building.  
+These should work pretty much as you expect. Cache stores partial 
+information if it has it, and full information if you request it. 
+That's because a lot of high level calls return a bit of data about 
+the next level down (Empire gives planets, Body gives buildings, etc). 
+So we store the partial to avoid hitting up a full call when all you 
+want is the id. So C<empire_data> will give you full empire data and partial
+planets (just ID and name). C<Planet_data> will give you full data on the
+planet and partial (though fairly good) data on the buildings.
+C<building_data> will give you full info on the building. 
 
-    The data structure returned from a full request consists of the main 
-    hash returned by the object->view() call, *and* other top level 
-    structures in the response.  So if you call 
+=head2 C<building_data([$building_id], [$refresh])>
 
-    my $spaceport = $laluna->building_data($spaceport),
+This might not work as you expect. By default, when we call body_data, 
+we store partial info on buildings from a C<< body->get_buildings() >> request. 
+That's generally enough for pending build, recycling, etc. Calling
+building data with the refresh flag set will give you full info on that
+building.  
 
-    you'll get $spaceport->{'id'}, $spaceport->{'waste_hour'}, etc, but 
-    you'll also get $spaceport->{'docked_ships'}. Similarly,
-    $recycler->{'recycle'} if it's in the middle of one. 
+The data structure returned from a full request consists of the main 
+hash returned by the C<< object->view() >> call, *and* other top level 
+structures in the response.  So if you call 
 
-    =head2 NB REFRESH FLAG
-    The "refresh" flag may not work quite as you expect. It doesn't 
-    guarantee fresh info. It guarantees full data less than 25 minutes old 
-    (or whatever you set CACHE_TIME to). That's somewhat counterintuitive,
-    and I should probably call it the "full" flag, but for the moment, this 
-    is what you get. The resource extrapolation works pretty well, so if you
-    call "refresh" on a building for which we already have full info, you'll
-    get that full info, with extrapolated resource values, but it might be a
-    little old. If you absolutely must have up to the second data, there are
-    convenience methods to call:
+    my $spaceport = $lacuna->building_data($spaceport),
 
-=head2 view_planet($planet_id)
-=head2 view_building($building_id)
-    These are wrappers around the body->view_buildings (because that gives
-                                                        building info *and* full planet info) and building->view() client methods.
-    These guarantee you up-to-the-second information about a planet or
-    building, and they also cache the info.
+you'll get C<< $spaceport->{'id'} >>, C<< $spaceport->{'waste_hour'} >>, etc, but 
+you'll also get C<< $spaceport->{'docked_ships'} >>. Similarly,
+C<< $recycler->{'recycle'} >> if it's in the middle of one. 
 
-=head2 list_buildings_on_planet($planet, [$array_ref])
+=head2 NB REFRESH FLAG
+
+The "I<refresh>" flag may not work quite as you expect. It doesn't 
+guarantee fresh info. It guarantees full data less than 25 minutes old 
+(or whatever you set I<CACHE_TIME> to). That's somewhat counterintuitive,
+and I should probably call it the "I<full>" flag, but for the moment, this 
+is what you get. The resource extrapolation works pretty well, so if you
+call "I<refresh>" on a building for which we already have full info, you'll
+get that full info, with extrapolated resource values, but it might be a
+little old. If you absolutely must have up to the second data, there are
+convenience methods to call:
+
+=head2 C<view_planet($planet_id)>
+
+Z<>
+
+=head2 C<view_building($building_id)>
+
+These are wrappers around the C<< body->view_buildings >> (because that gives
+building info B<and> full planet info) and C<< building->view() >>
+client methods.
+These guarantee you up-to-the-second information about a planet or
+building, and they also cache the info.
+
+=head2 C<list_buildings_on_planet($planet, [$array_ref])>
 
     my @filters = ("spaceport");
     my @buildings = $lacuna->list_buildings_on_planet($planet, \@filters);
 
-    $planet will be a planet id. foreach my $planet (keys %$planet_data) from 
-    above will do.
+C<$planet> will be a planet id. C<foreach my $planet (keys %$planet_data)> from
+above will do.
 
 
-    @filters needs to contain valid building types of the kind found in a 
-    building url - "wasterecycling" or "spaceport". Feel free to implement a 
-    look up table for "Space Port" and "Trash Compactor" :)
+C<@filters> needs to contain valid building types of the kind found in a 
+building url - "I<wasterecycling>" or "I<spaceport>". Feel free to implement a 
+look up table for "I<Space Port>" and "I<Trash Compactor>" :)
 
-    The method returns a list of building ids, but it also creates client 
-    objects in the Cache OBJECT structure. So then you could say
+The method returns a list of building ids, but it also creates client 
+objects in the I<Cache OBJECT> structure. So then you could say
 
     foreach $building (@recyclers){
-
         my $object = $lacuna{'OBJECTS'}->{'buildings'}->{$building};
         $object->recycle();
 
-    or any similar client method. Don't use the object for view methods,
-    though - use the helper methods above so data is cached (and actually
-    just use cached data where you can)
+or any similar client method. Don't use the object for view methods,
+though - use the helper methods above so data is cached (and actually
+just use cached data where you can)
 
-    Note objects do not persist between script calls, and are not shared 
-    between scripts.
+Note objects do not persist between script calls, and are not shared 
+between scripts.
 
 =head1 DATA
 
 =head2 OBJECTS
 
-$lacuna->{'OBJECTS'}->{'buildings'}
-    and
-        $lacuna->{'OBJECTS'}->{'bodies'}
+C<< $lacuna->{'OBJECTS'}->{'buildings'} >>
+and
+C<< $lacuna->{'OBJECTS'}->{'bodies'} >>
 
-    Stored by id. This just means you don't have to toss around the objects all 
-        the time.
-        $lacuna->{'OBJECTS'}->{$type}->{$id}->method();
+Stored by id. This just means you don't have to toss around the objects all 
+the time.
 
-    should always work.
+C<< $lacuna->{'OBJECTS'}->{$type}->{$id}->method(); >>
+should always work.
 
 
-    I think that's about it.
+I think that's about it.
 
 =head1 CAVEATS
 
-    It may stomp on disk data, but scripts should play friendly with each other. 
-    See how it goes.
+It may stomp on disk data, but scripts should play friendly with each other. 
+See how it goes.
 
-    You know the drill. Don't use it to run Fusion Power plants. Oh, wait....
+You know the drill. Don't use it to run Fusion Power plants. I<Oh, wait....>
 
-    =head1 AUTHOR
+=head1 AUTHOR
 
-    Jai Cornes, E<lt>solitaire@tygger.netE<gt>
+Jai Cornes, E<lt>solitaire@tygger.netE<gt>
 
-    =head1 COPYRIGHT AND LICENSE
+=head1 COPYRIGHT AND LICENSE
 
-    Copyright (C) 2010 by Jai Cornes
+Copyright (C) 2010 by Jai Cornes
 
-    This library is free software; you can redistribute it and/or modify
-    it under the same terms as Perl itself, either Perl version 5.10.0 or,
-       at your option, any later version of Perl 5 you may have available.
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.10.0 or,
+at your option, any later version of Perl 5 you may have available.
