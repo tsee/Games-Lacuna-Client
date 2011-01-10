@@ -70,8 +70,8 @@ for (my $i = 0; $i <= $#queue; $i++) {
         
         my ($match) =
             grep { $buildings->{$_}{url} eq $url }
-            grep { $item->{upgrade}{x} ? ( $item->{upgrade}{x} eq $buildings->{$_}{x} ) : 1 }
-            grep { $item->{upgrade}{y} ? ( $item->{upgrade}{y} eq $buildings->{$_}{y} ) : 1 }
+            grep { defined $item->{upgrade}{x} ? ( $item->{upgrade}{x} eq $buildings->{$_}{x} ) : 1 }
+            grep { defined $item->{upgrade}{y} ? ( $item->{upgrade}{y} eq $buildings->{$_}{y} ) : 1 }
             keys %$buildings;
         
         die "building not found: '$url'"
