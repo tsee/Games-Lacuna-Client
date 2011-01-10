@@ -119,7 +119,7 @@ else {
 	print "Grafts available\n\n";
 
 	for my $graft ( @grafts ) {
-		printf "ID: %d\n", $graft->{name}{id};
+		printf "ID: %d\n", $graft->{spy}{id};
 		printf "Name: %s\n", $graft->{spy}{name};
 		
 		print "Species:\n";
@@ -129,7 +129,7 @@ else {
 		
 		print "Graftable Affinities:\n";
 		map {
-			printf "\t%s\n";
+			printf "\t%s\n", $_;
 		} sort @{ $graft->{graftable_affinities} };
 		
 		print "\n";
@@ -144,11 +144,10 @@ else {
 sub usage {
   die <<"END_USAGE";
 Usage: $0 CONFIG_FILE
-       --planet PLANET_NAME
-	   
-	   --id       SPY_ID
-	   --name     SPY_NAME
-	   --affinity AFFINITY
+    --planet PLANET_NAME
+    --id       SPY_ID
+    --name     SPY_NAME
+    --affinity AFFINITY
 
 CONFIG_FILE  defaults to 'lacuna.yml'
 
