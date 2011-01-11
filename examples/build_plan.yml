@@ -19,4 +19,5 @@ queue:
       type: Singularity
       x: 1
       y: 3
+    subsidize: 1
   
