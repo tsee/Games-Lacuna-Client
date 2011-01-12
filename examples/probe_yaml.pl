@@ -76,7 +76,7 @@ GetOptions(
   my @bodies;
   for my $star (@stars) {
     my @tbod;
-    if ($clean or $ename ne '') {
+    if ($clean or $empire ne '') {
       for my $bod ( @{$star->{bodies}} ) {
         if ($empire ne '' and defined($bod->{empire})) {
           push @tbod, $bod if $bod->{empire}->{name} =~ /$empire/;
