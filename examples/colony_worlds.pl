@@ -199,7 +199,10 @@ for my $star (@stars) {
         }
     }
     
-    push @planets, grep { (not defined $_->{empire}) && $_->{orbit} >= $min_orbit && $_->{orbit} <= $max_orbit && $_->{type} eq 'habitable planet' } @{$star->{bodies}};
+    push @planets, grep { 
+		not defined $_->{empire} && $_->{orbit} >= $min_orbit && $_->{orbit} <= $max_orbit && 
+		( $_->{type} eq 'habitable planet' || $conditions->{'gas_giant'} && $_->{type} eq 'gas giant' )
+	} @{$star->{bodies}};
 }
 
 my $factors_sum=0;

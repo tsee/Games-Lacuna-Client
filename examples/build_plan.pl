@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use List::Util            (qw(max));
+use List::Util            (qw(first max));
 use Getopt::Long          (qw(GetOptions));
 use Games::Lacuna::Client ();
 use YAML::Any             qw( LoadFile );
@@ -43,6 +43,9 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 # Load planet data
 my $planet = $client->body( id => $planets{$planet_name} );
 my $buildings;
+my $dev_min;
+
+print "Planet: $planet_name\n";
 
 # run through our queue
 for (my $i = 0; $i <= $#queue; $i++) {
@@ -70,8 +73,8 @@ for (my $i = 0; $i <= $#queue; $i++) {
         
         my ($match) =
             grep { $buildings->{$_}{url} eq $url }
-            grep { $item->{upgrade}{x} ? ( $item->{upgrade}{x} eq $buildings->{$_}{x} ) : 1 }
-            grep { $item->{upgrade}{y} ? ( $item->{upgrade}{y} eq $buildings->{$_}{y} ) : 1 }
+            grep { defined $item->{upgrade}{x} ? ( $item->{upgrade}{x} eq $buildings->{$_}{x} ) : 1 }
+            grep { defined $item->{upgrade}{y} ? ( $item->{upgrade}{y} eq $buildings->{$_}{y} ) : 1 }
             keys %$buildings;
         
         die "building not found: '$url'"
@@ -85,6 +88,18 @@ for (my $i = 0; $i <= $#queue; $i++) {
             $buildings->{$match}{y};
         
         $return = $building->upgrade;
+    }
+    
+    if ( $item->{subsidize} ) {
+        my $dev_min = get_dev_min();
+        
+        if ( $dev_min ) {
+            print "Subsidizing build\n";
+            
+            $dev_min->subsidize_build_queue;
+            sleep 1;
+            next;
+        }
     }
     
     # quit if we're at the end of the queue
@@ -103,6 +118,21 @@ sub build_remaining {
         grep { defined }
         map { $buildings->{$_}{pending_build}{seconds_remaining} }
             keys %$buildings;
+}
+
+sub get_dev_min {
+    return $dev_min if $dev_min;
+    
+    my $id = first {
+        $buildings->{$_}{url} eq "/development"
+    } keys %$buildings;
+    
+    if ( !$id ) {
+        warn "Cannot subsidize without a Development Ministry\n";
+        return;
+    }
+    
+    return $client->building( id => $id, type => "Development" );
 }
 
 sub usage {
