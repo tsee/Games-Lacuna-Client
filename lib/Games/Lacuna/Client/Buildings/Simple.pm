@@ -24,8 +24,8 @@ our @BuildingTypes = (qw(
     CloakingLab
     Corn
     CornMeal
-    Crater
     CrashedShipSite
+    Crater
     Dairy
     Denton
     Espionage
@@ -44,8 +44,8 @@ our @BuildingTypes = (qw(
     JunkHengeSculpture
     KalavianRuins
     KasternsKeep
-    Lake
     Lagoon
+    Lake
     Lapis
     LapisForest
     LuxuryHousing
@@ -82,9 +82,9 @@ our @BuildingTypes = (qw(
     TheDillonForge
     University
     Volcano
+    WasteDigester
     WasteEnergy
     WasteSequestration
-    WasteDigester
     WasteTreatment
     WaterProduction
     WaterPurification
