@@ -28,7 +28,6 @@ our @BuildingTypes = (qw(
     CrashedShipSite
     Dairy
     Denton
-    EnergyReserve
     Espionage
     EssentiaVein
     Fission
