@@ -12,6 +12,9 @@ use Getopt::Long qw(GetOptions);
 use YAML;
 use YAML::Dumper;
 
+  $dump_planet = "Test Planet here";
+
+
   my $cfg_file = shift(@ARGV) || 'lacuna.yml';
   unless ( $cfg_file and -e $cfg_file ) {
     die "Did not provide a config file";
@@ -42,10 +45,7 @@ GetOptions(
   for my $pid (keys %$planets) {
     my $buildings = $client->body(id => $pid)->get_buildings()->{buildings};
     my $planet_name = $client->body(id => $pid)->get_status()->{body}->{name};
-    next unless ($planet_name eq "Oslo"); # Test Planet
-#    next unless ($planet_name eq "Reykjavik"); # Test Planet
-#    next unless ($planet_name eq "Greenland"); # Test Planet
-#    next unless ($planet_name eq "Muspelheim"); # Test Planet
+    next unless ($planet_name eq "$test_planet"); # Test Planet
     print "$planet_name\n";
 
     my @sybit = grep { $buildings->{$_}->{url} eq '/orestorage' } keys %$buildings;
