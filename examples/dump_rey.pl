@@ -4,6 +4,9 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use List::Util            (qw(first));
 use Games::Lacuna::Client;
 use Getopt::Long qw(GetOptions);
 use YAML;
@@ -14,7 +17,7 @@ use YAML::Dumper;
     die "Did not provide a config file";
   }
 
-my $dump_file = "data_dump.yml";
+my $dump_file = "data/data_dump.yml";
 GetOptions(
   'o=s' => \$dump_file,
 );
@@ -39,7 +42,10 @@ GetOptions(
   for my $pid (keys %$planets) {
     my $buildings = $client->body(id => $pid)->get_buildings()->{buildings};
     my $planet_name = $client->body(id => $pid)->get_status()->{body}->{name};
-    next unless ($planet_name eq "Helsinki"); # Test Planet
+    next unless ($planet_name eq "Oslo"); # Test Planet
+#    next unless ($planet_name eq "Reykjavik"); # Test Planet
+#    next unless ($planet_name eq "Greenland"); # Test Planet
+#    next unless ($planet_name eq "Muspelheim"); # Test Planet
     print "$planet_name\n";
 
     my @sybit = grep { $buildings->{$_}->{url} eq '/orestorage' } keys %$buildings;
@@ -58,15 +64,19 @@ GetOptions(
 # Find dump
   my @builds;
   my $em_bit;
-  for my $sy_id (@dump) {
-    print "Trying to Dump\n";
+  my $sy_id = pop(@dump);
+  print "Trying to Dump\n";
 #    $em_bit = $client->building( id => $sy_id, type => 'OreStorage' )->view();
-    $em_bit = $client->building( id => $sy_id, type => 'OreStorage' )->dump("fluorite", "50000");
+#  $em_bit = $client->building( id => $sy_id, type => 'OreStorage' )->dump("beryl", "600000");
+  $em_bit = $client->building( id => $sy_id, type => 'OreStorage' )->dump("fluorite", "1000000");
+  $em_bit = $client->building( id => $sy_id, type => 'OreStorage' )->dump("monazite", "5000000");
+#  $em_bit = $client->building( id => $sy_id, type => 'OreStorage' )->dump("chalcopyrite", "1000000");
+#    $em_bit = $client->building( id => $sy_id, type => 'OreStorage' )->dump("gypsum", "150000");
+#    $em_bit = $client->building( id => $sy_id, type => 'OreStorage' )->dump("methane", "280000");
 #    $em_bit = $client->building( id => $sy_id, type => 'FoodReserve' )->dump("wheat", "2000");
 #    $em_bit = $client->building( id => $sy_id, type => 'EnergyReserve' )->dump("2000");
 #    $em_bit = $client->building( id => $sy_id, type => 'WaterStorage' )->dump("2000");
     push @builds, $em_bit;
-  }
 
 print OUTPUT $dumper->dump(\@builds);
 close(OUTPUT);
