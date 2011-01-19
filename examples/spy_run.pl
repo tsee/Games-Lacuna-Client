@@ -3,8 +3,7 @@
 use strict;
 use warnings;
 use Getopt::Long          qw(GetOptions);
-use List::Util            qw( first max );
-use Data::Dumper;
+use List::Util            qw( first );
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client ();
@@ -45,33 +44,45 @@ my $intel_id = first {
 } keys %$buildings;
 
 my $intel = $client->building( id => $intel_id, type => 'Intelligence' );
+my @spies;
 
-my @spies =
-    grep {
-        grep {
-            $_->{task} eq $assignment
-        } @{ $_->{possible_assignments} }
+for my $spy ( @{ $intel->view_spies->{spies} } ) {
+    next if lc( $spy->{assigned_to}{name} ) ne lc( $target );
+    
+    my @missions = grep {
+        $_->{task} =~ /^$assignment/i
+    } @{ $spy->{possible_assignments} };
+    
+    next if !@missions;
+    
+    if ( @missions > 1 ) {
+        warn "Supplied --assignment matches multiple possible assignments - skipping!\n";
+        for my $mission (@missions) {
+            warn sprintf "\tmatches: %s\n", $mission->{task};
+        }
+        last;
     }
-    grep {
-        lc( $_->{assigned_to}{name} ) eq lc( $target )
-    } @{ $intel->view_spies->{spies} };
-
+    
+    $assignment = $missions[0]->{task};
+    
+    push @spies, $spy;
+}
 
 for my $spy (@spies) {
-        my $return;
-        
-        eval {
-            $return = $intel->assign_spy( $spy->{id}, $assignment );
-        };
-        
-        if ($@) {
-            warn $@;
-            next;
-        }
-        
-        printf "%s\n\t%s\n",
-            $return->{mission}{result},
-            $return->{mission}{reason};
+    my $return;
+    
+    eval {
+        $return = $intel->assign_spy( $spy->{id}, $assignment );
+    };
+    
+    if ($@) {
+        warn "Error: $@\n";
+        next;
+    }
+    
+    printf "%s\n\t%s\n",
+        $return->{mission}{result},
+        $return->{mission}{reason};
 }
 
 exit;
@@ -90,9 +101,11 @@ CONFIG_FILE  defaults to 'lacuna.yml'
 
 --target is the planet that your spy is assigned to.
 
---assignment must exactly match one of the missions listed in the API docs:
-http://us1.lacunaexpanse.com/api/Intelligence.html
-e.g. "Gather Operative Intelligence"
+--assignment must match one of the missions listed in the API docs:
+    http://us1.lacunaexpanse.com/api/Intelligence.html
+
+It only needs to be long enough to uniquely match a single available mission,
+e.g. "gather op" will successfully match "Gather Operative Intelligence"
 
 END_USAGE
 
