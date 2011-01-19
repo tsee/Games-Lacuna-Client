@@ -56,20 +56,8 @@ my @spies =
         lc( $_->{assigned_to}{name} ) eq lc( $target )
     } @{ $intel->view_spies->{spies} };
 
-my $max_recovery =
-    max
-    map {
-        $_->{recovery}
-    }
-    grep {
-        $_->{task} eq $assignment
-    }
-    map {
-        @{ $_->{possible_assignments} }
-    } @spies;
 
-while (1) {
-    for my $spy (@spies) {
+for my $spy (@spies) {
         my $return;
         
         eval {
@@ -84,10 +72,10 @@ while (1) {
         printf "%s\n\t%s\n",
             $return->{mission}{result},
             $return->{mission}{reason};
-    }
 }
 
 exit;
+
 
 sub usage {
   die <<"END_USAGE";
@@ -109,4 +97,3 @@ e.g. "Gather Operative Intelligence"
 END_USAGE
 
 }
-
