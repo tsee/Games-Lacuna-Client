@@ -11,8 +11,7 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    view   => { default_args => [qw(session_id building_id)] },
-    dump   => { default_args => [qw(session_id building_id)] },
+    dump => { default_args => [qw(session_id building_id)] },
   };
 }
 
@@ -23,7 +22,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Buildings::OreStorage - Ore Storage Building
+Games::Lacuna::Client::Buildings::OreStorage - The Ore Storage Tanks building
 
 =head1 SYNOPSIS
 

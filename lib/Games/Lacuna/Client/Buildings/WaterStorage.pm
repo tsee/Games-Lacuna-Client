@@ -11,7 +11,6 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    view   => { default_args => [qw(session_id building_id)] },
     dump   => { default_args => [qw(session_id building_id)] },
   };
 }

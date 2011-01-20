@@ -35,7 +35,7 @@ sub api_methods {
     get_status            => { default_args => [qw(session_id)] },
     view_profile          => { default_args => [qw(session_id)] },
     edit_profile          => { default_args => [qw(session_id)] },
-    view_public_profile   => { default_args => [qw(session_id empire_id)] },
+    view_public_profile   => { default_args => [qw(session_id)] },
     find                  => { default_args => [qw(session_id)] },
     set_status_message    => { default_args => [qw(session_id)] },
     view_boosts           => { default_args => [qw(session_id)] },
@@ -48,6 +48,8 @@ sub api_methods {
     enable_self_destruct  => { default_args => [qw(session_id)] },
     disable_self_destruct => { default_args => [qw(session_id)] },
     redeem_essentia_code  => { default_args => [qw(session_id)] },
+    redefine_species_limits => { default_args => [qw(session_id)] },
+    redefine_species        => { default_args => [qw(session_id)] },
     view_species_stats    => { default_args => [qw(session_id)] },
   };
 }

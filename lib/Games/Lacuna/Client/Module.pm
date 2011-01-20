@@ -80,6 +80,14 @@ sub _generate_method_per_spec {
     if ($client->debug) {
       print STDERR "DEBUG: " . __PACKAGE__ . " result " . Data::Dumper::Dumper($ret);
     }
+
+    if (ref $ret eq 'HASH' and exists $ret->{result} and ref $ret->{result} eq 'HASH') {
+        $self->client->{rpc_count} =
+            $ret->{result}{status} ? $ret->{result}{status}{empire}{rpc_count} :
+            $ret->{result}{empire} ? $ret->{result}{empire}{rpc_count} :
+            $self->client->{rpc_count};
+    }
+
     return $ret->{result};
   };
 

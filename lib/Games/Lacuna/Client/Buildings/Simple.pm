@@ -77,6 +77,7 @@ our @BuildingTypes = (qw(
     Soup
     SpaceJunkPark
     Stockpile
+    SupplyPod
     Syrup
     TerraformingLab
     TerraformingPlatform

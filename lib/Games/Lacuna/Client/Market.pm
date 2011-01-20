@@ -4,13 +4,23 @@ use warnings;
 
 use Games::Lacuna::Client;
 use Scalar::Util qw'blessed';
+use List::MoreUtils qw'any';
 
 our @opt = qw{
   call_limit
   building
   planet_id
   planet_name
+  filter
 };
+
+{
+  my @filter = qw'food ore water waste energy glyph prisoner ship plan';
+  sub _valid_filter{
+    my($filter) = @_;
+    return any { $_ eq $filter } @filter;
+  }
+}
 
 sub new{
   my($class,%opt) = @_;
@@ -26,6 +36,12 @@ sub new{
   }, $class;
 
   @$self{@opt} = @opt{@opt};
+
+  if( my $filter = $opt{filter} ){
+    my($package, $filename, $line) = caller;
+    die "Invalid filter $filter at $filename line $line\n"
+      unless _valid_filter($filter);
+  }
 
   return $self;
 }
@@ -67,14 +83,20 @@ sub available_trades{
   my $client = $self->{client};
   my $status = $client->empire->get_status();
   my $planets = $status->{empire}{planets};
-  my $home = $status->{empire}{home_planet_id};
 
-  %arg = $self->_args([qw'planet_id planet_name call_limit building'],\%arg);
+  %arg = $self->_args(\@opt,\%arg);
+
+  if( my $filter = $arg{filter} ){
+    my($package, $filename, $line) = caller;
+    die "Invalid filter $filter at $filename line $line\n"
+      unless _valid_filter($filter);
+  }
 
   my $p_id;
   if( $arg{planet_name} and not $arg{planet_id} ){
     my $planet = $arg{planet_name};
     ($p_id) = grep { $planets->{$_} eq $planet } keys %$planets;
+    die "Unable to find planet named '$planet'\n" unless defined $p_id;
   }elsif( $arg{planet_id} ){
     $p_id = $arg{planet_id};
   }
@@ -82,6 +104,11 @@ sub available_trades{
   my $type = $arg{building};
   # $type should be Trade or Transporter
   $type = 'Trade' unless $type;
+
+  unless( $type eq 'Trade' or $type eq 'Transporter' ){
+    die "Invalid trade building: $type\n"
+  }
+
   my($class,%opt) = @_;
   $class = blessed $class || $class;
 
@@ -92,27 +119,30 @@ sub available_trades{
   }else{
     for $p_id ( keys %$planets ){
       $b_id = $self->_search_for_building($p_id,$type);
-      last if $b_id;
+      last if defined $b_id;
     }
   }
 
-  die "Unable to find appropriate building" unless $b_id;
+  die "Unable to find appropriate building" unless defined $b_id;
 
   my $building = $client->building( id => $b_id, type => $type );
+  my $filter = $arg{filter};
   my $page_num = 1;
   my $trades_per_page = 25;
   my $max_pages = $arg{call_limit} || 20;
-  my $trade_count;
   my @trades;
 
-  while ($page_num <= $max_pages and (not defined $trade_count
-   or $trade_count > ($page_num * $trades_per_page ))) {
-      my $result = $building->view_market($page_num);
-      $page_num++;
-      $trade_count = $result->{trade_count};
-      push @trades, map{
-        Games::Lacuna::Client::Market::Trade->new($_,$type);
-      } @{$result->{trades}};
+  while(
+    my $result = $building->view_market($page_num, $filter)
+  ){
+    push @trades, map{
+      Games::Lacuna::Client::Market::Trade->new($_,$type);
+    } @{$result->{trades}};
+
+    # stop if this is the last page
+    last if $result->{trade_count} <= $page_num * $trades_per_page;
+    # stop if the next page will be past the limit
+    last if ++$page_num > $max_pages;
   }
 
   return @trades if wantarray;
@@ -140,6 +170,10 @@ sub available_trades{
     return $self;
   }
   sub ask{
+    my($self) = @_;
+    return $self->{ask};
+  }
+  sub price{
     my($self) = @_;
     return $self->{ask};
   }
@@ -207,16 +241,20 @@ sub available_trades{
         return 'food';
       }elsif( any { $_ eq $type } ore_types() ){
         return 'ore';
-      }elsif( any { $_ eq $type } qw'waste water energy glyph plan' ){
+      }elsif( any { $_ eq $type } qw'waste water energy' ){
         return $type;
       }
-    }elsif( ($type) = $$self =~ /^([\w-]+) / ){
-      if( $$self =~ /^(?:spy|prisoner)/i ){
-        return 'prisoner';
-      }
+    }
+    if( $$self =~ /prisoner/ ){
+      return 'prisoner';
     }
 
     return;
+  }
+
+  sub sub_type{
+    my($self) = @_;
+    my($type) = $$self =~ / (.*)$/;
   }
 
   sub size{
@@ -225,7 +263,12 @@ sub available_trades{
     $amount =~ s/,//;
     return $amount;
   }
-  
+
+  sub quantity{
+    my($self) = @_;
+    return $self->size;
+  }
+
   sub desc{
     my($self) = @_;
     return $$self;
@@ -234,27 +277,51 @@ sub available_trades{
 {
   package Games::Lacuna::Client::Market::Trade::Plan;
   our @ISA = 'Games::Lacuna::Client::Market::Trade::SimpleItem';
+  use Games::Lacuna::Client::Types ':meta';
 
-  sub size{ return 10_000 }
+  sub type{ 'plan' }
+  sub size{ 10_000 }
+  sub quantity{ 1 }
+
+  sub plan_type{
+    my($self) = @_;
+    my($name) = $$self =~ /^(.*?) \(/;
+    return meta_type($name);
+  }
+  sub sub_type{ plan_type(@_) }
+  sub level{
+    my($self) = @_;
+    my($level) = $$self =~ /\((\d*[+]?\d*)\)/;
+    return $level || 1;
+  }
 }
 {
   package Games::Lacuna::Client::Market::Trade::Glyph;
   our @ISA = 'Games::Lacuna::Client::Market::Trade::SimpleItem';
 
-  sub size{ return 100 }
+  sub type{ 'glyph' }
+  sub size{ 100 }
+  sub quantity{ 1 }
+  sub sub_type{
+    my($self) = @_;
+    my($type) = $$self =~ /^(.*) glyph$/;
+    return $type;
+  }
 }
 {
   package Games::Lacuna::Client::Market::Trade::Ship;
   our @ISA = 'Games::Lacuna::Client::Market::Trade::SimpleItem';
 
-  sub type{ return 'ship' }
-  sub size{ return 50_000 }
+  sub type{ 'ship' }
+  sub size{ 50_000 }
+  sub quantity{ 1 }
 
   sub ship_type{
     my($self) = @_;
     my($type) = $$self =~ /^([^\(]+?) \(.*\)/;
     return $type;
   }
+  sub sub_type{ ship_type(@_) }
 
   sub info{
     my($self) = @_;

@@ -25,11 +25,13 @@ use List::MoreUtils qw(any);
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw( meta_type food_types ore_types get_tags tag_list );
+our @EXPORT = qw( food_types ore_types get_tags tag_list meta_building_list meta_type meta_type_list );
 our %EXPORT_TAGS = (
-    list => [qw( food_types ore_types )],
-    tag  => [qw( get_tags tag_list )],
-    all  => [@EXPORT],
+    list     => [qw( food_types ore_types )],
+    resource => [qw( food_types ore_types )],
+    tag      => [qw( get_tags tag_list )],
+    meta     => [qw( meta_building_list meta_type meta_type_list )],
+    all      => [@EXPORT],
 );
 
 {
@@ -166,14 +168,25 @@ our %EXPORT_TAGS = (
     );
 
     sub meta_type {
-        my( $type ) = @_;
-        return unless $type;
+        my( $building ) = @_;
+        return unless $building;
         for my $k ( keys %meta_types ){
-            if( any {$_ eq $type} @{$meta_types{$k}} ){
+            if( any {$_ eq $building} @{$meta_types{$k}} ){
                 return $k;
             }
         }
         return;
+    }
+    sub meta_type_list{
+        return keys %meta_types if wantarray;
+        return [keys %meta_types];
+    }
+    sub meta_building_list {
+        my( $type ) = @_;
+        return unless $type;
+        my $buildings = $meta_types{$type};
+        return @$buildings if wantarray;
+        return [@$buildings];
     }
 }
 {
@@ -303,8 +316,6 @@ Games::Lacuna::Client::Types
 
 =over 4
 
-=item meta_type
-
 =item food_types
 
 =item ore_types
@@ -312,6 +323,12 @@ Games::Lacuna::Client::Types
 =item get_tags
 
 =item tag_list
+
+=item meta_building_list
+
+=item meta_type
+
+=item meta_type_list
 
 =back
 
