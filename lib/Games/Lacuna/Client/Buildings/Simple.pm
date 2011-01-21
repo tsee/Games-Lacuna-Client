@@ -15,6 +15,7 @@ our @BuildingTypes = (qw(
     AtmosphericEvaporator
     Bean
     Beeldeban
+    BeeldebanNest
     Bread
     Burger
     Cheese
