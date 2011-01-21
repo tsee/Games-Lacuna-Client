@@ -23,7 +23,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Buildings::FoodReserve - The Genetics Lab
+Games::Lacuna::Client::Buildings::GeneticsLab - The Genetics Lab
 
 =head1 SYNOPSIS
 

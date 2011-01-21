@@ -1,4 +1,4 @@
-package Games::Lacuna::Client::Buildings::ThemePark;
+package Games::Lacuna::Client::Buildings::OracleOfAnid;
 use 5.0080000;
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    operate => { default_args => [qw(session_id building_id)] },
+    get_star => { default_args => [qw(session_id building_id)] },
   };
 }
 
@@ -22,7 +22,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Buildings::ThemePark - The Theme Park building
+Games::Lacuna::Client::Buildings::OracleOfAnid - The Oracle of Anid building
 
 =head1 SYNOPSIS
 

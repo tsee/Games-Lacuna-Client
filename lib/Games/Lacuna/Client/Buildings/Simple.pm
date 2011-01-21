@@ -57,7 +57,6 @@ our @BuildingTypes = (qw(
     Mine
     MunitionsLab
     NaturalSpring
-    OracleOfAnid
     OreRefinery
     Oversight
     Pancake

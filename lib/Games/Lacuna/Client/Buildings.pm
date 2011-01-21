@@ -26,6 +26,7 @@ our @BuildingTypes = (qw(
     MissionCommand
     Network19
     Observatory
+    OracleOfAnid
     OreStorage
     Park
     PlanetaryCommand
