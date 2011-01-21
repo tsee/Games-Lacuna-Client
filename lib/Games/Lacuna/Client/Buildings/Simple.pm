@@ -89,7 +89,6 @@ our @BuildingTypes = (qw(
     WaterProduction
     WaterPurification
     WaterReclamation
-    WaterStorage
     Wheat
   ),
 );

@@ -38,6 +38,7 @@ our @BuildingTypes = (qw(
     Trade
     Transporter
     WasteRecycling
+    WaterStorage
   ),
 );
 for my $building_type ( @BuildingTypes ){
