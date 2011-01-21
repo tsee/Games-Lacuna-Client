@@ -4,14 +4,15 @@ use strict;
 use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use List::Util            (qw(first max));
-use Getopt::Long          (qw(GetOptions));
 use Games::Lacuna::Client ();
+use Getopt::Long          (qw(GetOptions));
 
 my $planet_name;
+my $demolish;
 
 GetOptions(
     'planet=s' => \$planet_name,
+    'demolish' => \$demolish,
 );
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
@@ -31,44 +32,35 @@ my $empire  = $client->empire->get_status->{empire};
 my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
 # Scan each planet
-foreach my $name ( sort keys %planets ) {
+for my $name ( sort keys %planets ) {
 
     next if defined $planet_name && $planet_name ne $name;
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );
     my $result    = $planet->get_buildings;
-    my $body      = $result->{status}->{body};
     
     my $buildings = $result->{buildings};
 
-    # Find the PPC
-    my $ppc_id = first {
-            $buildings->{$_}->{name} eq 'Planetary Command Center'
+    # Find the Archaeology Ministry
+    my @bleeders = grep {
+            $buildings->{$_}->{url} eq 'deployedbleeder'
     } keys %$buildings;
     
-    my $ppc   = $client->building( id => $ppc_id, type => 'PlanetaryCommand' );
-    my $plans = $ppc->view_plans->{plans};
-    
-    next if !@$plans;
-    
-    printf "%s\n", $name;
-    print "=" x length $name;
-    print "\n";
-    
-    my $max_length = max map { length $_->{name} } @$plans;
-    
-    for my $plan (@$plans) {
-        printf "%${max_length}s, level %d",
-            $plan->{name},
-            $plan->{level};
+    if (@bleeders) {
+        printf "%s has %d deployed bleeders\n", $name, scalar(@bleeders);
         
-        if ( $plan->{extra_build_level} ) {
-            printf "extra build level %d", $plan->{extra_build_level};
+        if ($demolish) {
+            for my $id (@bleeders) {
+                my $bleeder = $client->building( id => $id, type => 'DeployedBleeder' );
+                
+                $bleeder->demolish;
+            }
+            
+            print "All bleeders on planet demolished\n";
         }
         
         print "\n";
     }
-    
-    print "\n";
 }
+

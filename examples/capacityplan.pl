@@ -5,6 +5,7 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 
 use List::Util            ();
+use Getopt::Long          (qw(GetOptions));
 use Games::Lacuna::Client ();
 
 use constant MINUTE => 60;
@@ -12,6 +13,11 @@ use constant HOUR   => 3600;
 
 # API call count
 my $i = 0;
+my $planet_name;
+
+GetOptions(
+    'planet=s' => \$planet_name,
+);
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
@@ -34,6 +40,9 @@ my @options = ();
 # Scan each planet
 foreach my $planet_id ( sort keys %$planets ) {
 	my $name = $planets->{$planet_id};
+
+        next if defined $planet_name && $planet_name ne $name;
+
 	print ++$i . " - Loading planet $name...\n";
 
 	# Load planet data
@@ -63,6 +72,12 @@ foreach my $planet_id ( sort keys %$planets ) {
 		my $time     = int( $capacity / $hour );
 		my $left     = int( $storage  / $hour );
 		my $label    = ucfirst($type);
+
+		if ( $hour < 0 ) {
+			my $left = int( (0-$stored) / $hour );
+			print "$name - $label - Negative production - Reaches zero in ${left}h\n";
+			next;
+		}
 
 		# Is there a building we can upgrade?
 		my $building = {

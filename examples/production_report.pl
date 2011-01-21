@@ -7,6 +7,13 @@ use lib "$FindBin::Bin/../lib";
 use Number::Format        qw( format_number );
 use List::Util            qw( max );
 use Games::Lacuna::Client ();
+use Getopt::Long          (qw(GetOptions));
+
+my $planet_name;
+
+GetOptions(
+    'planet=s' => \$planet_name,
+);
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
@@ -27,6 +34,8 @@ my $planets = $empire->{planets};
 # Scan each planet
 foreach my $planet_id ( sort keys %$planets ) {
     my $name = $planets->{$planet_id};
+
+    next if defined $planet_name && $planet_name ne $name;
 
     # Load planet data
     my $planet    = $client->body( id => $planet_id );

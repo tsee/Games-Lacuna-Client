@@ -2,6 +2,8 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use List::Util            ();
 use MIME::Lite            ();
 use YAML::Any             (qw(DumpFile LoadFile));
@@ -85,7 +87,7 @@ foreach my $name ( sort keys %planets ) {
     
     for my $ship (@$ships) {
         # only keep ships not from our own empire
-        next if $ship->{from}{empire}{id} == $empire->{id};
+        next if $ship->{from}{empire}{id} && $ship->{from}{empire}{id} == $empire->{id};
         
         # check cache
         next if grep {

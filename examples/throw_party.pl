@@ -2,26 +2,21 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client ();
 use Getopt::Long          (qw(GetOptions));
-my $cfg_file;
-
-if ( @ARGV && $ARGV[0] !~ /^--/) {
-	$cfg_file = shift @ARGV;
-}
-else {
-	$cfg_file = 'lacuna.yml';
-}
-
-unless ( $cfg_file and -e $cfg_file ) {
-	die "Did not provide a config file";
-}
 
 my @planets;
 
 GetOptions(
     'planet=s@' => \@planets,
 );
+
+my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+unless ( $cfg_file and -e $cfg_file ) {
+    die "Did not provide a config file";
+}
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,

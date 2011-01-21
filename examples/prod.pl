@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 use FindBin;
-use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client::Governor;
 use Games::Lacuna::Client;
 use YAML::Any;
@@ -13,13 +12,13 @@ use YAML::Any;
 
 $| = 1;
 
-my $client_config   = '/home/lemming/mine/lacuna/bin/norway.yml';
+my $client_config   = '/path/to/your/config_file';
 
 my $client = Games::Lacuna::Client->new( cfg_file => $client_config );
 
 $Games::Lacuna::Client::PrettyPrint::ansi_color = 1;
 my $governor = Games::Lacuna::Client::Governor->new( $client, {
-    cache_dir => '/home/lemming/mine/lacuna/bin/cache', # You will want to specify this.
+    cache_dir => '/your/governor/cache/dir', # You will want to specify this.
     cache_duration => 86400,
     colony => { _default_ => { priorities => [] }, },
     verbosity => { summary => 1, production => 1 }

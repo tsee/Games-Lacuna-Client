@@ -2,21 +2,11 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use List::Util            (qw(first));
 use Games::Lacuna::Client ();
 use Getopt::Long          (qw(GetOptions));
-my $cfg_file;
-
-if ( @ARGV && $ARGV[0] !~ /^--/) {
-	$cfg_file = shift @ARGV;
-}
-else {
-	$cfg_file = 'lacuna.yml';
-}
-
-unless ( $cfg_file and -e $cfg_file ) {
-	die "Did not provide a config file";
-}
 
 my @ship_names;
 my @ship_types;
@@ -24,7 +14,9 @@ my $speed;
 my $max;
 my $from;
 my $star;
+my $own_star;
 my $planet;
+my $dryrun;
 
 GetOptions(
     'ship=s@'  => \@ship_names,
@@ -34,21 +26,36 @@ GetOptions(
     'from=s'   => \$from,
     'star=s'   => \$star,
     'planet=s' => \$planet,
+    'own_star' => \$own_star,
+    'dryrun!'  => \$dryrun,
 );
 
 usage() if !@ship_names && !@ship_types;
 
 usage() if !$from;
 
-usage() if !$star && !$planet;
+usage() if !$star && !$planet && !$own_star;
+
+usage() if $own_star && $planet;
+
+my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+unless ( $cfg_file and -e $cfg_file ) {
+    die "Did not provide a config file";
+}
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
 	 #debug    => 1,
 );
 
-my $empire  = $client->empire->get_status->{empire};
-my $planets = $empire->{planets};
+my $empire = $client->empire->get_status->{empire};
+
+# reverse hash, to key by name instead of id
+my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
+
+die "--from colony '$from' not found"
+    if !$planets{$from};
+
 my $target_id;
 my $target_name;
 my $target_type;
@@ -78,37 +85,24 @@ if ($star) {
         $target_type = "star_id";
     }
 }
+elsif ($own_star) {
+    my $body = $client->body( id => $planets{$from} )->get_status;
+    
+    $target_id   = $body->{body}{star_id};
+    $target_name = "own star";
+    $target_type = "star_id";
+}
 else {
     # send to own colony
-    for my $key (keys %$planets) {
-        if ( $planets->{$key} eq $planet ) {
-            $target_id   = $key;
-            $target_name = $planet;
-            $target_type = "body_id";
-            last;
-        }
-    }
+    $target_id = $planets{$planet}
+        or die "Colony '$planet' not found\n";
     
-    die "Colony '$planet' not found"
-        if !$target_id;
+    $target_name = $planet;
+    $target_type = "body_id";
 }
-
-# Where are we sending from?
-
-my $from_id;
-
-for my $key (keys %$planets) {
-    if ( $planets->{$key} eq $from ) {
-        $from_id = $key;
-        last;
-    }
-}
-
-die "From colony '$from' not found"
-    if !$from_id;
 
 # Load planet data
-my $body      = $client->body( id => $from_id );
+my $body      = $client->body( id => $planets{$from} );
 my $result    = $body->get_buildings;
 my $buildings = $result->{buildings};
 
@@ -119,7 +113,12 @@ my $space_port_id = first {
 
 my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
 
-my $ships = $space_port->get_ships_for( $from_id, { body_id => $target_id}  );
+my $ships = $space_port->get_ships_for(
+    $planets{$from},
+    {
+        $target_type => $target_id,
+    }
+);
 
 my $available = $ships->{available};
 my $sent = 0;
@@ -129,7 +128,14 @@ for my $ship ( @$available ) {
     next if @ship_types && !grep { $ship->{type} eq $_ } @ship_types;
     next if $speed && $speed != $ship->{speed};
     
-    $space_port->send_ship( $ship->{id}, { $target_type => $target_id } );
+    if ($dryrun)
+    {
+      print qq{DRYRUN: };
+    }
+    else
+    {
+      $space_port->send_ship( $ship->{id}, { $target_type => $target_id } );
+    }
     
     printf "Sent %s to %s\n", $ship->{name}, $target_name;
     
@@ -148,6 +154,8 @@ Usage: $0 send_ship.yml
        --from       NAME  (required)
        --star       NAME
        --planet     NAME
+       --own_star
+       --dryrun
 
 Either of --ship_name or --type is required.
 
@@ -163,7 +171,12 @@ sent. Default behaviour is to send all matching ships.
 
 If --star is missing, the planet is assumed to be one of your own colonies.
 
-At least one of --star or --planet is required.
+At least one of --star or --planet or --own_star is required.
+
+--own_star and --planet cannot be used together.
+
+If --dryrun is specified, nothing will be sent, but all actions that WOULD
+happen are reported
 
 END_USAGE
 

@@ -1,72 +1,104 @@
 #!/usr/bin/perl
-#
-# Just a proof of concept for theme park
 
 use strict;
 use warnings;
+use Getopt::Long qw( GetOptions );
+use List::Util   qw( first );
+use Data::Dumper;
+
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use Games::Lacuna::Client;
-use Getopt::Long qw(GetOptions);
-use YAML;
-use YAML::Dumper;
+use Games::Lacuna::Client ();
 
-  my $cfg_file = shift(@ARGV) || 'norway.yml';
-  unless ( $cfg_file and -e $cfg_file ) {
-    die "Did not provide a config file";
-  }
+my $planet;
+my $operate;
+my $count = 1;
+my $help;
 
-my $dump_file = "data/data_theme.yml";
-my $theme_file = "data/theme.yml";
 GetOptions(
-  'o=s' => \$dump_file,
-  'i=s' => \$theme_file,
+    'planet=s' => \$planet,
+    'operate'  => \$operate,
+    'count=i'  => \$count,
+    'help|h'   => \$help,
 );
-  
-  my $client = Games::Lacuna::Client->new(
-    cfg_file => $cfg_file,
-    # debug    => 1,
-  );
 
-  my $dumper = YAML::Dumper->new;
-  $dumper->indent_width(4);
-  open(OUTPUT, ">", "$dump_file") || die "Could not open $dump_file";
+usage() if $help;
+usage() if !$planet;
 
-  my $data = $client->empire->view_species_stats();
+my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+unless ( $cfg_file and -e $cfg_file ) {
+	die "Did not provide a config file";
+}
 
-# Get planets
-  my $planets        = $data->{status}->{empire}->{planets};
-  my $home_planet_id = $data->{status}->{empire}->{home_planet_id}; 
+my $client = Games::Lacuna::Client->new(
+	cfg_file => $cfg_file,
+	# debug    => 1,
+);
 
-# Get Theme Park
-  my @theme;
-  for my $pid (keys %$planets) {
-    my $buildings = $client->body(id => $pid)->get_buildings()->{buildings};
-    my $planet_name = $client->body(id => $pid)->get_status()->{body}->{name};
-    next unless ($planet_name eq "Reykjavik"); # Test Planet
-    print "$planet_name\n";
+# Load the planets
+my $empire = $client->empire->get_status->{empire};
 
-    my @sybit = grep { $buildings->{$_}->{url} eq '/themepark' } keys %$buildings;
-    if (@sybit) {
-      print "Theme Park!\n";
+# reverse hash, to key by name instead of id
+my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
+
+# Load planet data
+my $body   = $client->body( id => $planets{$planet} );
+my $result = $body->get_buildings;
+
+my $buildings = $result->{buildings};
+
+# Find the ThemePark
+my $themepark_id = first {
+        $buildings->{$_}->{url} eq '/themepark'
+} keys %$buildings;
+
+die "No Theme Park on this planet\n"
+	if !$themepark_id;
+
+my $themepark = $client->building( id => $themepark_id, type => 'ThemePark' );
+
+if ( $operate ) {
+    for ( 1 .. $count ) {
+        my $return = $themepark->operate->{themepark};
+        
+        print "Success\n";
+        
+        if ( !$return->{can_operate} ) {
+            print "Cannot operate again:\n";
+            printf "%s\n", $return->{reason}[1];
+        }
+        
+        sleep 1;
     }
-    print OUTPUT $dumper->dump(\@sybit);
-    push @theme, @sybit;
-  }
-
-  print "Storage: ".join(q{, },@theme)."\n";
-
-  my @builds;
-  my $em_bit;
-  for (1) {
-    for my $sy_id (sort {$a <=> $b} @theme) {
-      print "Lets ride the Bargletron: $sy_id\n";
-#    $em_bit = $client->building( id => $sy_id, type => 'ThemePark' )->view();
-      $em_bit = $client->building( id => $sy_id, type => 'ThemePark' )->operate();
-      push @builds, $em_bit;
+}
+else {
+    my $return = $themepark->view->{themepark};
+    
+    if ( $return->{can_operate} ) {
+        print "Can operate the Theme Park\n";
+        printf "We have the %d foods required\n", $return->{food_type_count};
     }
-  }
+    else {
+        print "Cannot operate the Theme Park:\n";
+        printf "%s\n", $return->{reason}[1];
+    }
+}
 
-print OUTPUT $dumper->dump(\@builds);
-close(OUTPUT);
+exit;
 
+
+sub usage {
+  die <<"END_USAGE";
+Usage: $0 CONFIG_FILE
+    --planet PLANET_NAME
+    --count  COUNT
+    --operate
+    --help
+
+CONFIG_FILE  defaults to 'lacuna.yml'
+
+COUNT is the number of times to operate the Theme Park. Defaults to 1.
+
+END_USAGE
+
+}
