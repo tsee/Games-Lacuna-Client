@@ -125,6 +125,11 @@ Cider:
   tags:
     - food
   type: food
+CitadelOfKnope:
+  tags:
+    - glyph
+    - ship
+  type: glyph
 CloakingLab:
   tags:
     - command
@@ -270,6 +275,10 @@ GeoThermalVent:
     - energy
     - glyph
   type: glyph
+GratchsGauntlet:
+  tags:
+    - glyph
+  type: glyph
 GreatBallOfJunk:
   produces: happiness
   tags:
@@ -279,6 +288,10 @@ GreatBallOfJunk:
     - waste
   type: happiness
 Grove:
+  tags:
+    - glyph
+  type: glyph
+HallsOfVrbansk:
   tags:
     - glyph
   type: glyph
@@ -311,6 +324,12 @@ JunkHengeSculpture:
     - waste
   type: happiness
 KalavianRuins:
+  produces: happiness
+  tags:
+    - glyph
+    - happiness
+  type: glyph
+KasternsKeep:
   tags:
     - glyph
   type: glyph
@@ -467,6 +486,11 @@ Pancake:
   tags:
     - food
   type: food
+PantheonOfHagness:
+  tags:
+    - glyph
+    - planet
+  type: glyph
 Park:
   produces: happiness
   tags:
@@ -602,6 +626,14 @@ Stockpile:
     - command
     - storage
   type: command
+SubspaceSupplyDepot:
+  tags:
+    - command
+  type: command
+SupplyPod:
+  tags:
+    - storage
+  type: storage
 Syrup:
   produces: food
   requires:
@@ -619,6 +651,7 @@ Syrup:
   type: food
 TempleOfTheDrajilites:
   tags:
+    - command
     - glyph
   type: glyph
 TerraformingLab:
@@ -631,6 +664,17 @@ TerraformingPlatform:
   tags:
     - colony
     - command
+    - infrastructure
+  type: command
+TheDillonForge:
+  tags:
+    - glyph
+  type: glyph
+ThemePark:
+  produces: happiness
+  tags:
+    - command
+    - happiness
     - infrastructure
   type: command
 Trade:
