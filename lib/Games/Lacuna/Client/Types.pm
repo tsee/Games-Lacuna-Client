@@ -114,6 +114,8 @@ our %EXPORT_TAGS = (
             Wheat
         )],
         glyph => [qw(
+            AlgaePond
+            BeeldebanNest
             CrashedShipSite
             Crater
             EssentiaVein
@@ -123,7 +125,9 @@ our %EXPORT_TAGS = (
             KalavianRuins
             Lagoon
             Lake
+            LapisForest
             LibraryOfJith
+            MalcudField
             MassadsHenge
             NaturalSpring
             OracleOfAnid
@@ -198,11 +202,13 @@ our %EXPORT_TAGS = (
 {
     my %tags = (
         Algae => [qw(food)],
+        AlgaePond => [qw(food glyph)],
         Apple => [qw(food)],
         Archaeology => [qw(command glyph infrastructure)],
         AtmosphericEvaporator => [qw(water)],
         Bean => [qw(food)],
         Beeldeban => [qw(food)],
+        BeeldebanNest => [qw(food glyph)],
         Bread => [qw(food)],
         Burger => [qw(food)],
         Capitol => [qw(command infrastructure)],
@@ -240,9 +246,11 @@ our %EXPORT_TAGS = (
         Lagoon => [qw(glyph)],
         Lake => [qw(decoration glyph)],
         Lapis => [qw(food)],
+        LapisForest => [qw(food glyph)],
         LibraryOfJith => [qw(glyph infrastructure)],
         LuxuryHousing => [qw(happiness infrastructure)],
         Malcud => [qw(food)],
+        MalcudField => [qw(food glyph)],
         MassadsHenge => [qw(glyph)],
         MetalJunkArches => [qw(happiness infrastructure sculpture waste)],
         Mine => [qw(ore)],

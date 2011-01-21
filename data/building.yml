@@ -6,6 +6,14 @@ Algae:
   tags:
     - food
   type: food
+AlgaePond:
+  produces: food
+  requires:
+    university: 2
+  tags:
+    - food
+    - glyph
+  type: glyph
 Apple:
   produces: food
   requires:
@@ -45,6 +53,16 @@ Beeldeban:
   tags:
     - food
   type: food
+BeeldebanNest:
+  produces: food
+  requires:
+    orbit:
+      - 5
+      - 6
+  tags:
+    - food
+    - glyph
+  type: glyph
 Bread:
   produces: food
   requires:
@@ -314,6 +332,15 @@ Lapis:
   tags:
     - food
   type: food
+LapisForest:
+  produces: food
+  requires:
+    orbit:
+      - 2
+  tags:
+    - food
+    - glyph
+  type: glyph
 LibraryOfJith:
   tags:
     - glyph
@@ -339,6 +366,21 @@ Malcud:
   tags:
     - food
   type: food
+MalcudField:
+  produces: food
+  requires:
+    orbit:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+  tags:
+    - food
+    - glyph
+  type: glyph
 MassadsHenge:
   tags:
     - glyph
