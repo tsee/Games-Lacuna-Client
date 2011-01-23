@@ -8,14 +8,14 @@ colony:
     exclude: 0
     pcc_is_storage: 0
     priorities:
-    - repairs
-    - production_crisis
-    - storage_crisis
-    - construction
-    - resource_upgrades
-    - other_upgrades
-    - recycling
-    - pushes
+      - repairs
+      - production_crisis
+      - storage_crisis
+      - construction
+      - resource_upgrades
+      - other_upgrades
+      - recycling
+      - pushes
     profile:
       _default_:
         build_above: 10000
@@ -54,3 +54,4 @@ verbosity:
   trace: 1
   upgrades: 0
   warning: 1
+
