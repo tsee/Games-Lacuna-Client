@@ -21,7 +21,18 @@ GetOptions(
 $TimePerIteration = int($TimePerIteration * MINUTE);
 
 my $config_file = shift @ARGV || 'lacuna.yml';
-usage() if not defined $config_file or not -e $config_file;
+unless ( $config_file and -e $config_file ) {
+  $config_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  usage() unless $config_file and -e $config_file
+}
 usage() if not defined $schedule_file or not -e $schedule_file;
 
 my $client = Games::Lacuna::Client->new(

@@ -14,7 +14,18 @@ my $build_gap = 5; # seconds
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
-	usage( "Did not provide a config file" );
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  unless ( $cfg_file and -e $cfg_file ) {
+    usage( "Did not provide a config file" );
+  }
 }
 
 my $plan_file = shift(@ARGV) || 'build_plan.yml';

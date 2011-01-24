@@ -27,7 +27,20 @@ usage() if $help;
 my $action = shift @ARGV;
 usage('No action specified') unless $action;
 
-die usage("Did not provide a config file") unless ( $cfg_file and -e $cfg_file );
+unless ( $cfg_file and -e $cfg_file ) {
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  unless ( $cfg_file and -e $cfg_file ) {
+    die "Did not provide a config file";
+  }
+}
 
 my $client = Games::Lacuna::Client->new(
     cfg_file => $cfg_file,

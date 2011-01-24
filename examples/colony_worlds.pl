@@ -48,7 +48,18 @@ GetOptions(
 usage() if $help;
 
 my $sortby = shift(@ARGV) || 'score';
-die usage("Did not provide a config file") unless ( $cfg_file and -e $cfg_file );
+unless ( $cfg_file and -e $cfg_file ) {
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  die usage("Did not provide a config file") unless $cfg_file and -e $cfg_file
+}
 warn "Conditions file '$cond_file' does not exist" unless -e $cond_file;
 
 sub usage
