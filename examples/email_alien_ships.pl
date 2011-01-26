@@ -25,6 +25,7 @@ my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
 	# debug    => 1,
 );
+$email_conf->{cache_dir} ||= $client->cache_dir;
 
 # validate config file
 for my $key (qw(cache_dir email)) {
@@ -78,6 +79,7 @@ foreach my $name ( sort keys %planets ) {
     my $space_port_id = List::Util::first {
             $buildings->{$_}->{name} eq 'Space Port'
     } keys %$buildings;
+    next unless $space_port_id;
     
     my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
     
