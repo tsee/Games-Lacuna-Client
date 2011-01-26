@@ -17,6 +17,20 @@ if ( @ARGV && $ARGV[0] !~ /^--/) {
 else {
 	$cfg_file = 'lacuna.yml';
 }
+unless ( $cfg_file and -e $cfg_file ) {
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  unless ( $cfg_file and -e $cfg_file ) {
+    die "Did not provide a config file";
+  }
+}
 
 if ( @ARGV && $ARGV[0] !~ /^--/) {
     $push_file = shift @ARGV;
