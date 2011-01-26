@@ -4,14 +4,18 @@ use strict;
 use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use List::Util            (qw(max));
-use Getopt::Long          (qw(GetOptions));
+use List::Util            qw(min max);
+use Getopt::Long          qw(GetOptions);
 use Games::Lacuna::Client ();
 
-my $planet_name;
+my $ships_per_page;
+my @specs = qw( combat hold_size max_occupants speed stealth );
+my %opts;
 
 GetOptions(
-    'planet=s' => \$planet_name,
+    \%opts,
+    'planet=s',
+    @specs,
 );
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
@@ -42,12 +46,12 @@ my $empire  = $client->empire->get_status->{empire};
 my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
 my $available = 'Docks Available';
-my %total;
+my @all_ships;
 
 # Scan each planet
 foreach my $name ( sort keys %planets ) {
 
-    next if defined $planet_name && $planet_name ne $name;
+    next if defined $opts{planet} && $opts{planet} ne $name;
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );
@@ -63,26 +67,37 @@ foreach my $name ( sort keys %planets ) {
     
     next if !$space_port_id;
     
-    my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' )->view;
+    my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
     
-    my $ships = $space_port->{docked_ships};
+    my $ship_count;
+    my $page = 1;
+    my @ships;
     
-    my $max_length = print_ships( $name, $ships );
+    do {
+        my $return    = $space_port->view_all_ships( $page );
+        $ship_count ||= $return->{number_of_ships};
+        my $ships     = $return->{ships};
+        
+        push @ships, grep { $_->{task} eq 'Docked' } @$ships;
+        
+        $ship_count -= scalar @$ships;
+        $page++;
+    }
+    while ( $ship_count > 0 );
+    
+    my $max_length = print_ships( $name, \@ships );
     
     printf "%${max_length}s: %d\n",
         $available,
-        $space_port->{docks_available};
+        $space_port->view->{docks_available};
     
-    for my $type ( keys %$ships ) {
-        $total{$type} ||= 0;
-        $total{$type} += $ships->{$type};
-    }
+    push @all_ships, @ships;
     
     print "\n";
 }
 
-print_ships( "Total Ships", \%total )
-    unless $planet_name;
+print_ships( "Total Ships", \@all_ships )
+    unless $opts{planet};
 
 exit;
 
@@ -94,26 +109,47 @@ sub print_ships {
     print "=" x length $name;
     print "\n";
     
-    my $max_length = max( map { length _prettify_name($_) } keys %$ships )
+    my $max_length = max( map { length $_->{type_human} } @$ships )
                    || 0;
     
     $max_length = length($available) > $max_length ? length $available
                 :                                    $max_length;
     
-    for my $type ( sort keys %$ships ) {
-        printf "%${max_length}s: %d\n",
-            _prettify_name( $type ),
-            $ships->{$type};
+    my %type;
+    
+    for my $ship (@$ships) {
+        my $type = $ship->{type_human};
+        
+        no warnings 'uninitialized';
+        $type{$type}{count}++;
+        
+        for my $spec (@specs) {
+            my $value = $ship->{$spec};
+            
+            no warnings 'uninitialized';
+            $type{$type}{$spec}{$value}++;
+        }
+    }
+    
+    for my $type ( sort keys %type ) {
+        printf "%${max_length}s: %d", $type, $type{$type}{count};
+        
+        for my $spec (@specs) {
+            next if !$opts{$spec};
+            
+            my $min = min( keys %{ $type{$type}{$spec} } );
+            my $max = max( keys %{ $type{$type}{$spec} } );
+            
+            if ( $min == $max ) {
+                print " $spec: $min";
+            }
+            else {
+                print " $spec: $min-$max";
+            }
+        }
+        
+        print "\n";
     }
     
     return $max_length;
-}
-
-sub _prettify_name {
-    my $name = shift;
-    
-    $name = ucfirst $name;
-    $name =~ s/_(\w)/" ".ucfirst($1)/ge;
-    
-    return $name;
 }
