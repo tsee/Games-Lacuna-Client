@@ -13,7 +13,7 @@ use Games::Lacuna::Client::Buildings;
 my $planet;
 my $sort;
 my $reverse;
-my @types = qw( food ore water energy waste );
+my @types = qw( food ore water energy waste happiness );
 
 GetOptions(
     'planet=s' => \$planet,
@@ -76,7 +76,7 @@ if ( $sort ) {
 else {
     # sort by total production
     
-    # don't include waste
+    # don't include waste or happiness
     my @types = qw( food ore water energy );
     
     @detail = sort {
