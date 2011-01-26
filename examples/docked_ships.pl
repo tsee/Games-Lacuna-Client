@@ -16,6 +16,8 @@ GetOptions(
     \%opts,
     'planet=s',
     @specs,
+    'travelling',
+    'all',
 );
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
@@ -78,7 +80,15 @@ foreach my $name ( sort keys %planets ) {
         $ship_count ||= $return->{number_of_ships};
         my $ships     = $return->{ships};
         
-        push @ships, grep { $_->{task} eq 'Docked' } @$ships;
+        if ( $opts{all} ) {
+            push @ships, @$ships;
+        }
+        else {
+            my $task = $opts{travelling} ? 'Travelling'
+                     :                     'Docked';
+            
+            push @ships, grep { $_->{task} eq $task } @$ships;
+        }
         
         $ship_count -= scalar @$ships;
         $page++;
