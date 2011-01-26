@@ -29,6 +29,7 @@ our @BuildingTypes = (qw(
     Crater
     Dairy
     Denton
+    DeployedBleeder
     Espionage
     EssentiaVein
     Fission
