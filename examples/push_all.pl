@@ -117,13 +117,24 @@ for my $key (@foods, @ores, 'water', 'energy') {
 }
 
 my $ship_count = 1;
+my $last_hold_size;
 
 for my $ship (@ships) {
+    
+    if ( $last_hold_size && $last_hold_size <= $ship->{hold_size} ) {
+        next;
+    }
+    elsif ( $last_hold_size ) {
+        # smaller hold-size, so we'll give it a try
+        undef $last_hold_size;
+    }
+    
     my @items = trade_items( $ship, $resources );
     
     if (!@items) {
         warn "insufficient items to fill ship\n";
-        last;
+        $last_hold_size = $ship->{hold_size};
+        next;
     }
     
     my $return;
