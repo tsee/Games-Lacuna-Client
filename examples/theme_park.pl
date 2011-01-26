@@ -74,7 +74,13 @@ if ( $operate ) {
         
         print "Success\n";
         
-        if ( !$return->{can_operate} ) {
+        if ( $return->{can_operate} ) {
+            my $food_count = $return->{food_type_count};
+            
+            print "Can operate the Theme Park again\n";
+            printf "We have the %d foods required\n", $food_count;
+        }
+        else {
             print "Cannot operate again:\n";
             printf "%s\n", $return->{reason}[1];
         }
@@ -86,8 +92,10 @@ else {
     my $return = $themepark->view->{themepark};
     
     if ( $return->{can_operate} ) {
+        my $food_count = $return->{food_type_count} || 0;
+        
         print "Can operate the Theme Park\n";
-        printf "We have the %d foods required\n", $return->{food_type_count};
+        printf "We have the %d foods required\n", $food_count;
     }
     else {
         print "Cannot operate the Theme Park:\n";
