@@ -37,18 +37,20 @@ my $client = Games::Lacuna::Client->new(
 
 # Load the planets
 my $empire  = $client->empire->get_status->{empire};
-my $planets = $empire->{planets};
+
+# reverse hash, to key by name instead of id
+my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
 my $available = 'Docks Available';
+my %total;
 
 # Scan each planet
-foreach my $planet_id ( sort keys %$planets ) {
-    my $name = $planets->{$planet_id};
+foreach my $name ( sort keys %planets ) {
 
     next if defined $planet_name && $planet_name ne $name;
 
     # Load planet data
-    my $planet    = $client->body( id => $planet_id );
+    my $planet    = $client->body( id => $planets{$name} );
     my $result    = $planet->get_buildings;
     my $body      = $result->{status}->{body};
     
@@ -64,6 +66,29 @@ foreach my $planet_id ( sort keys %$planets ) {
     my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' )->view;
     
     my $ships = $space_port->{docked_ships};
+    
+    my $max_length = print_ships( $name, $ships );
+    
+    printf "%${max_length}s: %d\n",
+        $available,
+        $space_port->{docks_available};
+    
+    for my $type ( keys %$ships ) {
+        $total{$type} ||= 0;
+        $total{$type} += $ships->{$type};
+    }
+    
+    print "\n";
+}
+
+print_ships( "Total Ships", \%total )
+    unless $planet_name;
+
+exit;
+
+
+sub print_ships {
+    my ( $name, $ships ) = @_;    
     
     printf "%s\n", $name;
     print "=" x length $name;
@@ -81,11 +106,7 @@ foreach my $planet_id ( sort keys %$planets ) {
             $ships->{$type};
     }
     
-    printf "%${max_length}s: %d\n",
-        $available,
-        $space_port->{docks_available};
-    
-    print "\n";
+    return $max_length;
 }
 
 sub _prettify_name {
