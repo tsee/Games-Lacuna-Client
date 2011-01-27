@@ -169,6 +169,7 @@ our %EXPORT_TAGS = (
             WaterStorage
         )],
         waste => [qw(
+            DeployedBleeder
             WasteRecycling
             WasteTreatment
         )],
@@ -232,6 +233,7 @@ our %EXPORT_TAGS = (
         Crater => [qw(decoration glyph)],
         Dairy => [qw(food)],
         Denton => [qw(food)],
+        DeployedBleeder => [qw(waste)],
         Development => [qw(command infrastructure)],
         Embassy => [qw(alliance command infrastructure)],
         EnergyReserve => [qw(energy storage)],

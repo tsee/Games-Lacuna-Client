@@ -186,6 +186,11 @@ Denton:
   tags:
     - food
   type: food
+DeployedBleeder:
+  produces: waste
+  tags:
+    - waste
+  type: waste
 Development:
   tags:
     - command
