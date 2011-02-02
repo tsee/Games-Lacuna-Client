@@ -69,13 +69,13 @@ foreach my $name ( sort keys %planets ) {
     
     my $max_length = max map { length $_->{name} } @$plans;
     
-    for my $plan (@$plans) {
+    for my $plan ( sort { $a->{name} cmp $b->{name} } @$plans ) {
         printf "%${max_length}s, level %d",
             $plan->{name},
             $plan->{level};
         
         if ( $plan->{extra_build_level} ) {
-            printf "extra build level %d", $plan->{extra_build_level};
+            printf " + %d", $plan->{extra_build_level};
         }
         
         print "\n";
