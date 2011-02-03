@@ -72,9 +72,12 @@ my $buildings = $body->get_buildings->{buildings};
 # Check dock space on target planet
 my $to_dock_count;
 {
+    my $to_body      = $client->body( id => $planets_by_name{$to} );
+    my $to_buildings = $to_body->get_buildings->{buildings};
+    
     my $space_port_id = first {
-        $buildings->{$_}->{url} eq '/spaceport'
-    } keys %$buildings;
+        $to_buildings->{$_}->{url} eq '/spaceport'
+    } keys %$to_buildings;
     
     die "No spaceport found on target planet\n"
         if !$space_port_id;
