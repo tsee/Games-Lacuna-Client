@@ -6,6 +6,7 @@ use warnings;
 use List::Util            qw(min max);
 use List::MoreUtils       qw(any none);
 use Getopt::Long          qw(GetOptions);
+use Pod::Usage;
 
 use FindBin;
 use lib "${FindBin::Bin}/../lib";
@@ -24,7 +25,17 @@ GetOptions(
   'dry-run|n!',
   'type|t=s@',
   'skip|s=s@',
+  'usage',
+  'help',
 );
+
+if( $opts{usage} ){
+  pod2usage;
+}elsif( $opts{help} ){
+  pod2usage({
+    -verbose => 2,
+  });
+}
 
 # allow users to select groups of ship types
 my %meta_type = (
