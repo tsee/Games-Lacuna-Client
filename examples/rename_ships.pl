@@ -19,10 +19,10 @@ my %opts = (
 
 GetOptions(
   \%opts,
-  'planet=s',
-  'format=s',
+  'planet|p=s',
+  'format|f=s',
   'dry-run|n!',
-  'type=s@',
+  'type|t=s@',
   'skip|s=s@',
 );
 
@@ -209,3 +209,63 @@ sub do_format{
   }
   return $name;
 }
+
+__END__
+
+=head1 NAME
+
+rename_ships.pl
+
+=head1 DESCRIPTION
+
+Renames multiple ships at the same time.
+
+=head1 SYNOPSIS
+
+rename_ships.pl --type scow --format '${type} &{int(cargo/1000)||q[]}'
+
+rename_ships.pl -t scow 
+-f 'Scow &{int(cargo/1000)}-&{int(speed/100)}&{combat>100?" [".int(combat/100)."]":q[]}'
+
+=head1 OPTIONS
+
+=head2 --type -t
+
+Selects which vessel type to rename. Can be specified more than once.
+
+=over 4
+
+=item --type cargo_ship
+
+=item --type CARGO
+
+=back
+
+There are some convenience types that select all ships of a given type.
+These are always in all-caps
+
+=over 4
+
+=item CARGO
+
+=item BATTLE
+
+=back
+
+=head2 --format -f
+
+Controls how the name of the ship will turn out.
+
+=head2 --skip -s
+
+Allows you to skip over ships of a given name.
+Useful if you named ships for how they are used.
+
+    --skip Glyph
+    --skip Daloris
+
+=head2 --dry-run -n
+
+Outputs the changes that would have occurred without actually doing so.
+
+=cut
