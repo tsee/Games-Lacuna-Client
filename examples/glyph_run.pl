@@ -38,9 +38,6 @@ if ($planet_name)
     @selected_planets = grep { $_ eq $planet_name } keys %planets;
 }
 
-
-#@selected_planets = ("Gavania 2");
-@glyphs = qw(anthracite);
 my %requestedGlyphs = map { $_ => 1 } @glyphs;
 
 foreach $planet_name (@selected_planets)
@@ -65,6 +62,11 @@ foreach $planet_name (@selected_planets)
     my @ores = grep {
         exists $requestedGlyphs{$_}
     } keys %{$buildingOre->{ore}};
+    if (!@ores)
+    {
+        print "Can't find any of ", (join ',', keys %requestedGlyphs), " on planet '$planet_name'\n";
+        next;
+    }
 
     foreach my $ore (@ores)
     {
