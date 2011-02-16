@@ -12,15 +12,18 @@ use Data::Dumper;
 
 my $planet_name;
 my @glyphs;
+my $use_delay = 0;
 
 GetOptions(
     'planet=s' => \$planet_name,
     'glyph=s'  => \@glyphs,
+    'use_delay' => \$use_delay,
 );
 
 usage() if !@glyphs;
 
 my $cfg_file = Games::Lacuna::Client->get_config_file(shift(@ARGV) || 'lacuna.yml');
+sleep((localtime)[2]) if ($use_delay);
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
