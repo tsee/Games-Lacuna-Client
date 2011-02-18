@@ -12,6 +12,7 @@ my @ship_names;
 my @ship_types;
 my $speed;
 my $max;
+my $leave = 0;
 my $from;
 my $star;
 my $own_star;
@@ -23,6 +24,7 @@ GetOptions(
     'type=s@'  => \@ship_types,
     'speed=i'  => \$speed,
     'max=i'    => \$max,
+    'leave=i'  => \$leave,
     'from=s'   => \$from,
     'star=s'   => \$star,
     'planet=s' => \$planet,
@@ -133,10 +135,17 @@ my $ships = $space_port->get_ships_for(
 
 my $available = $ships->{available};
 my $sent = 0;
+my $kept = 0;
 
 for my $ship ( @$available ) {
     next if @ship_names && !grep { $ship->{name} eq $_ } @ship_names;
     next if @ship_types && !grep { $ship->{type} eq $_ } @ship_types;
+    
+    if ( $leave > $kept ) {
+        $kept++;
+        next;
+    }
+    
     next if $speed && $speed != $ship->{speed};
     
     if ($dryrun)
@@ -162,6 +171,7 @@ Usage: $0 send_ship.yml
        --type       TYPE
        --speed      SPEED
        --max        MAX
+       --leave      COUNT
        --from       NAME  (required)
        --star       NAME
        --planet     NAME
@@ -177,6 +187,9 @@ It must match the ship's "type", not "type_human", e.g. "scanner", "spy_pod".
 
 If --max is set, this is the maximum number of matching ships that will be
 sent. Default behaviour is to send all matching ships.
+
+If --leave is set, this number of ships will be kept on the planet. This counts
+all ships of the desired type, regardless of any --speed setting.
 
 --from is the colony from which the ship should be sent.
 
