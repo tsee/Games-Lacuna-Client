@@ -28,7 +28,7 @@ GetOptions(
     'from=s'   => \$from,
     'star=s'   => \$star,
     'planet=s' => \$planet,
-    'own_star' => \$own_star,
+    'own-star' => \$own_star,
     'dryrun!'  => \$dryrun,
 );
 
