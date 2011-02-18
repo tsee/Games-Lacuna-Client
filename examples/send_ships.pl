@@ -166,6 +166,7 @@ my $available = $ships->{available};
 my $sent = 0;
 my $kept = 0;
 
+SHIP:
 for my $ship ( @$available ) {
     next if @ship_names && !grep { $ship->{name} eq $_ } @ship_names;
     next if @ship_types && !grep { $ship->{type} eq $_ } @ship_types;
@@ -177,10 +178,10 @@ for my $ship ( @$available ) {
     
     next if $speed && $speed != $ship->{speed};
     
-    if ($dryrun) {
-        print "DRYRUN: ";
-    }
-    else {
+    print "DRYRUN: "
+        if $dryrun;
+    
+    try {
         request(
             object => $space_port,
             method => 'send_ship',
@@ -188,8 +189,15 @@ for my $ship ( @$available ) {
                 $ship->{id},
                 $target,
             ],
-        );
+        ) unless $dryrun;
     }
+    catch {
+        my $error = $_;
+        warn "Failed to send ship $ship->{name} ($ship->{id}): $_\n";
+        # supress "exiting subroutine with 'last'" warning
+        no warnings;
+        next SHIP;
+    };
     
     printf "Sent %s to %s\n", $ship->{name}, $target_name;
     
@@ -229,7 +237,9 @@ RPC_ATTEMPT:
             }
             else {
                 # RPC error we can't handle
-                die "$error\n";
+                # supress "exiting subroutine with 'last'" warning
+                no warnings;
+                last RPC_ATTEMPT;
             }
         };
         
