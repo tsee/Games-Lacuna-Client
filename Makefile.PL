@@ -25,6 +25,8 @@ WriteMakefile(
         'MIME::Lite'        => '0',
         'Crypt::SSLeay'     => '0', # or IO::Socket::SSL
         'Exception::Class'  => '0',
+        'Time::HiRes'       => '0',
+        'Try::Tiny'         => '0.07',
     },                                               # e.g., Module::Name => 1.1
     (
         $] >= 5.005

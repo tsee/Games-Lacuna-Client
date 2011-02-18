@@ -3,10 +3,15 @@
 use strict;
 use warnings;
 use FindBin;
+use Getopt::Long          (qw(GetOptions));
+use Time::HiRes            qw( sleep );
+use Try::Tiny;
 use lib "$FindBin::Bin/../lib";
 use List::Util            (qw(first));
 use Games::Lacuna::Client ();
-use Getopt::Long          (qw(GetOptions));
+
+my $login_attempts = 5;
+my $reattempt_wait = 0.1;
 
 my @ship_names;
 my @ship_types;
@@ -68,7 +73,10 @@ my $client = Games::Lacuna::Client->new(
 	 #debug    => 1,
 );
 
-my $empire = $client->empire->get_status->{empire};
+my $empire = request(
+    object => $client->empire,
+    method => 'get_status',
+)->{empire};
 
 # reverse hash, to key by name instead of id
 my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
@@ -85,8 +93,12 @@ if ( defined $x && defined $y ) {
     $target      = { x => $x, y => $y };
     $target_name = "$x,$y";
 }
-if ($star) {
-    my $star_result = $client->map->get_star_by_name($star)->{star};
+elsif ($star) {
+    my $star_result = request(
+        object => $client->map,
+        method => 'get_star_by_name',
+        params => [ $star ],
+    )->{star};
     
     if ($planet) {
         # send to planet on star
@@ -107,9 +119,14 @@ if ($star) {
     }
 }
 elsif ($own_star) {
-    my $body = $client->body( id => $planets{$from} )->get_status;
+    my $body = $client->body( id => $planets{$from} );
     
-    $target      = { star_id => $body->{body}{star_id} };
+    $body = request(
+        object => $body,
+        method => 'get_status',
+    )->{body};
+    
+    $target      = { star_id => $body->{star_id} };
     $target_name = "own star";
 }
 else {
@@ -122,9 +139,12 @@ else {
 }
 
 # Load planet data
-my $body      = $client->body( id => $planets{$from} );
-my $result    = $body->get_buildings;
-my $buildings = $result->{buildings};
+my $body = $client->body( id => $planets{$from} );
+
+my $buildings = request(
+    object => $body,
+    method => 'get_buildings',
+)->{buildings};
 
 # Find the first Space Port
 my $space_port_id = first {
@@ -133,9 +153,13 @@ my $space_port_id = first {
 
 my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
 
-my $ships = $space_port->get_ships_for(
-    $planets{$from},
-    $target,
+my $ships = request(
+    object => $space_port,
+    method => 'get_ships_for',
+    params => [
+        $planets{$from},
+        $target,
+    ],
 );
 
 my $available = $ships->{available};
@@ -153,13 +177,18 @@ for my $ship ( @$available ) {
     
     next if $speed && $speed != $ship->{speed};
     
-    if ($dryrun)
-    {
-        print qq{DRYRUN: };
+    if ($dryrun) {
+        print "DRYRUN: ";
     }
-    else
-    {
-        $space_port->send_ship( $ship->{id}, $target );
+    else {
+        request(
+            object => $space_port,
+            method => 'send_ship',
+            params => [
+                $ship->{id},
+                $target,
+            ],
+        );
     }
     
     printf "Sent %s to %s\n", $ship->{name}, $target_name;
@@ -168,6 +197,51 @@ for my $ship ( @$available ) {
     last if $max && $max == $sent;
 }
 
+exit;
+
+sub request {
+    my ( %params )= @_;
+    
+    my $method = delete $params{method};
+    my $object = delete $params{object};
+    my $params = delete $params{params} || [];
+    
+    my $request;
+    
+RPC_ATTEMPT:
+    for ( 1 .. $login_attempts ) {
+        try {
+            $request = $object->$method(@$params);
+        }
+        catch {
+            my $error = $_;
+            
+            # if session expired, try again without a session
+            my $client = $object->client;
+            
+            if ( $client->{session_id} && $error =~ /Session expired/i ) {
+                
+                warn "GLC session expired, trying again without session\n";
+                
+                delete $client->{session_id};
+                
+                sleep $reattempt_wait;
+            }
+            else {
+                # RPC error we can't handle
+                die "$error\n";
+            }
+        };
+        
+        last RPC_ATTEMPT
+            if $request;
+    }
+    
+    die "RPC request failed $login_attempts times, giving up\n"
+        if !$request;
+    
+    return $request;
+}
 
 sub usage {
   die <<"END_USAGE";
