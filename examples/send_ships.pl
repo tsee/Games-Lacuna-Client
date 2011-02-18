@@ -14,6 +14,8 @@ my $speed;
 my $max;
 my $leave = 0;
 my $from;
+my $x;
+my $y;
 my $star;
 my $own_star;
 my $planet;
@@ -26,6 +28,8 @@ GetOptions(
     'max=i'    => \$max,
     'leave=i'  => \$leave,
     'from=s'   => \$from,
+    'x=i'      => \$x,
+    'y=i'      => \$y,
     'star=s'   => \$star,
     'planet=s' => \$planet,
     'own-star' => \$own_star,
@@ -36,7 +40,10 @@ usage() if !@ship_names && !@ship_types;
 
 usage() if !$from;
 
-usage() if !$star && !$planet && !$own_star;
+usage() if !$star && !$planet && !$own_star && !defined $x && !defined $y;
+
+usage() if defined $x && !defined $y;
+usage() if defined $y && !defined $x;
 
 usage() if $own_star && $planet;
 
@@ -69,12 +76,15 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 die "--from colony '$from' not found"
     if !$planets{$from};
 
-my $target_id;
+my $target;
 my $target_name;
-my $target_type;
 
 # Where are we sending to?
 
+if ( defined $x && defined $y ) {
+    $target      = { x => $x, y => $y };
+    $target_name = "$x,$y";
+}
 if ($star) {
     my $star_result = $client->map->get_star_by_name($star)->{star};
     
@@ -87,31 +97,28 @@ if ($star) {
         die "Planet '$planet' not found at star '$star'"
             if !$body;
         
-        $target_id   = $body->{id};
+        $target      = { body_id => $body->{id} };
         $target_name = "$planet [$star]";
-        $target_type = "body_id";
     }
     else {
         # send to star
-        $target_id   = $star_result->{id};
+        $target      = { star_id => $star_result->{id} };
         $target_name = $star;
-        $target_type = "star_id";
     }
 }
 elsif ($own_star) {
     my $body = $client->body( id => $planets{$from} )->get_status;
     
-    $target_id   = $body->{body}{star_id};
+    $target      = { star_id => $body->{body}{star_id} };
     $target_name = "own star";
-    $target_type = "star_id";
 }
 else {
     # send to own colony
-    $target_id = $planets{$planet}
+    my $target_id = $planets{$planet}
         or die "Colony '$planet' not found\n";
     
+    $target      = { body_id => $target_id };
     $target_name = $planet;
-    $target_type = "body_id";
 }
 
 # Load planet data
@@ -122,15 +129,13 @@ my $buildings = $result->{buildings};
 # Find the first Space Port
 my $space_port_id = first {
         $buildings->{$_}->{name} eq 'Space Port'
-} keys %$buildings;
+    } keys %$buildings;
 
 my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
 
 my $ships = $space_port->get_ships_for(
     $planets{$from},
-    {
-        $target_type => $target_id,
-    }
+    $target,
 );
 
 my $available = $ships->{available};
@@ -150,11 +155,11 @@ for my $ship ( @$available ) {
     
     if ($dryrun)
     {
-      print qq{DRYRUN: };
+        print qq{DRYRUN: };
     }
     else
     {
-      $space_port->send_ship( $ship->{id}, { $target_type => $target_id } );
+        $space_port->send_ship( $ship->{id}, $target );
     }
     
     printf "Sent %s to %s\n", $ship->{name}, $target_name;
@@ -173,6 +178,8 @@ Usage: $0 send_ship.yml
        --max        MAX
        --leave      COUNT
        --from       NAME  (required)
+       --x          COORDINATE
+       --y          COORDINATE
        --star       NAME
        --planet     NAME
        --own_star
@@ -195,7 +202,8 @@ all ships of the desired type, regardless of any --speed setting.
 
 If --star is missing, the planet is assumed to be one of your own colonies.
 
-At least one of --star or --planet or --own_star is required.
+At least one of --star or --planet or --own_star or both --x and --y are
+required.
 
 --own_star and --planet cannot be used together.
 
