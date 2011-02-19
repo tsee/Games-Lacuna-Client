@@ -62,20 +62,15 @@ foreach $planet_name (@selected_planets)
     }
 
     my $buildingOre = $building->get_ores_available_for_processing();
-    my @ores = grep {
-        exists $requestedGlyphs{$_}
-    } keys %{$buildingOre->{ore}};
-    if (!@ores)
-    {
-        print "Can't find any of ", (join ',', keys %requestedGlyphs), " on planet '$planet_name'\n";
-        next;
-    }
 
-    foreach my $ore (@ores)
+    my $searching = 0;
+    foreach my $ore (@glyphs)
     {
+        next unless $buildingOre->{ore}->{$ore};
         my $return;
         eval {
             $return = $building->search_for_glyph($ore);
+            $searching = 1;
         };
         
         if ($@) {
@@ -85,6 +80,11 @@ foreach $planet_name (@selected_planets)
 
         print "'$planet_name' searching for $ore\n";
         last;
+    }
+    if (!$searching)
+    {
+        print "Can't find any of ", (join ',', keys %requestedGlyphs), " on planet '$planet_name'\n";
+        next;
     }
     
 }
