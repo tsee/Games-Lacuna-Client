@@ -92,7 +92,7 @@ use Data::Dumper;
             stars       => \@stars,
         };
 
-        if( not $class->can_observe($gov, $pid) ){
+        if ( $class->allowed_to_upgrade_observatory($gov) && not $class->can_observe($gov, $pid)) {
             ### Hey, maybe we should upgrade the Observatory on this planet...
             my $observatory_bldg = $gov->{client}->building(
                 id      => $observatory->{building_id},
@@ -102,6 +102,13 @@ use Data::Dumper;
         }
 
         return;
+    }
+
+    sub allowed_to_upgrade_observatory {
+        my ($class, $gov) = @_;
+        return 1 if !defined $gov->{config}->{astronomer}->{can_upgrade_observatory};
+        return 1 if $gov->{config}->{astronomer}->{can_upgrade_observatory};
+        return 0;
     }
 
     sub stars {
