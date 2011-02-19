@@ -47,18 +47,24 @@ foreach my $planet_id ( sort keys %$planets ) {
     
     my $buildings = $result->{buildings};
 
-    # Find the Space Port
-    my $space_port_id = List::Util::first {
-            $buildings->{$_}->{name} eq 'Space Port'
-    } keys %$buildings;
-    
-    my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
-    
-    my $ships = $space_port->view_foreign_ships->{ships};
+    my $planetShips;
+    for (my $pageNum = 1; ; $pageNum++)
+    {
+        # Find the Space Port
+        my $space_port_id = List::Util::first {
+                $buildings->{$_}->{name} eq 'Space Port'
+        } keys %$buildings;
+        
+        my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
+        
+        my $ships = $space_port->view_foreign_ships($pageNum)->{ships};
+        push @$planetShips, @$ships;
+        last if scalar @$ships != 25;
+    }
     
     push @incoming, {
         name  => $name,
-        ships => $ships,
+        ships => $planetShips,
     };
 }
 
