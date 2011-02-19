@@ -94,21 +94,25 @@ foreach my $name ( sort keys %planets ) {
     
     my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
     
-    my $ships = $space_port->view_foreign_ships->{ships};
-    
     my @new_ships;
-    
-    for my $ship (@$ships) {
-        # only keep ships not from our own empire
-        next if $ship->{from}{empire}{id} && $ship->{from}{empire}{id} == $empire->{id};
+
+    for (my $pageNum = 1; ; $pageNum++)
+    {
+        my $ships = $space_port->view_foreign_ships($pageNum)->{ships};
         
-        # check cache
-        next if grep {
-               $_->{id} == $ship->{id}
-            && $_->{date_arrives} eq $ship->{date_arrives}
-        } @{ $cache->{$name} };
-        
-        push @new_ships, $ship;
+        for my $ship (@$ships) {
+            # only keep ships not from our own empire
+            next if $ship->{from}{empire}{id} && $ship->{from}{empire}{id} == $empire->{id};
+            
+            # check cache
+            next if grep {
+                   $_->{id} == $ship->{id}
+                && $_->{date_arrives} eq $ship->{date_arrives}
+            } @{ $cache->{$name} };
+            
+            push @new_ships, $ship;
+        }
+        last if scalar @$ships != 25;
     }
     
     push @incoming, {
