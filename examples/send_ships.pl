@@ -4,10 +4,11 @@ use strict;
 use warnings;
 use FindBin;
 use Getopt::Long          (qw(GetOptions));
+use List::Util            (qw(first));
+use POSIX                  qw( floor );
 use Time::HiRes            qw( sleep );
 use Try::Tiny;
 use lib "$FindBin::Bin/../lib";
-use List::Util            (qw(first));
 use Games::Lacuna::Client ();
 
 my $login_attempts = 5;
@@ -19,6 +20,7 @@ my $speed;
 my $max;
 my $leave = 0;
 my $from;
+my $share = 1;
 my $x;
 my $y;
 my $star;
@@ -33,6 +35,7 @@ GetOptions(
     'max=i'    => \$max,
     'leave=i'  => \$leave,
     'from=s'   => \$from,
+    'share=s'  => \$share,
     'x=i'      => \$x,
     'y=i'      => \$y,
     'star=s'   => \$star,
@@ -163,10 +166,9 @@ my $ships = request(
 );
 
 my $available = $ships->{available};
-my $sent = 0;
-my $kept = 0;
+my $kept      = 0;
+my @use_ship;
 
-SHIP:
 for my $ship ( @$available ) {
     next if @ship_names && !grep { $ship->{name} eq $_ } @ship_names;
     next if @ship_types && !grep { $ship->{type} eq $_ } @ship_types;
@@ -178,6 +180,17 @@ for my $ship ( @$available ) {
     
     next if $speed && $speed != $ship->{speed};
     
+    push @use_ship, $ship;
+    
+    last if $max && $max == scalar @use_ship;
+}
+
+# honour --share
+my $use_count = floor( $share * scalar @use_ship );
+splice @use_ship, $use_count;
+
+SHIP:
+for my $ship ( @use_ship ) {
     print "DRYRUN: "
         if $dryrun;
     
@@ -200,9 +213,6 @@ for my $ship ( @$available ) {
     };
     
     printf "Sent %s to %s\n", $ship->{name}, $target_name;
-    
-    $sent++;
-    last if $max && $max == $sent;
 }
 
 exit;
@@ -261,6 +271,7 @@ Usage: $0 send_ship.yml
        --speed      SPEED
        --max        MAX
        --leave      COUNT
+       --share      PROPORTION OF AVAILABLE SHIPS TO SEND
        --from       NAME  (required)
        --x          COORDINATE
        --y          COORDINATE
@@ -281,6 +292,10 @@ sent. Default behaviour is to send all matching ships.
 
 If --leave is set, this number of ships will be kept on the planet. This counts
 all ships of the desired type, regardless of any --speed setting.
+
+--share is the proportion of available ships to send (after taking into account
+--max and --leave). Defaults to 1, meaning all ships. 0.5 would mean 50% of
+ships.
 
 --from is the colony from which the ship should be sent.
 
