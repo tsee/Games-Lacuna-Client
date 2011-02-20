@@ -192,7 +192,10 @@ my $use_count = floor( $share * scalar @use_ship );
 splice @use_ship, $use_count;
 
 # honour --sleep
-sleep $sleep if $sleep;
+if ($sleep) {
+    print "Sleeping for $sleep seconds...\n";
+    sleep $sleep;
+}
 
 SHIP:
 for my $ship ( @use_ship ) {
@@ -270,7 +273,7 @@ RPC_ATTEMPT:
 
 sub usage {
   die <<"END_USAGE";
-Usage: $0 send_ship.yml
+Usage: $0 lacuna.yml
        --ship       NAME
        --type       TYPE
        --speed      SPEED
