@@ -26,6 +26,7 @@ my $y;
 my $star;
 my $own_star;
 my $planet;
+my $sleep;
 my $dryrun;
 
 GetOptions(
@@ -41,6 +42,7 @@ GetOptions(
     'star=s'   => \$star,
     'planet=s' => \$planet,
     'own-star' => \$own_star,
+    'sleep=i'  => \$sleep,
     'dryrun!'  => \$dryrun,
 );
 
@@ -189,6 +191,9 @@ for my $ship ( @$available ) {
 my $use_count = floor( $share * scalar @use_ship );
 splice @use_ship, $use_count;
 
+# honour --sleep
+sleep $sleep if $sleep;
+
 SHIP:
 for my $ship ( @use_ship ) {
     print "DRYRUN: "
@@ -278,6 +283,7 @@ Usage: $0 send_ship.yml
        --star       NAME
        --planet     NAME
        --own_star
+       --sleep      SECONDS
        --dryrun
 
 Either of --ship_name or --type is required.
@@ -305,6 +311,8 @@ At least one of --star or --planet or --own_star or both --x and --y are
 required.
 
 --own_star and --planet cannot be used together.
+
+If --sleep is specified, will wait that number of seconds before sending ships.
 
 If --dryrun is specified, nothing will be sent, but all actions that WOULD
 happen are reported
