@@ -165,31 +165,62 @@ my $ships = request(
         $planets{$from},
         $target,
     ],
-);
+)->{available};
 
-my $available = $ships->{available};
-my $kept      = 0;
-my @use_ship;
+my @ships;
 
-for my $ship ( @$available ) {
+for my $ship ( @$ships ) {
     next if @ship_names && !grep { $ship->{name} eq $_ } @ship_names;
     next if @ship_types && !grep { $ship->{type} eq $_ } @ship_types;
     
-    if ( $leave > $kept ) {
-        $kept++;
-        next;
+    push @ships, $ship;
+}
+
+# if --leave is used, try to leave as many as possible of the *wrong*
+# speed, so we have more to send
+
+if ( $speed ) {
+    my @wrong_speed;
+    my @right_speed;
+    
+    for my $ship ( @ships ) {
+        if ( $ship->{speed} == $speed ) {
+            push @right_speed, $ship;
+        }
+        else {
+            push @wrong_speed, $ship;
+        }
     }
     
-    next if $speed && $speed != $ship->{speed};
-    
-    push @use_ship, $ship;
-    
-    last if $max && $max == scalar @use_ship;
+    if ( @wrong_speed >= $leave ) {
+        # we can use all the correct speed ships
+        @ships = @right_speed;
+    }
+    else {
+        my $diff = $leave - @wrong_speed;
+        
+        die "No ships available to send\n"
+            if $diff > @right_speed;
+        
+        my $can_use = @right_speed - $diff;
+        
+        splice @right_speed, $can_use;
+        
+        @ships = @right_speed;
+    }
+}
+
+if ( $max && $max < @ships ) {
+    splice @ships, $max;
 }
 
 # honour --share
-my $use_count = floor( $share * scalar @use_ship );
-splice @use_ship, $use_count;
+my $use_count = floor( $share * scalar @ships );
+
+die "No ships available to send\n"
+    if !$use_count;
+
+splice @ships, $use_count;
 
 # honour --sleep
 if ($sleep) {
@@ -198,7 +229,7 @@ if ($sleep) {
 }
 
 SHIP:
-for my $ship ( @use_ship ) {
+for my $ship ( @ships ) {
     print "DRYRUN: "
         if $dryrun;
     
