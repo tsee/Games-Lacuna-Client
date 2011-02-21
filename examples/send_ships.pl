@@ -2,12 +2,13 @@
 
 use strict;
 use warnings;
-use FindBin;
+use DateTime;
 use Getopt::Long          (qw(GetOptions));
 use List::Util            (qw(first));
 use POSIX                  qw( floor );
 use Time::HiRes            qw( sleep );
 use Try::Tiny;
+use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client ();
 
@@ -27,23 +28,25 @@ my $star;
 my $own_star;
 my $planet;
 my $sleep;
+my $seconds;
 my $dryrun;
 
 GetOptions(
-    'ship=s@'  => \@ship_names,
-    'type=s@'  => \@ship_types,
-    'speed=i'  => \$speed,
-    'max=i'    => \$max,
-    'leave=i'  => \$leave,
-    'from=s'   => \$from,
-    'share=s'  => \$share,
-    'x=i'      => \$x,
-    'y=i'      => \$y,
-    'star=s'   => \$star,
-    'planet=s' => \$planet,
-    'own-star' => \$own_star,
-    'sleep=i'  => \$sleep,
-    'dryrun!'  => \$dryrun,
+    'ship=s@'   => \@ship_names,
+    'type=s@'   => \@ship_types,
+    'speed=i'   => \$speed,
+    'max=i'     => \$max,
+    'leave=i'   => \$leave,
+    'from=s'    => \$from,
+    'share=s'   => \$share,
+    'x=i'       => \$x,
+    'y=i'       => \$y,
+    'star=s'    => \$star,
+    'planet=s'  => \$planet,
+    'own-star'  => \$own_star,
+    'sleep=i'   => \$sleep,
+    'seconds=i' => \$seconds,
+    'dryrun!'   => \$dryrun,
 );
 
 usage() if !@ship_names && !@ship_types;
@@ -222,8 +225,16 @@ die "No ships available to send\n"
 
 splice @ships, $use_count;
 
-# honour --sleep
-if ($sleep) {
+# send immediately?
+
+if ($seconds) {
+    my $now_seconds = DateTime->now->second;
+    
+    if ( $now_seconds > $seconds ) {
+        sleep $seconds - $now_seconds;
+    }
+}
+elsif ($sleep) {
     print "Sleeping for $sleep seconds...\n";
     sleep $sleep;
 }
@@ -318,6 +329,7 @@ Usage: $0 lacuna.yml
        --planet     NAME
        --own_star
        --sleep      SECONDS
+       --seconds    SECONDS
        --dryrun
 
 Either of --ship_name or --type is required.
@@ -346,7 +358,11 @@ required.
 
 --own_star and --planet cannot be used together.
 
+If --seconds is specified, what until that second of the current minute before
+sending. If that second has already passed, send immediately.
+
 If --sleep is specified, will wait that number of seconds before sending ships.
+Ignored if --seconds is set.
 
 If --dryrun is specified, nothing will be sent, but all actions that WOULD
 happen are reported
