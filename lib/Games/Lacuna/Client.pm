@@ -204,6 +204,25 @@ sub assert_session {
   return $self->session_id;
 }
 
+sub get_config_file {
+  my ($class, $cfg_file) = @_;
+  unless ( $cfg_file and -e $cfg_file ) {
+    $cfg_file = eval{
+      require File::HomeDir;
+      require File::Spec;
+      my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+      File::Spec->catfile(
+        $dist,
+        'login.yml'
+      ) if $dist;
+    };
+    unless ( $cfg_file and -e $cfg_file ) {
+      die "Did not provide a config file";
+    }
+  }
+  return $cfg_file;
+}
+
 
 1;
 __END__

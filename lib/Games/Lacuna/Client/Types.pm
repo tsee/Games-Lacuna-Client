@@ -75,8 +75,10 @@ our %EXPORT_TAGS = (
             Shipyard
             SpacePort
             Stockpile
+            SubspaceSupplyDepot
             TerraformingLab
             TerraformingPlatform
+            ThemePark
             Trade
             Transporter
             University
@@ -114,23 +116,33 @@ our %EXPORT_TAGS = (
             Wheat
         )],
         glyph => [qw(
+            AlgaePond
+            BeeldebanNest
+            CitadelOfKnope
             CrashedShipSite
             Crater
             EssentiaVein
             GeoThermalVent
+            GratchsGauntlet
             Grove
+            HallsOfVrbansk
             InterDimensionalRift
             KalavianRuins
+            KasternsKeep
             Lagoon
             Lake
+            LapisForest
             LibraryOfJith
+            MalcudField
             MassadsHenge
             NaturalSpring
             OracleOfAnid
+            PantheonOfHagness
             Ravine
             RockyOutcrop
             Sand
             TempleOfTheDrajilites
+            TheDillonForge
             Volcano
         )],
         happiness => [qw(
@@ -152,10 +164,12 @@ our %EXPORT_TAGS = (
             EnergyReserve
             FoodReserve
             OreStorage
+            SupplyPod
             WasteSequestration
             WaterStorage
         )],
         waste => [qw(
+            DeployedBleeder
             WasteRecycling
             WasteTreatment
         )],
@@ -190,7 +204,7 @@ our %EXPORT_TAGS = (
     }
 }
 {
-    my @tags = qw(alliance colony command decoration defense energy essentia food glyph happiness infrastructure intelligence ore sculpture ship storage trade waste water);
+    my @tags = qw(alliance colony command decoration defense energy essentia food glyph happiness infrastructure intelligence ore planet sculpture ship storage trade waste water);
     sub tag_list {
         return @tags;
     }
@@ -198,17 +212,20 @@ our %EXPORT_TAGS = (
 {
     my %tags = (
         Algae => [qw(food)],
+        AlgaePond => [qw(food glyph)],
         Apple => [qw(food)],
         Archaeology => [qw(command glyph infrastructure)],
         AtmosphericEvaporator => [qw(water)],
         Bean => [qw(food)],
         Beeldeban => [qw(food)],
+        BeeldebanNest => [qw(food glyph)],
         Bread => [qw(food)],
         Burger => [qw(food)],
         Capitol => [qw(command infrastructure)],
         Cheese => [qw(food)],
         Chip => [qw(food)],
         Cider => [qw(food)],
+        CitadelOfKnope => [qw(glyph ship)],
         CloakingLab => [qw(command infrastructure ship)],
         Corn => [qw(food)],
         CornMeal => [qw(food)],
@@ -216,6 +233,7 @@ our %EXPORT_TAGS = (
         Crater => [qw(decoration glyph)],
         Dairy => [qw(food)],
         Denton => [qw(food)],
+        DeployedBleeder => [qw(waste)],
         Development => [qw(command infrastructure)],
         Embassy => [qw(alliance command infrastructure)],
         EnergyReserve => [qw(energy storage)],
@@ -230,19 +248,24 @@ our %EXPORT_TAGS = (
         GeneticsLab => [qw(command infrastructure)],
         Geo => [qw(energy)],
         GeoThermalVent => [qw(energy glyph)],
+        GratchsGauntlet => [qw(glyph)],
         GreatBallOfJunk => [qw(happiness infrastructure sculpture waste)],
         Grove => [qw(glyph)],
+        HallsOfVrbansk => [qw(glyph)],
         HydroCarbon => [qw(energy)],
         Intelligence => [qw(command infrastructure intelligence)],
         InterDimensionalRift => [qw(glyph storage)],
         JunkHengeSculpture => [qw(happiness infrastructure sculpture waste)],
-        KalavianRuins => [qw(glyph)],
+        KalavianRuins => [qw(glyph happiness)],
+        KasternsKeep => [qw(glyph)],
         Lagoon => [qw(glyph)],
         Lake => [qw(decoration glyph)],
         Lapis => [qw(food)],
+        LapisForest => [qw(food glyph)],
         LibraryOfJith => [qw(glyph infrastructure)],
         LuxuryHousing => [qw(happiness infrastructure)],
         Malcud => [qw(food)],
+        MalcudField => [qw(food glyph)],
         MassadsHenge => [qw(glyph)],
         MetalJunkArches => [qw(happiness infrastructure sculpture waste)],
         Mine => [qw(ore)],
@@ -257,6 +280,7 @@ our %EXPORT_TAGS = (
         OreStorage => [qw(ore storage)],
         Oversight => [qw(command infrastructure)],
         Pancake => [qw(food)],
+        PantheonOfHagness => [qw(glyph planet)],
         Park => [qw(command happiness infrastructure)],
         Pie => [qw(food)],
         PilotTraining => [qw(command infrastructure ship)],
@@ -276,10 +300,14 @@ our %EXPORT_TAGS = (
         SpaceJunkPark => [qw(happiness infrastructure sculpture waste)],
         SpacePort => [qw(command ship)],
         Stockpile => [qw(command storage)],
+        SubspaceSupplyDepot => [qw(command)],
+        SupplyPod => [qw(storage)],
         Syrup => [qw(food)],
-        TempleOfTheDrajilites => [qw(glyph)],
+        TempleOfTheDrajilites => [qw(command glyph)],
         TerraformingLab => [qw(colony command infrastructure)],
         TerraformingPlatform => [qw(colony command infrastructure)],
+        TheDillonForge => [qw(glyph)],
+        ThemePark => [qw(command happiness infrastructure)],
         Trade => [qw(command infrastructure ship trade)],
         Transporter => [qw(command infrastructure trade)],
         University => [qw(command infrastructure)],

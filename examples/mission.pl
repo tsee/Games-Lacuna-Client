@@ -2,6 +2,8 @@
 use strict;
 use warnings;
 use Getopt::Long qw(GetOptions);
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client;
 use Games::Lacuna::Client::PrettyPrint qw(warning action);
 
@@ -50,7 +52,18 @@ END_USAGE
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
-	die "Did not provide a config file";
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  unless ( $cfg_file and -e $cfg_file ) {
+    die "Did not provide a config file";
+  }
 }
 
 my $client = Games::Lacuna::Client->new( cfg_file => $cfg_file );

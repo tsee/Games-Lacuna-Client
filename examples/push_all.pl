@@ -19,8 +19,19 @@ else {
 	$cfg_file = 'lacuna.yml';
 }
 
-unless ( $cfg_file && -e $cfg_file ) {
-    die "config file not found: '$cfg_file'";
+unless ( $cfg_file and -e $cfg_file ) {
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  unless ( $cfg_file and -e $cfg_file ) {
+    die "Did not provide a config file";
+  }
 }
 
 my $from;
@@ -106,13 +117,24 @@ for my $key (@foods, @ores, 'water', 'energy') {
 }
 
 my $ship_count = 1;
+my $last_hold_size;
 
 for my $ship (@ships) {
+    
+    if ( $last_hold_size && $last_hold_size <= $ship->{hold_size} ) {
+        next;
+    }
+    elsif ( $last_hold_size ) {
+        # smaller hold-size, so we'll give it a try
+        undef $last_hold_size;
+    }
+    
     my @items = trade_items( $ship, $resources );
     
     if (!@items) {
         warn "insufficient items to fill ship\n";
-        last;
+        $last_hold_size = $ship->{hold_size};
+        next;
     }
     
     my $return;

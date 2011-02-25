@@ -18,9 +18,9 @@ our @BuildingTypes = (qw(
     EnergyReserve
     Entertainment
     FoodReserve
-    Intelligence
     GeneticsLab
     HallsOfVrbansk
+    Intelligence
     LibraryOfJith
     MiningMinistry
     MissionCommand

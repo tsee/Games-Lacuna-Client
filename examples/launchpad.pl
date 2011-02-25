@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Cache;
 use Data::Dumper;
 
@@ -16,6 +18,21 @@ usage() unless $shiptype && $coords;
 my %opts = ('cfg_file' => "/path/to/lacuna.yml",
             'cache_file' => "/path/to/lac_cache.dat",
             'refresh' => $refresh);
+
+unless ( $opts{cfg_file} and -e $opts{cfg_file} ) {
+  $opts{cfg_file} = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  unless ( $opts{cfg_file} and -e $opts{cfg_file} ) {
+    die "Did not provide a config file";
+  }
+}
 
 my ($t_type, $t_name) = split(":", $coords);
 my $target_id = { $t_type => $t_name };

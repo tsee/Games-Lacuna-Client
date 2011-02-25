@@ -2,19 +2,32 @@
 
 use strict;
 use warnings;
+use Clone        qw(clone);
+use List::Util   qw(first max);
+use Getopt::Long qw(GetOptions);
+use YAML::Any    qw( LoadFile );
+
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use List::Util            (qw(first max));
-use Getopt::Long          (qw(GetOptions));
 use Games::Lacuna::Client ();
-use YAML::Any             qw( LoadFile );
 
 $| = 1;
 my $build_gap = 5; # seconds
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
-	usage( "Did not provide a config file" );
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  unless ( $cfg_file and -e $cfg_file ) {
+    usage( "Did not provide a config file" );
+  }
 }
 
 my $plan_file = shift(@ARGV) || 'build_plan.yml';
@@ -88,6 +101,35 @@ for (my $i = 0; $i <= $#queue; $i++) {
             $buildings->{$match}{y};
         
         $return = $building->upgrade;
+    }
+    
+    if ( my $levels = $item->{levels} ) {
+        my $copy = clone( $item );
+        
+        delete $copy->{levels};
+        
+        if ( $item->{build} ) {
+            $copy->{upgrade} = delete $copy->{build};
+        }
+        else {
+            # need to get x,y in case there's another of the same type already built
+            my $building = $client->building(
+                id   => $return->{building}{id},
+                type => $item->{upgrade}{type},
+            );
+            
+            my $return = $building->view;
+            
+            $copy->{upgrade}{x} = $return->{building}{x};
+            $copy->{upgrade}{y} = $return->{building}{y};
+        }
+        
+        # already handled 1
+        $levels--;
+        
+        for my $level ( 1 .. $levels ) {
+            splice @queue, $i+$level, 0, clone( $copy );
+        }
     }
     
     if ( $item->{subsidize} ) {

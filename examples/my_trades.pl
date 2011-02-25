@@ -16,7 +16,18 @@ GetOptions(
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
-	die "Did not provide a config file";
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  unless ( $cfg_file and -e $cfg_file ) {
+    die "Did not provide a config file";
+  }
 }
 
 my $client = Games::Lacuna::Client->new(
@@ -87,13 +98,13 @@ for my $name (sort keys %my_trades) {
         
         my @trades = @{ $my_trades{$name}{$building} };
         
-        my $max_length = max map { length $_->{offer_description} } @trades;
-        
         for my $trade (@trades) {
-            printf "%s offered %-${max_length}s for %s\n",
-                $trade->{date_offered},
-                $trade->{offer_description},
-                $trade->{ask_description};
+            printf "Posted: %s\n", $trade->{date_offered};
+            printf "\tAsking %d Essentia for:\n", $trade->{ask};
+            
+            for my $item ( @{ $trade->{offer} } ) {
+                printf "\t%s\n", $item;
+            }
         }
         
         print "\n";
@@ -103,7 +114,7 @@ for my $name (sort keys %my_trades) {
 sub get_trades {
     my ( $building ) = @_;
 
-    my $trades = $building->view_my_trades;
+    my $trades = $building->view_my_market;
     my $count  = $trades->{trade_count};
     
     return [] if !$count;
@@ -117,7 +128,7 @@ sub get_trades {
     while ( $count > 0 ) {
         $page++;
         
-        push @trades, @{ $building->view_my_trades( $page )->{trades} };
+        push @trades, @{ $building->view_my_market( $page )->{trades} };
         
         $count -= $trades_per_page;
     }

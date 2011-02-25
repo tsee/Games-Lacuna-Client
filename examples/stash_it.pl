@@ -27,7 +27,20 @@ usage() if $help;
 my $action = shift @ARGV;
 usage('No action specified') unless $action;
 
-die usage("Did not provide a config file") unless ( $cfg_file and -e $cfg_file );
+unless ( $cfg_file and -e $cfg_file ) {
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  unless ( $cfg_file and -e $cfg_file ) {
+    die "Did not provide a config file";
+  }
+}
 
 my $client = Games::Lacuna::Client->new(
     cfg_file => $cfg_file,
@@ -69,6 +82,13 @@ die "No embassy found" . ($arg_planet_name ? " on planet $arg_planet_name" : '')
 print "Selected embassy on $planet_name for you, specify --planet to choose a different one.\n"
     unless $arg_planet_name;
 
+my %ore_types = map { $_ => 1 } qw(
+    anthracite bauxite beryl     chalcopyrite chromite
+    fluorite   galena  goethite  gold         gypsum
+    halite     kerogen magnetite methane      monazite
+    rutile     sulfur  trona     uraninite    zircon
+);
+
 given ($action) {
     when('view') {
         my $stash = $emb->view_stash;
@@ -84,11 +104,22 @@ given ($action) {
             print "Energy: $energy\n" if $energy;
             print "Water:  $water\n" if $water;
 
-            if (keys %{$stash->{stash}}) {
+            if (grep { $stash->{stash}->{$_} } keys %ore_types) {
                 print "Ore:\n";
-                for my $item (sort keys %{$stash->{stash}}) {
-                    my $cnt = $stash->{stash}->{$item};
-                    print "  $cnt $item\n";
+                for my $type (sort keys %ore_types) {
+                    my $cnt = delete $stash->{stash}->{$type};
+                    if ($cnt) {
+                        print "  $cnt $type\n";
+                    }
+                }
+            }
+
+            if (grep { $stash->{stash}->{$_} } keys %{$stash->{stash}}) {
+                print "Food:\n";
+                for my $type (sort keys %{$stash->{stash}}) {
+                    my $cnt = delete $stash->{stash}->{$type};
+                    next unless $cnt;
+                    print "  $cnt $type\n";
                 }
             }
         }

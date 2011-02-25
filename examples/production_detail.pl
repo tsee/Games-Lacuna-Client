@@ -13,7 +13,7 @@ use Games::Lacuna::Client::Buildings;
 my $planet;
 my $sort;
 my $reverse;
-my @types = qw( food ore water energy waste );
+my @types = qw( food ore water energy waste happiness );
 
 GetOptions(
     'planet=s' => \$planet,
@@ -26,7 +26,18 @@ usage() if $sort && !grep { $_ eq lc $sort } @types;
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
-	die "Did not provide a config file";
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  unless ( $cfg_file and -e $cfg_file ) {
+    die "Did not provide a config file";
+  }
 }
 
 my $client = Games::Lacuna::Client->new(
@@ -65,7 +76,7 @@ if ( $sort ) {
 else {
     # sort by total production
     
-    # don't include waste
+    # don't include waste or happiness
     my @types = qw( food ore water energy );
     
     @detail = sort {

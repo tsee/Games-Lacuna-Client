@@ -11,7 +11,18 @@ use Games::Lacuna::Client ();
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
-	die "Did not provide a config file";
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
+  unless ( $cfg_file and -e $cfg_file ) {
+    die "Did not provide a config file";
+  }
 }
 
 my $email_file = shift(@ARGV) || 'email_alien_ships.yml';
@@ -25,6 +36,7 @@ my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
 	# debug    => 1,
 );
+$email_conf->{cache_dir} ||= $client->cache_dir;
 
 # validate config file
 for my $key (qw(cache_dir email)) {
@@ -78,24 +90,29 @@ foreach my $name ( sort keys %planets ) {
     my $space_port_id = List::Util::first {
             $buildings->{$_}->{name} eq 'Space Port'
     } keys %$buildings;
+    next unless $space_port_id;
     
     my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
     
-    my $ships = $space_port->view_foreign_ships->{ships};
-    
     my @new_ships;
-    
-    for my $ship (@$ships) {
-        # only keep ships not from our own empire
-        next if $ship->{from}{empire}{id} && $ship->{from}{empire}{id} == $empire->{id};
+
+    for (my $pageNum = 1; ; $pageNum++)
+    {
+        my $ships = $space_port->view_foreign_ships($pageNum)->{ships};
         
-        # check cache
-        next if grep {
-               $_->{id} == $ship->{id}
-            && $_->{date_arrives} eq $ship->{date_arrives}
-        } @{ $cache->{$name} };
-        
-        push @new_ships, $ship;
+        for my $ship (@$ships) {
+            # only keep ships not from our own empire
+            next if $ship->{from}{empire}{id} && $ship->{from}{empire}{id} == $empire->{id};
+            
+            # check cache
+            next if grep {
+                   $_->{id} == $ship->{id}
+                && $_->{date_arrives} eq $ship->{date_arrives}
+            } @{ $cache->{$name} };
+            
+            push @new_ships, $ship;
+        }
+        last if scalar @$ships != 25;
     }
     
     push @incoming, {
