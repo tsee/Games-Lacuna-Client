@@ -20,11 +20,14 @@ WriteMakefile(
         'AnyEvent'          => '0',
         'Date::Parse'       => '0',
         'Date::Format'      => '0',
+        'DateTime'          => '0',
         'Number::Format'    => '0',
         'FindBin'           => '0',
         'MIME::Lite'        => '0',
         'Crypt::SSLeay'     => '0', # or IO::Socket::SSL
         'Exception::Class'  => '0',
+        'Time::HiRes'       => '0',
+        'Try::Tiny'         => '0.07',
     },                                               # e.g., Module::Name => 1.1
     (
         $] >= 5.005

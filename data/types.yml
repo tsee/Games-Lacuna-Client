@@ -1,0 +1,45 @@
+---
+food:
+  - algae
+  - apple
+  - bean
+  - beetle
+  - bread
+  - burger
+  - cheese
+  - chip
+  - cider
+  - corn
+  - fungus
+  - lapis
+  - meal
+  - milk
+  - pancake
+  - pie
+  - potato
+  - root
+  - shake
+  - soup
+  - syrup
+  - wheat
+ore:
+  - anthracite
+  - bauxite
+  - beryl
+  - chalcopyrite
+  - chromite
+  - fluorite
+  - galena
+  - goethite
+  - gold
+  - gypsum
+  - halite
+  - kerogen
+  - magnetite
+  - methane
+  - monazite
+  - rutile
+  - sulfur
+  - trona
+  - uraninite
+  - zircon
