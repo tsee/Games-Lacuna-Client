@@ -17,6 +17,7 @@ GetOptions(
     'planet=s',
     @specs,
     'travelling',
+    'mining',
     'all',
 );
 
@@ -92,8 +93,9 @@ foreach my $name ( sort keys %planets ) {
             push @ships, @$ships;
         }
         else {
-            my $task = $opts{travelling} ? 'Travelling'
-                     :                     'Docked';
+            my $task = 'Docked';
+            $task = 'Travelling' if $opts{travelling};
+            $task = 'Mining'     if $opts{mining};
             
             push @ships, grep { $_->{task} eq $task } @$ships;
         }
