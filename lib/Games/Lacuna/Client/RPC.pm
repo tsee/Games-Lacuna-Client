@@ -70,7 +70,11 @@ sub call {
     uri => URI->new($uri),
   );
   my $resp = $self->ua->request($req);
-  my $res = $self->marshal->response_to_result($resp);
+  if ($resp->header('Client-Warning') eq 'Internal response') {
+    die "RPC Connection Error: " . $resp->message;
+  }
+  my $res = eval { $self->marshal->response_to_result($resp) }
+    or die "RPC Error : " . $resp->content;
 
   if ($self->{client}->{verbose_rpc}) {
     my @tmp = @$params;
