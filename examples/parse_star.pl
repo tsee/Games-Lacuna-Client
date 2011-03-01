@@ -14,8 +14,8 @@ use YAML::XS;
 use Data::Dumper;
 use utf8;
 
-my $home_x = -763;
-my $home_y = -54;
+my $home_x = 0;
+my $home_y = 0;
 my $probe_file = "data/probe_data_cmb.yml";
 
 GetOptions(
