@@ -69,8 +69,9 @@ sub call {
     ),
     uri => URI->new($uri),
   );
-  my $resp = $self->ua->request($req);
-  if ($resp->header('Client-Warning') eq 'Internal response') {
+  my $resp           = $self->ua->request($req);
+  my $client_warning = $resp->header('Client-Warning');
+  if ( defined $client_warning && $client_warning eq 'Internal response') {
     die "RPC Connection Error: " . $resp->message;
   }
   my $res = eval { $self->marshal->response_to_result($resp) }
