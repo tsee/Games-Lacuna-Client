@@ -50,6 +50,7 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
 my $total_str     = 'Total Docks';
 my $mining_str    = 'Ships Mining';
+my $defend_str    = 'Ships on remote Defense';
 my $available_str = 'Docks Available';
 my @all_ships;
 
@@ -76,6 +77,7 @@ foreach my $name ( sort keys %planets ) {
     
     my $ship_count;
     my $mining_count = 0;
+    my $defend_count = 0;
     my $page = 1;
     my @ships;
     
@@ -87,6 +89,11 @@ foreach my $name ( sort keys %planets ) {
         $mining_count +=
             grep {
                 $_->{task} eq 'Mining'
+            } @$ships;
+        
+        $defend_count +=
+            grep {
+                $_->{task} eq 'Defend'
             } @$ships;
         
         if ( $opts{all} ) {
@@ -119,6 +126,12 @@ foreach my $name ( sort keys %planets ) {
         $mining_str,
         $mining_count;
     
+    if ( $defend_count ) {
+        printf "%${max_length}s: %d\n",
+            $defend_str,
+            $defend_count
+    }
+    
     printf "%${max_length}s: %d\n",
         $available_str,
         $space_port_status->{docks_available};
@@ -144,8 +157,8 @@ sub print_ships {
     my $max_length = max( map { length $_->{type_human} } @$ships )
                    || 0;
     
-    $max_length = length($available_str) > $max_length ? length $available_str
-                :                                        $max_length;
+    $max_length = length($defend_str) > $max_length ? length $defend_str
+                :                                     $max_length;
     
     my %type;
     
