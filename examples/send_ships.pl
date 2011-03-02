@@ -101,32 +101,15 @@ if ( defined $x && defined $y ) {
     $target      = { x => $x, y => $y };
     $target_name = "$x,$y";
 }
-elsif ($star) {
-    my $star_result = request(
-        object => $client->map,
-        method => 'get_star_by_name',
-        params => [ $star ],
-    )->{star};
-    
-    if ($planet) {
-        # send to planet on star
-        my $bodies = $star_result->{bodies};
-        
-        my ($body) = first { $_->{name} eq $planet } @$bodies;
-        
-        die "Planet '$planet' not found at star '$star'"
-            if !$body;
-        
-        $target      = { body_id => $body->{id} };
-        $target_name = "$planet [$star]";
-    }
-    else {
-        # send to star
-        $target      = { star_id => $star_result->{id} };
-        $target_name = $star;
-    }
+elsif ( defined $star ) {
+    $target      = { star_name => $star };
+    $target_name = $star;
 }
-elsif ($own_star) {
+elsif ( defined $planet ) {
+    $target      = { body_name => $planet };
+    $target_name = $planet;
+}
+elsif ( $own_star ) {
     my $body = $client->body( id => $planets{$from} );
     
     $body = request(
@@ -138,12 +121,7 @@ elsif ($own_star) {
     $target_name = "own star";
 }
 else {
-    # send to own colony
-    my $target_id = $planets{$planet}
-        or die "Colony '$planet' not found\n";
-    
-    $target      = { body_id => $target_id };
-    $target_name = $planet;
+    die "target arguments missing\n";
 }
 
 # Load planet data
