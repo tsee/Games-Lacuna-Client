@@ -161,6 +161,7 @@ our %EXPORT_TAGS = (
             WasteDigester
         )],
         storage => [qw(
+            DistributionCenter
             EnergyReserve
             FoodReserve
             OreStorage
@@ -235,6 +236,7 @@ our %EXPORT_TAGS = (
         Denton => [qw(food)],
         DeployedBleeder => [qw(waste)],
         Development => [qw(command infrastructure)],
+        DistributionCenter => [qw(storage)],
         Embassy => [qw(alliance command infrastructure)],
         EnergyReserve => [qw(energy storage)],
         Entertainment => [qw(happiness infrastructure)],

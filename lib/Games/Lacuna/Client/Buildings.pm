@@ -14,6 +14,7 @@ our @BuildingTypes = (qw(
     Archaeology
     Capitol
     Development
+    DistributionCenter
     Embassy
     EnergyReserve
     Entertainment
