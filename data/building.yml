@@ -196,6 +196,10 @@ Development:
     - command
     - infrastructure
   type: command
+DistributionCenter:
+  tags:
+    - storage
+  type: storage
 Embassy:
   tags:
     - alliance

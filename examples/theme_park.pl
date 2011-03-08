@@ -84,8 +84,6 @@ if ( $operate ) {
             print "Cannot operate again:\n";
             printf "%s\n", $return->{reason}[1];
         }
-        
-        sleep 1;
     }
 }
 else {

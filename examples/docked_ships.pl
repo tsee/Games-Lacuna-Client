@@ -17,6 +17,7 @@ GetOptions(
     'planet=s',
     @specs,
     'travelling',
+    'mining',
     'all',
 );
 
@@ -47,7 +48,10 @@ my $empire  = $client->empire->get_status->{empire};
 # reverse hash, to key by name instead of id
 my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
-my $available = 'Docks Available';
+my $total_str     = 'Total Docks';
+my $mining_str    = 'Ships Mining';
+my $defend_str    = 'Ships on remote Defense';
+my $available_str = 'Docks Available';
 my @all_ships;
 
 # Scan each planet
@@ -72,6 +76,8 @@ foreach my $name ( sort keys %planets ) {
     my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
     
     my $ship_count;
+    my $mining_count = 0;
+    my $defend_count = 0;
     my $page = 1;
     my @ships;
     
@@ -80,12 +86,23 @@ foreach my $name ( sort keys %planets ) {
         $ship_count ||= $return->{number_of_ships};
         my $ships     = $return->{ships};
         
+        $mining_count +=
+            grep {
+                $_->{task} eq 'Mining'
+            } @$ships;
+        
+        $defend_count +=
+            grep {
+                $_->{task} eq 'Defend'
+            } @$ships;
+        
         if ( $opts{all} ) {
             push @ships, @$ships;
         }
         else {
-            my $task = $opts{travelling} ? 'Travelling'
-                     :                     'Docked';
+            my $task = 'Docked';
+            $task = 'Travelling' if $opts{travelling};
+            $task = 'Mining'     if $opts{mining};
             
             push @ships, grep { $_->{task} eq $task } @$ships;
         }
@@ -97,9 +114,27 @@ foreach my $name ( sort keys %planets ) {
     
     my $max_length = print_ships( $name, \@ships );
     
+    my $space_port_status = $space_port->view;
+    
+    print "\n";
+    
     printf "%${max_length}s: %d\n",
-        $available,
-        $space_port->view->{docks_available};
+        $total_str,
+        $space_port_status->{max_ships};
+    
+    printf "%${max_length}s: %d\n",
+        $mining_str,
+        $mining_count;
+    
+    if ( $defend_count ) {
+        printf "%${max_length}s: %d\n",
+            $defend_str,
+            $defend_count
+    }
+    
+    printf "%${max_length}s: %d\n",
+        $available_str,
+        $space_port_status->{docks_available};
     
     push @all_ships, @ships;
     
@@ -122,8 +157,8 @@ sub print_ships {
     my $max_length = max( map { length $_->{type_human} } @$ships )
                    || 0;
     
-    $max_length = length($available) > $max_length ? length $available
-                :                                    $max_length;
+    $max_length = length($defend_str) > $max_length ? length $defend_str
+                :                                     $max_length;
     
     my %type;
     
