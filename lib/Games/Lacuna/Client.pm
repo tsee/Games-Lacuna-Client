@@ -35,6 +35,7 @@ require Games::Lacuna::Client::RPC;
 require Games::Lacuna::Client::Alliance;
 require Games::Lacuna::Client::Body;
 require Games::Lacuna::Client::Buildings;
+require Games::Lacuna::Client::Captcha;
 require Games::Lacuna::Client::Empire;
 require Games::Lacuna::Client::Inbox;
 require Games::Lacuna::Client::Map;
@@ -100,6 +101,11 @@ sub body {
 sub building {
   my $self = shift;
   return Games::Lacuna::Client::Buildings->new(client => $self, @_);
+}
+
+sub captcha {
+  my $self = shift;
+  return Games::Lacuna::Client::Captcha->new(client => $self, @_);
 }
 
 sub inbox {

@@ -19,6 +19,7 @@ our @CARP_NOT = qw(
   Games::Lacuna::Client::Alliance
   Games::Lacuna::Client::Body
   Games::Lacuna::Client::Buildings
+  Games::Lacuna::Client::Captcha
   Games::Lacuna::Client::Empire
   Games::Lacuna::Client::Inbox
   Games::Lacuna::Client::Map
