@@ -29,6 +29,7 @@ my $own_star;
 my $planet;
 my $sleep;
 my $seconds;
+my $rename;
 my $dryrun;
 
 GetOptions(
@@ -46,6 +47,7 @@ GetOptions(
     'own-star|own_star' => \$own_star,
     'sleep=i'           => \$sleep,
     'seconds=i'         => \$seconds,
+    'rename'            => \$rename,
     'dryrun|dry-run'    => \$dryrun,
 );
 
@@ -77,7 +79,8 @@ unless ( $cfg_file and -e $cfg_file ) {
 }
 
 my $client = Games::Lacuna::Client->new(
-	cfg_file => $cfg_file,
+	cfg_file       => $cfg_file,
+    prompt_captcha => 1,
 	 #debug    => 1,
 );
 
@@ -241,11 +244,35 @@ my $return = request(
 
 print "Sent to: $target_name\n";
 
-for my $ship ( @{ $return->{status}{fleet} } ) {
-    printf "%s (%s) arriving %s\n",
-        $ship->{type_human},
-        $ship->{name},
-        $ship->{date_arrives};
+for my $ship ( @{ $return->{fleet} } ) {
+    printf qq{%s "%s" arriving %s\n},
+        $ship->{ship}{type_human},
+        $ship->{ship}{name},
+        $ship->{ship}{date_arrives};
+}
+
+if ( $rename ) {
+    print "\n";
+    
+    for my $ship (@ships) {
+        
+        my $name = sprintf "%s (%s)",
+            $ship->{type_human},
+            $target_name;
+        
+        request(
+            object => $space_port,
+            method => 'name_ship',
+            params => [
+                $ship->{id},
+                $name,
+            ],
+        );
+        
+        printf qq{Renamed "%s" to "%s"\n},
+            $ship->{name},
+            $name;
+    }
 }
 
 exit;
@@ -258,14 +285,16 @@ sub request {
     my $params = delete $params{params} || [];
     
     my $request;
+    my $error;
     
 RPC_ATTEMPT:
     for ( 1 .. $login_attempts ) {
+        
         try {
             $request = $object->$method(@$params);
         }
         catch {
-            my $error = $_;
+            $error = $_;
             
             # if session expired, try again without a session
             my $client = $object->client;
@@ -290,8 +319,10 @@ RPC_ATTEMPT:
             if $request;
     }
     
-    die "RPC request failed $login_attempts times, giving up\n"
-        if !$request;
+    if (!$request) {
+        warn "RPC request failed $login_attempts times, giving up\n";
+        die $error;
+    }
     
     return $request;
 }
@@ -347,7 +378,11 @@ sending. If that second has already passed, send immediately.
 If --sleep is specified, will wait that number of seconds before sending ships.
 Ignored if --seconds is set.
 
-If --dryrun is specified, nothing will be sent, but all actions that WOULD
+If --rename is provided, each ship sent will be renamed using the form
+"Type (Target)". This may be helpful for keeping track of fighters on remote
+defense.
+
+If --dryrun is provided, nothing will be sent, but all actions that WOULD
 happen are reported
 
 END_USAGE
