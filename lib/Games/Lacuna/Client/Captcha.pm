@@ -9,25 +9,40 @@ use Games::Lacuna::Client::Module;
 our @ISA = qw(Games::Lacuna::Client::Module);
 
 use Class::XSAccessor {
-  getters => [qw(body_id)],
+    getters => [qw(guid url)],
 };
 
 sub api_methods {
-  return {
-    fetch  => { default_args => [qw(session_id)] },
-    solve  => { default_args => [qw(session_id)] },
-  };
+    return {
+        fetch => { default_args => [qw(session_id)] },
+        solve => { default_args => [qw(session_id guid)] },
+    };
 }
 
 sub new {
-  my $class = shift;
-  my %opt = @_;
-  my $self = $class->SUPER::new(@_);
-  bless $self => $class;
-  $self->{body_id} = $opt{id};
-  return $self;
+    my $class = shift;
+    my %opt = @_;
+    my $self = $class->SUPER::new(@_);
+    bless $self => $class;
+    return $self;
 }
 
+sub fetch {
+    my $self = shift;
+    my $result = $self->_fetch(@_);
+    $self->{guid} = $result->{guid};
+    return $result;
+}
+
+sub prompt_for_solution {
+    my $self = shift;
+    my $result = $self->fetch;
+    print "URL: $result->{url}\n";
+    print "Answer? ";
+    my $answer = <STDIN>;
+    chomp($answer);
+    return $answer;
+}
 
 __PACKAGE__->init();
 
@@ -46,11 +61,19 @@ Games::Lacuna::Client::Captcha - The captcha module
 
 =head1 AUTHOR
 
+<<<<<<< HEAD
 Steffen Mueller, E<lt>smueller@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (C) 2010 by Steffen Mueller
+=======
+Dave Olszewski, E<lt>cxreg@pobox.com<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2010 by Dave Olszewski
+>>>>>>> ea148822286db6eb223c2e51da39d78c82328454
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,
