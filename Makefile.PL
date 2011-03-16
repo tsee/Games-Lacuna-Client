@@ -23,6 +23,7 @@ WriteMakefile(
         'DateTime'          => '0',
         'Number::Format'    => '0',
         'FindBin'           => '0',
+        'IO::Interactive'   => '0',
         'MIME::Lite'        => '0',
         'Crypt::SSLeay'     => '0', # or IO::Socket::SSL
         'Exception::Class'  => '0',
