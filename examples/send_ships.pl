@@ -32,21 +32,21 @@ my $seconds;
 my $dryrun;
 
 GetOptions(
-    'ship=s@'   => \@ship_names,
-    'type=s@'   => \@ship_types,
-    'speed=i'   => \$speed,
-    'max=i'     => \$max,
-    'leave=i'   => \$leave,
-    'from=s'    => \$from,
-    'share=s'   => \$share,
-    'x=i'       => \$x,
-    'y=i'       => \$y,
-    'star=s'    => \$star,
-    'planet=s'  => \$planet,
-    'own-star'  => \$own_star,
-    'sleep=i'   => \$sleep,
-    'seconds=i' => \$seconds,
-    'dryrun!'   => \$dryrun,
+    'ship=s@'           => \@ship_names,
+    'type=s@'           => \@ship_types,
+    'speed=i'           => \$speed,
+    'max=i'             => \$max,
+    'leave=i'           => \$leave,
+    'from=s'            => \$from,
+    'share=s'           => \$share,
+    'x=i'               => \$x,
+    'y=i'               => \$y,
+    'star=s'            => \$star,
+    'planet=s'          => \$planet,
+    'own-star|own_star' => \$own_star,
+    'sleep=i'           => \$sleep,
+    'seconds=i'         => \$seconds,
+    'dryrun|dry-run'    => \$dryrun,
 );
 
 usage() if !@ship_names && !@ship_types;
@@ -217,30 +217,35 @@ elsif ($sleep) {
     sleep $sleep;
 }
 
-SHIP:
-for my $ship ( @ships ) {
-    print "DRYRUN: "
-        if $dryrun;
+if ( $dryrun ) {
+    print "DRYRUN\n";
+    print "======\n";
     
-    try {
-        request(
-            object => $space_port,
-            method => 'send_ship',
-            params => [
-                $ship->{id},
-                $target,
-            ],
-        ) unless $dryrun;
+    print "Sent to: $target_name\n";
+    
+    for my $ship (@ships) {
+        printf "%s\n", $ship->{name};
     }
-    catch {
-        my $error = $_;
-        warn "Failed to send ship $ship->{name} ($ship->{id}): $_\n";
-        # supress "exiting subroutine with 'last'" warning
-        no warnings;
-        next SHIP;
-    };
     
-    printf "Sent %s to %s\n", $ship->{name}, $target_name;
+    exit;
+}
+
+my $return = request(
+    object => $space_port,
+    method => 'send_fleet',
+    params => [
+        [ map { $_->{id} } @ships ],
+        $target,
+    ],
+);
+
+print "Sent to: $target_name\n";
+
+for my $ship ( @{ $return->{status}{fleet} } ) {
+    printf "%s (%s) arriving %s\n",
+        $ship->{type_human},
+        $ship->{name},
+        $ship->{date_arrives};
 }
 
 exit;
