@@ -311,6 +311,10 @@ HydroCarbon:
   tags:
     - energy
   type: energy
+IBS:
+  tags:
+    - command
+  type: command
 Intelligence:
   requires:
     university: 2
@@ -507,6 +511,10 @@ Park:
     - happiness
     - infrastructure
   type: command
+Parliament:
+  tags:
+    - command
+  type: command
 Pie:
   produces: food
   requires:
@@ -630,6 +638,14 @@ SpacePort:
     - command
     - ship
   type: command
+StationCommand:
+  stores:
+    - plans
+  tags:
+    - command
+    - infrastructure
+    - spacestation
+  type: command
 Stockpile:
   tags:
     - command
@@ -710,6 +726,16 @@ Volcano:
     - glyph
     - ore
   type: glyph
+Warehouse:
+  stores:
+    - food
+    - ore
+    - water
+    - energy
+  tags:
+    - command
+    - storage
+  type: command
 WasteDigester:
   produces: ore
   tags:
