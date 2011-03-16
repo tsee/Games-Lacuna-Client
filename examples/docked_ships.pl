@@ -85,14 +85,12 @@ foreach my $name ( sort keys %planets ) {
     push @{ $filter->{task} }, 'Travelling  '
         if $opts{travelling};
     
-    my $return = $space_port->view_all_ships(
+    my $ships = $space_port->view_all_ships(
         {
             no_paging => 1,
         },
         $filter ? $filter : (),
-    );
-    
-    my $ships = $return->{ships};
+    )->{ships};
     
     $mining_count +=
         grep {
