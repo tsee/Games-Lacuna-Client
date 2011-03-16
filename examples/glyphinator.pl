@@ -161,7 +161,6 @@ while (!$finished) {
         $glc = Games::Lacuna::Client->new(
             cfg_file       => $opts{config} || "$FindBin::Bin/../lacuna.yml",
             rpc_sleep      => 1,
-            prompt_captcha => 1,
         );
 
         output("Starting up at " . localtime() . "\n");
@@ -192,9 +191,6 @@ while (!$finished) {
     }
 
     if (defined $opts{continuous}) {
-        diag("WARNING!!!!! Captcha prompt will cause script hang if you are not here to answer!\n")
-            if $opts{'send-excavators'};
-
         my $sleep = $opts{continuous} || 360;
 
         if ($opts{'do-digs'} and $status->{digs}) {
@@ -696,15 +692,6 @@ sub determine_ore {
 
 ## Excavators ##
 
-my %attack_ships;
-BEGIN {
-    %attack_ships = map { $_ => 1 } qw/
-        bleeder observatory_seeker spaceport_seeker
-        placebo placebo2 placebo3 placebo4 placebo5 placebo6
-        scow security_ministry_seeker
-        snark snark2 snark3 spy_pod spy_shuttle thud
-    /;
-}
 sub send_excavators {
     PLANET:
 
@@ -757,62 +744,10 @@ sub send_excavators {
                     for (@dests) {
                         my ($dest_name, $x, $y, $distance, $zone, $checked_epoch) = @$_;
 
-                        my $recently_checked = time() - $checked_epoch < $RECENT_CHECK;
+                        # Get the next available excavator
                         my $ex = $status->{ready}{$planet}[0];
 
-                        # Check even harder to see if inhabited, if we want to avoid those
-                        if (!$recently_checked and !$batch->{'inhabited-ok'}) {
-                            my $ships;
-                            my $ok = eval {
-                                $ships = $port->get_ships_for($status->{planets}{$planet}, {x => $x, y => $y});
-                                return 1;
-                            };
-                            unless ($ok) {
-                                if (my $e = Exception::Class->caught('LacunaRPCException')) {
-                                    if ($e->code eq '1002') {
-                                        # Empty orbit, update db and try again
-                                        output("$dest_name is an empty orbit, trying again...\n");
-                                        mark_orbit_empty($x, $y);
-
-                                        $need_more++;
-                                        next;
-                                    }
-
-                                    diag("Unknown error sending excavator from $planet to $dest_name: $e\n");
-                                }
-                                else {
-                                    my $e = Exception::Class->caught();
-                                    diag("Unknown error sending excavator from $planet to $dest_name: $e\n");
-                                }
-                            }
-
-                            my @avail_attack_ships   = grep { $attack_ships{$_->{type}} }
-                                @{$ships->{available}};
-                            my @unavail_attack_ships = grep { $attack_ships{$_->{ship}{type}} }
-                                @{$ships->{unavailable}};
-
-                            if (@avail_attack_ships) {
-                                output("$dest_name is an occupied planet, trying again...\n");
-                                mark_orbit_occupied($x, $y);
-                                $need_more++;
-                                next;
-                            } elsif(@unavail_attack_ships) {
-                                # 1013 - Can only be sent to inhabited planets (uninhabited planet)
-                                # 1009 - Can only be sent to planets and stars (asteroid)
-                                if (!grep { $_->{reason}[0] eq '1013' or $_->{reason}[0] eq '1009'}
-                                        @unavail_attack_ships) {
-                                    output("$dest_name is an occupied planet, trying again...\n");
-                                    mark_orbit_occupied($x, $y);
-                                    $need_more++;
-                                    next;
-                                }
-                            } else {
-                                unless ($warned_cant_verify++) {
-                                    diag("$planet has no spy pods, scows, or attack ships, cannot verify if this planet is inhabited!\n");
-                                }
-                            }
-                        }
-
+                        # Only try each destination once
                         $skip{$dest_name}++;
 
                         if ($opts{'dry-run'}) {
@@ -842,6 +777,14 @@ sub send_excavators {
                                         output("$dest_name was unavailable due to recent search, trying again...\n");
                                         update_last_sent($x, $y);
 
+                                        $need_more++;
+                                        next;
+                                    }
+
+                                    if ($e->code eq '1016' and !$batch->{'inhabited-ok'}) {
+                                        # Don't mark as inhabited because we don't actually know if the destination was
+                                        # inhabited, or just protected
+                                        output("$dest_name would have triggered defenses, trying again...\n");
                                         $need_more++;
                                         next;
                                     }
