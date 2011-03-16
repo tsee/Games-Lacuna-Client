@@ -344,6 +344,7 @@ Usage: $0 lacuna.yml
        --own_star
        --sleep      SECONDS
        --seconds    SECONDS
+       --rename
        --dryrun
 
 Either of --ship_name or --type is required.
