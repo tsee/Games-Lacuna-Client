@@ -197,6 +197,11 @@ Development:
     - infrastructure
   type: command
 DistributionCenter:
+  stores:
+    - food
+    - ore
+    - water
+    - energy
   tags:
     - storage
   type: storage
