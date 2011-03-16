@@ -9,8 +9,6 @@ require Exporter;
 our @ISA = 'Exporter';
 our @EXPORT_OK = qw'LoadBuilding';
 
-use 5.12.2;
-
 sub _load{
   my($input) = @_;
   if( ref $input ){
