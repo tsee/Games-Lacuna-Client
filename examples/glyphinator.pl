@@ -201,7 +201,8 @@ while (!$finished) {
                 @{$status->{digs}};
 
             if (defined $last_dig) {
-                $sleep = min($sleep, $last_dig);
+                # Sleep until the digs end, but at least 10 minutes, unless asked to not wait that long
+                $sleep = min($sleep, max($last_dig, 10));
             }
         }
 
