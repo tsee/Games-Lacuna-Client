@@ -34,11 +34,14 @@
 
 use strict;
 use warnings;
+use File::Spec;
+use LWP::UserAgent;
+use MIME::Lite;
+use URI;
+use YAML::Any (qw(LoadFile DumpFile));
+
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use File::Spec;
-use MIME::Lite;
-use YAML::Any (qw(LoadFile DumpFile));
 use Games::Lacuna::Client ();
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
@@ -134,4 +137,27 @@ BODY
 $cache->{last_seen_id} = $last_seen_id;
 
 DumpFile( $cache_file_path, $cache );
+
+# announcements
+if (   $email_conf->{forward_announcements}
+    && $inbox->{status}{server}{accouncement} )
+{
+    my $url = URI->new( $client->uri );
+    $url->path('announcement');
+    $url->query_form( session_id => $client->session_id );
+    
+    my $ua = LWP::UserAgent->new;
+    
+    my $response = $ua->get($url);
+    
+    my $email = MIME::List->new(
+        From    => $email_conf->{email}{from},
+        To      => $email_conf->{email}{to},
+        Subject => "Server Announcement",
+        Type    => "text/html",
+        Data    => $response->content,
+    );
+    
+    $email->send( @$mime_lite_conf );
+}
 
