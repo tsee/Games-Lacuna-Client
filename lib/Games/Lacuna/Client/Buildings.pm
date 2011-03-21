@@ -36,6 +36,7 @@ our @BuildingTypes = (qw(
     Security
     Shipyard
     SpacePort
+    SSLA
     StationCommand
     SubspaceSupplyDepot
     TempleOfTheDrajilites

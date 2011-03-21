@@ -76,6 +76,10 @@ our %EXPORT_TAGS = (
             Security
             Shipyard
             SpacePort
+            SSLA
+            SSLB
+            SSLC
+            SSLD
             StationCommand
             Stockpile
             SubspaceSupplyDepot
@@ -299,6 +303,10 @@ our %EXPORT_TAGS = (
         Ravine => [qw(glyph storage waste)],
         RockyOutcrop => [qw(decoration glyph)],
         SAW => [qw(command defense infrastructure)],
+        SSLA => [qw(infrastructure)],
+        SSLB => [qw(infrastructure)],
+        SSLC => [qw(infrastructure)],
+        SSLD => [qw(infrastructure)],
         Sand => [qw(decoration glyph)],
         Security => [qw(command infrastructure)],
         Shake => [qw(food)],

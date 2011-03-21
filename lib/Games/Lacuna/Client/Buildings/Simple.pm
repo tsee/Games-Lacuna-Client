@@ -75,6 +75,9 @@ our @BuildingTypes = (qw(
     Singularity
     Soup
     SpaceJunkPark
+    SSLB
+    SSLC
+    SSLD
     Stockpile
     SupplyPod
     Syrup

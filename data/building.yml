@@ -643,6 +643,22 @@ SpacePort:
     - command
     - ship
   type: command
+SSLA:
+  tags:
+    - infrastructure
+  type: command
+SSLB:
+  tags:
+    - infrastructure
+  type: command
+SSLC:
+  tags:
+    - infrastructure
+  type: command
+SSLD:
+  tags:
+    - infrastructure
+  type: command
 StationCommand:
   stores:
     - plans
