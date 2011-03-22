@@ -282,6 +282,13 @@ Decorative Recipes:
     quantity:
       trona: 1
 Functional Recipes:
+  Amalgus Meadow:
+    order:
+      - beryl
+      - trona
+    quantity:
+      beryl: 1
+      trona: 1
   Algae Pond:
     order:
       - uraninite
@@ -311,6 +318,13 @@ Functional Recipes:
       gold: 1
       monazite: 1
       trona: 1
+  Denton Brambles:
+    order:
+      - rutile
+      - goethite
+    quantity:
+      rutile: 1
+      goethite: 1
   Gas Giant Settlement Platform:
     order:
       - sulfur
