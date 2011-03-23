@@ -1,0 +1,6 @@
+---
+ship_attribute:
+  - speed
+  - hold_size
+  - combat
+  - stealth
