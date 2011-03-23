@@ -25,13 +25,13 @@ use List::MoreUtils qw(any);
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types get_tags tag_list meta_building_list meta_type meta_type_list ship_tags_list ship_tags );
+our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types get_tags tag_list meta_building_list meta_type meta_type_list ship_tags_list ship_tags ship_type_human );
 our %EXPORT_TAGS = (
     list     => [qw( food_types ore_types ship_types ship_attribute_types )],
     resource => [qw( food_types ore_types )],
     tag      => [qw( get_tags tag_list )],
     meta     => [qw( meta_building_list meta_type meta_type_list )],
-    ship     => [qw( ship_types ship_attribute_types ship_tags_list ship_tags )],
+    ship     => [qw( ship_types ship_attribute_types ship_tags_list ship_tags ship_type_human )],
     all      => [@EXPORT],
 );
 
@@ -645,6 +645,11 @@ our %EXPORT_TAGS = (
         my $tags = $ships{$type}{tags};
         return wantarray ? @$tags : [@$tags];
     }
+    sub ship_type_human {
+        my( $type ) = @_;
+        return unless $type;
+        return $ships{$type}{type_human};
+    }
 }
 1;
 
@@ -689,6 +694,8 @@ Games::Lacuna::Client::Types
 =item ship_tags_list
 
 =item ship_tags
+
+=item ship_type_human
 
 =back
 
