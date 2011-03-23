@@ -135,10 +135,12 @@ our %EXPORT_TAGS = (
         )],
         glyph => [qw(
             AlgaePond
+            AmalgusMeadow
             BeeldebanNest
             CitadelOfKnope
             CrashedShipSite
             Crater
+            DentonBrambles
             EssentiaVein
             GeoThermalVent
             GratchsGauntlet
@@ -232,6 +234,7 @@ our %EXPORT_TAGS = (
     my %tags = (
         Algae => [qw(food)],
         AlgaePond => [qw(food glyph)],
+        AmalgusMeadow => [qw(food glyph)],
         Apple => [qw(food)],
         Archaeology => [qw(command glyph infrastructure)],
         AtmosphericEvaporator => [qw(water)],
@@ -252,6 +255,7 @@ our %EXPORT_TAGS = (
         Crater => [qw(decoration glyph)],
         Dairy => [qw(food)],
         Denton => [qw(food)],
+        DentonBrambles => [qw(food glyph)],
         DeployedBleeder => [qw(waste)],
         Development => [qw(command infrastructure)],
         DistributionCenter => [qw(storage)],
