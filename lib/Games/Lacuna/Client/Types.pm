@@ -72,6 +72,7 @@ our %EXPORT_TAGS = (
             GeneticsLab
             IBS
             Intelligence
+            MercenariesGuild
             MissionCommand
             MunitionsLab
             Network19
@@ -292,6 +293,7 @@ our %EXPORT_TAGS = (
         Malcud => [qw(food)],
         MalcudField => [qw(food glyph)],
         MassadsHenge => [qw(glyph)],
+        MercenariesGuild => [qw(command infrastructure ship trade)],
         MetalJunkArches => [qw(happiness infrastructure sculpture waste)],
         Mine => [qw(ore)],
         MiningMinistry => [qw(ore ship)],

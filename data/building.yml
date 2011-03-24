@@ -434,6 +434,13 @@ MassadsHenge:
   tags:
     - glyph
   type: glyph
+MercenariesGuild:
+  tags:
+    - command
+    - infrastructure
+    - ship
+    - trade
+  type: command
 MetalJunkArches:
   produces: happiness
   tags:

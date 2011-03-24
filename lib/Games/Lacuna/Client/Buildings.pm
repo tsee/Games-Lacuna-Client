@@ -24,6 +24,7 @@ our @BuildingTypes = (qw(
     IBS
     Intelligence
     LibraryOfJith
+    MercenariesGuild
     MiningMinistry
     MissionCommand
     Network19
