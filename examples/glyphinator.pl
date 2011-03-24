@@ -706,7 +706,7 @@ sub send_excavators {
 
         my $launch_count;
         my $built_count = 0;
-        if ($status->{ready}{$planet}) {
+        if ($status->{ready}{$planet} and @{$status->{ready}{$planet}}) {
             verbose("Prepping excavators on $planet\n");
             my $port = $status->{spaceports}{$planet};
             my $originally_docked = @{$status->{ready}{$planet}};
@@ -752,6 +752,12 @@ sub send_excavators {
 
                         # Get the next available excavator
                         my $ex = $status->{ready}{$planet}[0];
+
+                        unless (defined $ex) {
+                            diag("No excavators left when we still had destinations, possible bug?\n");
+                            $all_done = 1;
+                            last;
+                        }
 
                         # Only try each destination once
                         $skip{$dest_name}++;
