@@ -75,44 +75,34 @@ foreach my $name ( sort keys %planets ) {
     
     my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
     
-    my $ship_count;
     my $mining_count = 0;
     my $defend_count = 0;
-    my $page = 1;
-    my @ships;
+    my $filter;
     
-    do {
-        my $return    = $space_port->view_all_ships( $page );
-        $ship_count ||= $return->{number_of_ships};
-        my $ships     = $return->{ships};
-        
-        $mining_count +=
-            grep {
-                $_->{task} eq 'Mining'
-            } @$ships;
-        
-        $defend_count +=
-            grep {
-                $_->{task} eq 'Defend'
-            } @$ships;
-        
-        if ( $opts{all} ) {
-            push @ships, @$ships;
-        }
-        else {
-            my $task = 'Docked';
-            $task = 'Travelling' if $opts{travelling};
-            $task = 'Mining'     if $opts{mining};
-            
-            push @ships, grep { $_->{task} eq $task } @$ships;
-        }
-        
-        $ship_count -= scalar @$ships;
-        $page++;
-    }
-    while ( $ship_count > 0 );
+    push @{ $filter->{task} }, 'Mining'
+        if $opts{mining};
     
-    my $max_length = print_ships( $name, \@ships );
+    push @{ $filter->{task} }, 'Travelling  '
+        if $opts{travelling};
+    
+    my $ships = $space_port->view_all_ships(
+        {
+            no_paging => 1,
+        },
+        $filter ? $filter : (),
+    )->{ships};
+    
+    $mining_count +=
+        grep {
+            $_->{task} eq 'Mining'
+        } @$ships;
+    
+    $defend_count +=
+        grep {
+            $_->{task} eq 'Defend'
+        } @$ships;
+    
+    my $max_length = print_ships( $name, $ships );
     
     my $space_port_status = $space_port->view;
     
@@ -136,7 +126,7 @@ foreach my $name ( sort keys %planets ) {
         $available_str,
         $space_port_status->{docks_available};
     
-    push @all_ships, @ships;
+    push @all_ships, @$ships;
     
     print "\n";
 }

@@ -3,3 +3,5 @@ cache_dir: '/path/to/cache/dir/which/must/be/writeable'
 
 email:
     to: 'me@example.com'
+
+forward_announcements: 1

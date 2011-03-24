@@ -11,6 +11,7 @@ use Class::MOP;
 our @BuildingTypes = (qw(
     Algae
     AlgaePond
+    AmalgusMeadow
     Apple
     AtmosphericEvaporator
     Bean
@@ -29,6 +30,7 @@ our @BuildingTypes = (qw(
     Crater
     Dairy
     Denton
+    DentonBrambles
     DeployedBleeder
     Espionage
     EssentiaVein
@@ -75,6 +77,9 @@ our @BuildingTypes = (qw(
     Singularity
     Soup
     SpaceJunkPark
+    SSLB
+    SSLC
+    SSLD
     Stockpile
     SupplyPod
     Syrup

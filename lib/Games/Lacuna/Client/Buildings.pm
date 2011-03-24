@@ -21,8 +21,10 @@ our @BuildingTypes = (qw(
     FoodReserve
     GeneticsLab
     HallsOfVrbansk
+    IBS
     Intelligence
     LibraryOfJith
+    MercenariesGuild
     MiningMinistry
     MissionCommand
     Network19
@@ -30,15 +32,19 @@ our @BuildingTypes = (qw(
     OracleOfAnid
     OreStorage
     Park
+    Parliament
     PlanetaryCommand
     Security
     Shipyard
     SpacePort
+    SSLA
+    StationCommand
     SubspaceSupplyDepot
     TempleOfTheDrajilites
     ThemePark
     Trade
     Transporter
+    Warehouse
     WasteRecycling
     WaterStorage
   ),

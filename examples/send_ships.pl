@@ -29,24 +29,26 @@ my $own_star;
 my $planet;
 my $sleep;
 my $seconds;
+my $rename;
 my $dryrun;
 
 GetOptions(
-    'ship=s@'   => \@ship_names,
-    'type=s@'   => \@ship_types,
-    'speed=i'   => \$speed,
-    'max=i'     => \$max,
-    'leave=i'   => \$leave,
-    'from=s'    => \$from,
-    'share=s'   => \$share,
-    'x=i'       => \$x,
-    'y=i'       => \$y,
-    'star=s'    => \$star,
-    'planet=s'  => \$planet,
-    'own-star'  => \$own_star,
-    'sleep=i'   => \$sleep,
-    'seconds=i' => \$seconds,
-    'dryrun!'   => \$dryrun,
+    'ship=s@'           => \@ship_names,
+    'type=s@'           => \@ship_types,
+    'speed=i'           => \$speed,
+    'max=i'             => \$max,
+    'leave=i'           => \$leave,
+    'from=s'            => \$from,
+    'share=s'           => \$share,
+    'x=i'               => \$x,
+    'y=i'               => \$y,
+    'star=s'            => \$star,
+    'planet=s'          => \$planet,
+    'own-star|own_star' => \$own_star,
+    'sleep=i'           => \$sleep,
+    'seconds=i'         => \$seconds,
+    'rename'            => \$rename,
+    'dryrun|dry-run'    => \$dryrun,
 );
 
 usage() if !@ship_names && !@ship_types;
@@ -77,7 +79,8 @@ unless ( $cfg_file and -e $cfg_file ) {
 }
 
 my $client = Games::Lacuna::Client->new(
-	cfg_file => $cfg_file,
+	cfg_file       => $cfg_file,
+    prompt_captcha => 1,
 	 #debug    => 1,
 );
 
@@ -217,30 +220,59 @@ elsif ($sleep) {
     sleep $sleep;
 }
 
-SHIP:
-for my $ship ( @ships ) {
-    print "DRYRUN: "
-        if $dryrun;
+if ( $dryrun ) {
+    print "DRYRUN\n";
+    print "======\n";
     
-    try {
+    print "Sent to: $target_name\n";
+    
+    for my $ship (@ships) {
+        printf "%s\n", $ship->{name};
+    }
+    
+    exit;
+}
+
+my $return = request(
+    object => $space_port,
+    method => 'send_fleet',
+    params => [
+        [ map { $_->{id} } @ships ],
+        $target,
+    ],
+);
+
+print "Sent to: $target_name\n";
+
+for my $ship ( @{ $return->{fleet} } ) {
+    printf qq{%s "%s" arriving %s\n},
+        $ship->{ship}{type_human},
+        $ship->{ship}{name},
+        $ship->{ship}{date_arrives};
+}
+
+if ( $rename ) {
+    print "\n";
+    
+    for my $ship (@ships) {
+        
+        my $name = sprintf "%s (%s)",
+            $ship->{type_human},
+            $target_name;
+        
         request(
             object => $space_port,
-            method => 'send_ship',
+            method => 'name_ship',
             params => [
                 $ship->{id},
-                $target,
+                $name,
             ],
-        ) unless $dryrun;
+        );
+        
+        printf qq{Renamed "%s" to "%s"\n},
+            $ship->{name},
+            $name;
     }
-    catch {
-        my $error = $_;
-        warn "Failed to send ship $ship->{name} ($ship->{id}): $_\n";
-        # supress "exiting subroutine with 'last'" warning
-        no warnings;
-        next SHIP;
-    };
-    
-    printf "Sent %s to %s\n", $ship->{name}, $target_name;
 }
 
 exit;
@@ -253,14 +285,16 @@ sub request {
     my $params = delete $params{params} || [];
     
     my $request;
+    my $error;
     
 RPC_ATTEMPT:
     for ( 1 .. $login_attempts ) {
+        
         try {
             $request = $object->$method(@$params);
         }
         catch {
-            my $error = $_;
+            $error = $_;
             
             # if session expired, try again without a session
             my $client = $object->client;
@@ -285,8 +319,10 @@ RPC_ATTEMPT:
             if $request;
     }
     
-    die "RPC request failed $login_attempts times, giving up\n"
-        if !$request;
+    if (!$request) {
+        warn "RPC request failed $login_attempts times, giving up\n";
+        die $error;
+    }
     
     return $request;
 }
@@ -308,6 +344,7 @@ Usage: $0 lacuna.yml
        --own_star
        --sleep      SECONDS
        --seconds    SECONDS
+       --rename
        --dryrun
 
 Either of --ship_name or --type is required.
@@ -342,7 +379,11 @@ sending. If that second has already passed, send immediately.
 If --sleep is specified, will wait that number of seconds before sending ships.
 Ignored if --seconds is set.
 
-If --dryrun is specified, nothing will be sent, but all actions that WOULD
+If --rename is provided, each ship sent will be renamed using the form
+"Type (Target)". This may be helpful for keeping track of fighters on remote
+defense.
+
+If --dryrun is provided, nothing will be sent, but all actions that WOULD
 happen are reported
 
 END_USAGE

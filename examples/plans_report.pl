@@ -53,13 +53,19 @@ foreach my $name ( sort keys %planets ) {
     
     my $buildings = $result->{buildings};
 
-    # Find the PPC
-    my $ppc_id = first {
-            $buildings->{$_}->{name} eq 'Planetary Command Center'
+    # PPC or SC?
+    my $command_url = $result->{status}{body}{type} eq 'space station'
+                    ? '/stationcommand'
+                    : '/planetarycommand';
+    
+    my $command_id = first {
+            $buildings->{$_}{url} eq $command_url
     } keys %$buildings;
     
-    my $ppc   = $client->building( id => $ppc_id, type => 'PlanetaryCommand' );
-    my $plans = $ppc->view_plans->{plans};
+    my $command_type = Games::Lacuna::Client::Buildings::type_from_url($command_url);
+    
+    my $command = $client->building( id => $command_id, type => $command_type );
+    my $plans   = $command->view_plans->{plans};
     
     next if !@$plans;
     

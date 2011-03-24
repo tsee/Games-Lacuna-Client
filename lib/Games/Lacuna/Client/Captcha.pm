@@ -1,5 +1,4 @@
 package Games::Lacuna::Client::Captcha;
-
 use 5.0080000;
 use strict;
 use warnings;
@@ -62,11 +61,19 @@ Games::Lacuna::Client::Captcha - The captcha module
 
 =head1 AUTHOR
 
+<<<<<<< HEAD
+Steffen Mueller, E<lt>smueller@cpan.orgE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2010 by Steffen Mueller
+=======
 Dave Olszewski, E<lt>cxreg@pobox.com<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (C) 2010 by Dave Olszewski
+>>>>>>> ea148822286db6eb223c2e51da39d78c82328454
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

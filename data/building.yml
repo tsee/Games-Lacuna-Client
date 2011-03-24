@@ -14,6 +14,12 @@ AlgaePond:
     - food
     - glyph
   type: glyph
+AmalgusMeadow:
+  produces: food
+  tags:
+    - food
+    - glyph
+  type: glyph
 Apple:
   produces: food
   requires:
@@ -186,6 +192,12 @@ Denton:
   tags:
     - food
   type: food
+DentonBrambles:
+  produces: food
+  tags:
+    - food
+    - glyph
+  type: glyph
 DeployedBleeder:
   produces: waste
   tags:
@@ -197,6 +209,11 @@ Development:
     - infrastructure
   type: command
 DistributionCenter:
+  stores:
+    - food
+    - ore
+    - water
+    - energy
   tags:
     - storage
   type: storage
@@ -311,6 +328,10 @@ HydroCarbon:
   tags:
     - energy
   type: energy
+IBS:
+  tags:
+    - command
+  type: command
 Intelligence:
   requires:
     university: 2
@@ -413,6 +434,13 @@ MassadsHenge:
   tags:
     - glyph
   type: glyph
+MercenariesGuild:
+  tags:
+    - command
+    - infrastructure
+    - ship
+    - trade
+  type: command
 MetalJunkArches:
   produces: happiness
   tags:
@@ -507,6 +535,10 @@ Park:
     - happiness
     - infrastructure
   type: command
+Parliament:
+  tags:
+    - command
+  type: command
 Pie:
   produces: food
   requires:
@@ -575,6 +607,26 @@ SAW:
     - defense
     - infrastructure
   type: command
+SSLA:
+  tags:
+    - command
+    - infrastructure
+  type: command
+SSLB:
+  tags:
+    - command
+    - infrastructure
+  type: command
+SSLC:
+  tags:
+    - command
+    - infrastructure
+  type: command
+SSLD:
+  tags:
+    - command
+    - infrastructure
+  type: command
 Sand:
   tags:
     - decoration
@@ -629,6 +681,14 @@ SpacePort:
   tags:
     - command
     - ship
+  type: command
+StationCommand:
+  stores:
+    - plans
+  tags:
+    - command
+    - infrastructure
+    - spacestation
   type: command
 Stockpile:
   tags:
@@ -710,6 +770,16 @@ Volcano:
     - glyph
     - ore
   type: glyph
+Warehouse:
+  stores:
+    - food
+    - ore
+    - water
+    - energy
+  tags:
+    - command
+    - storage
+  type: command
 WasteDigester:
   produces: ore
   tags:

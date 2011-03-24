@@ -13,12 +13,14 @@ use JSON::RPC::Common;
 use JSON::RPC::Common::Marshal::HTTP;
 use HTTP::Request;
 use HTTP::Response;
+use IO::Interactive qw( is_interactive );
 
 our @CARP_NOT = qw(
   Games::Lacuna::Client
   Games::Lacuna::Client::Alliance
   Games::Lacuna::Client::Body
   Games::Lacuna::Client::Buildings
+  Games::Lacuna::Client::Captcha
   Games::Lacuna::Client::Empire
   Games::Lacuna::Client::Inbox
   Games::Lacuna::Client::Map
@@ -63,8 +65,11 @@ sub call {
 
     # Call the method.  If a Captcha error is returned, attempt to handle it
     # and re-call the method, up to 3 times
-    my $trying = 1;
-    my ($res, $captcha_attempts);
+    my $trying           = 1;
+    my $is_interactive   = is_interactive();
+    my $captcha_attempts = 0;
+    my $res;
+    
     while ($trying) {
         $trying = 0;
 
@@ -85,6 +90,7 @@ sub call {
         $res = $self->marshal->response_to_result($resp);
 
         if ($res and $res->error and $res->error->code eq '1016'
+                and $is_interactive
                 and $self->{client}->prompt_captcha and ++$captcha_attempts <= 3) {
             my $captcha = $self->{client}->captcha;
             my $answer = $captcha->prompt_for_solution;
