@@ -12,7 +12,7 @@ use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client ();
 
 $| = 1;
-my $build_gap = 5; # seconds
+my $build_gap = 3; # seconds
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
