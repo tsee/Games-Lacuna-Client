@@ -140,7 +140,7 @@ DumpFile( $cache_file_path, $cache );
 
 # announcements
 if (   $email_conf->{forward_announcements}
-    && $inbox->{status}{server}{accouncement} )
+    && $inbox->{status}{server}{announcement} )
 {
     my $url = URI->new( $client->uri );
     $url->path('announcement');
@@ -150,7 +150,7 @@ if (   $email_conf->{forward_announcements}
     
     my $response = $ua->get($url);
     
-    my $email = MIME::List->new(
+    my $email = MIME::Lite->new(
         From    => $email_conf->{email}{from},
         To      => $email_conf->{email}{to},
         Subject => "Server Announcement",
