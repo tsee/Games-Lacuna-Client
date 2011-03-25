@@ -9,6 +9,13 @@ use Games::Lacuna::Client::Buildings::Modules;
 
 our @ISA = qw(Games::Lacuna::Client::Buildings::Modules);
 
+sub api_methods {
+  return {
+    view_propositions => { default_args => [qw(session_id building_id)] },
+    cast_vote         => { default_args => [qw(session_id building_id)] },
+  };
+}
+
 __PACKAGE__->init();
 
 1;
