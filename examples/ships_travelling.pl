@@ -37,22 +37,28 @@ my $client = Games::Lacuna::Client->new(
 	# debug    => 1,
 );
 
-my $empire = $client->empire;
-my $estatus = $empire->get_status->{empire};
-my %planets_by_name = map { ($estatus->{planets}->{$_} => $client->body(id => $_)) }
-                      grep { $planet_name ? $planet_name eq $_ : 1 }
-                      keys %{$estatus->{planets}};
-# Beware. I think these might contain asteroids, too.
-# TODO: The body status has a 'type' field that should be listed as 'habitable planet'
+# Load the planets
+my $empire  = $client->empire->get_status->{empire};
+
+# reverse hash, to key by name instead of id
+my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
 my @spaceports;
 
-foreach my $planet (values %planets_by_name) {
-  my %buildings = %{ $planet->get_buildings->{buildings} };
-
-  my @b = first {$buildings{$_}{name} eq 'Space Port'}
-                  keys %buildings;
-  push @spaceports, map  { $client->building(type => 'SpacePort', id => $_) } @b;
+foreach my $name ( sort keys %planets ) {
+  next if defined $planet_name && $planet_name ne $name;
+  
+  # Load planet data
+  my $planet    = $client->body( id => $planets{$name} );
+  my $buildings = $planet->get_buildings->{buildings};
+  
+  my $id = first {
+    $buildings->{$_}{name} eq 'Space Port'
+  } keys %$buildings;
+  
+  next if !$id;
+  
+  push @spaceports, $client->building( id => $id, type => 'SpacePort' );
 }
 
 my @ships;
