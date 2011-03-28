@@ -17,6 +17,7 @@ our @BuildingTypes = (qw(
     Bean
     Beeldeban
     BeeldebanNest
+    BlackHoleGenerator
     Bread
     Burger
     Cheese
