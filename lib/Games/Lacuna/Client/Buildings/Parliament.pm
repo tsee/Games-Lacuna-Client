@@ -11,8 +11,12 @@ our @ISA = qw(Games::Lacuna::Client::Buildings::Modules);
 
 sub api_methods {
   return {
-    view_propositions => { default_args => [qw(session_id building_id)] },
-    cast_vote         => { default_args => [qw(session_id building_id)] },
+    view_laws                          => { default_args => [qw(session_id)] },
+    view_propositions                  => { default_args => [qw(session_id building_id)] },
+    cast_vote                          => { default_args => [qw(session_id building_id)] },
+    propose_write                      => { default_args => [qw(session_id building_id)] },
+    propose_transfer_station_ownership => { default_args => [qw(session_id building_id)] },
+    propose_fire_bfg                   => { default_args => [qw(session_id building_id)] },
   };
 }
 
