@@ -55,8 +55,6 @@ for my $name ( keys %planets ) {
     
     next if $result->{status}{body}{type} ne 'space station';
     
-    printf "Space Station: %s\n\n", $result->{status}{body}{name};
-    
     my $buildings = $result->{buildings};
     
     my $parliament_id = first {
@@ -66,6 +64,10 @@ for my $name ( keys %planets ) {
     my $parliament = $client->building( id => $parliament_id, type => 'Parliament' );
     
     my $propositions = $parliament->view_propositions->{propositions};
+    
+    next if !@$propositions;
+    
+    printf "Space Station: %s\n\n", $result->{status}{body}{name};
     
     for my $prop ( @$propositions ) {
         printf "%s\n", $prop->{description};
