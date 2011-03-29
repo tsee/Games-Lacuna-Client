@@ -853,6 +853,7 @@ sub send_excavators {
 
                 my $need = 0;
                 my $minutes = $opts{fill} || $opts{continuous} || 360;
+                my ($ore_cost, $energy_cost, $water_cost, $food_cost);
                 for my $yard (@{$status->{shipyards}{$planet} || []}) {
 
                     # Get the length of a build here
@@ -874,25 +875,28 @@ sub send_excavators {
                         verbose("Need " . pluralize($new, "additional excavator") . " based on build time\n");
                     }
 
-                    # Get the cost of a build
-                    my ($ore_cost, $energy_cost, $water_cost, $food_cost) =
-                        map { @{$buildable->{buildable}{$_}{cost}}{qw/ore energy water food/} }
-                        grep { $_ eq 'excavator' }
-                        keys %{$buildable->{buildable}};
-                    verbose("An excavator costs $ore_cost ore, $energy_cost energy, $water_cost water, and $food_cost food in this yard\n");
-                    my $by_ore    = $status->{planet_resources}{$planet}{ore_hour} / $ore_cost;
-                    my $by_water  = $status->{planet_resources}{$planet}{water_hour} / $water_cost;
-                    my $by_food   = $status->{planet_resources}{$planet}{food_hour} / $food_cost;
-                    my $by_energy = $status->{planet_resources}{$planet}{energy_hour} / $energy_cost;
-                    my $by_resource = min($by_ore, $by_water, $by_food, $by_energy);
-                    my $new_by_resource = int($by_resource * ($minutes / 60));
-                    verbose("$planet can sustain $by_resource excavators per hour based on current production, for $new_by_resource in $minutes minutes\n");
-                    $new = min($new, $new_by_resource);
-
                     $need += $new;
+
+                    # Get the cost of a build
+                    unless ($ore_cost) {
+                        ($ore_cost, $energy_cost, $water_cost, $food_cost) =
+                            map { @{$buildable->{buildable}{$_}{cost}}{qw/ore energy water food/} }
+                            grep { $_ eq 'excavator' }
+                            keys %{$buildable->{buildable}};
+                    }
                 }
 
                 verbose("Would need " . pluralize($need, "ship") . " to fill up to $minutes minutes on $planet\n");
+
+                verbose("An excavator costs $ore_cost ore, $energy_cost energy, $water_cost water, and $food_cost food in this yard\n");
+                my $by_ore    = $status->{planet_resources}{$planet}{ore_hour}    / $ore_cost;
+                my $by_water  = $status->{planet_resources}{$planet}{water_hour}  / $water_cost;
+                my $by_food   = $status->{planet_resources}{$planet}{food_hour}   / $food_cost;
+                my $by_energy = $status->{planet_resources}{$planet}{energy_hour} / $energy_cost;
+                my $by_resource = min($by_ore, $by_water, $by_food, $by_energy);
+                my $need_by_resource = int($by_resource * ($minutes / 60));
+                verbose("$planet can sustain $by_resource excavators per hour based on current production, for $need_by_resource in $minutes minutes\n");
+                $need = min($need, $need_by_resource);
 
                 # make whichever is higher, the number calculated here, or from --rebuild
                 $build = max($build, $need);
