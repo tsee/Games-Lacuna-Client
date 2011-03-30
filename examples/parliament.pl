@@ -71,14 +71,16 @@ for my $name ( keys %planets ) {
     
     for my $prop ( @$propositions ) {
         printf "%s\n", $prop->{description};
-        printf "%d votes needed - %d yes, %d no so far\n",
-            $prop->{votes_needed},
+        printf "Proposed by: %s\n", $prop->{proposed_by}{name};
+        printf "Will automatically pass at: %s\n", $prop->{date_ends};
+        printf "Votes needed: %d\n", $prop->{votes_needed};
+        printf "Votes so far: %d yes, %d no\n",
             $prop->{votes_yes},
             $prop->{votes_no};
-        print "\n";
         
         if ( exists $prop->{my_vote} ) {
-            printf "You have already voted\n\n";
+            printf "You have already voted: %s\n\n",
+                $prop->{my_vote} ? 'yes' : 'no';
             next;
         }
         
