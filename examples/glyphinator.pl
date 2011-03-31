@@ -1055,7 +1055,7 @@ SQL
 
         $find_dest->execute(@vals);
         while (my $row = $find_dest->fetchrow_hashref) {
-            my $dest_name = $row->{name} || "$row->{star_name} $row->{orbit}";
+            my $dest_name = "$row->{star_name} $row->{orbit}";
             my $dist = int(sqrt($row->{dist}));
             verbose("Selected destination $dest_name, which is " . pluralize($dist, "unit") . " away\n");
 
