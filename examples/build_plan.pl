@@ -12,9 +12,10 @@ use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client ();
 
 $| = 1;
-my $build_gap = 5; # seconds
+my $build_gap = 3; # seconds
 
-my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+# if there is only 1 arg, assume it's the build_plan.yml for later, not this config
+my $cfg_file = @ARGV == 2 ? shift @ARGV : 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
   $cfg_file = eval{
     require File::HomeDir;
@@ -30,7 +31,7 @@ unless ( $cfg_file and -e $cfg_file ) {
   }
 }
 
-my $plan_file = shift(@ARGV) || 'build_plan.yml';
+my $plan_file = @ARGV ? shift @ARGV : 'build_plan.yml';
 unless ( $plan_file and -e $plan_file ) {
 	usage( "Did not provide a plan file" );
 }

@@ -11,8 +11,22 @@ our @ISA = qw(Games::Lacuna::Client::Buildings::Modules);
 
 sub api_methods {
   return {
-    view_propositions => { default_args => [qw(session_id building_id)] },
-    cast_vote         => { default_args => [qw(session_id building_id)] },
+    view_laws                                         => { default_args => [qw(session_id)] },
+    view_propositions                                 => { default_args => [qw(session_id building_id)] },
+    get_stars_in_jurisdiction                         => { default_args => [qw(session_id building_id)] },
+    get_bodies_for_star_in_jurisdiction               => { default_args => [qw(session_id building_id)] },
+    get_mining_platforms_for_asteroid_in_jurisdiction => { default_args => [qw(session_id building_id)] },
+    cast_vote                                         => { default_args => [qw(session_id building_id)] },
+    propose_writ                                      => { default_args => [qw(session_id building_id)] },
+    propose_repeal_law                                => { default_args => [qw(session_id building_id)] },
+    propose_transfer_station_ownership                => { default_args => [qw(session_id building_id)] },
+    propose_seize_star                                => { default_args => [qw(session_id building_id)] },
+    propose_rename_star                               => { default_args => [qw(session_id building_id)] },
+    propose_broadcast_on_network19                    => { default_args => [qw(session_id building_id)] },
+    propose_rename_asteroid                           => { default_args => [qw(session_id building_id)] },
+    propose_members_only_mining_rights                => { default_args => [qw(session_id building_id)] },
+    propose_evict_mining_platform                     => { default_args => [qw(session_id building_id)] },
+    propose_fire_bfg                                  => { default_args => [qw(session_id building_id)] },
   };
 }
 

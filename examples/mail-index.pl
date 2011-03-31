@@ -13,8 +13,8 @@ use Games::Lacuna::Client ();
 my %opts = (
     dbfile       => "$FindBin::Bin/../mail.db",
     'start-page' => 1,
-    'max-pages'  => 500,
-    'max-rpc'    => 4500,
+    'max-pages'  => 1000,
+    'max-rpc'    => 9500,
 );
 
 my @tags = qw(
@@ -93,7 +93,8 @@ my $dbh = DBI->connect(
 my $json = JSON::Any->new;
 
 my $client = Games::Lacuna::Client->new(
-	cfg_file => $cfg_file,
+	cfg_file  => $cfg_file,
+    rpc_sleep => 1,
 	# debug    => 1,
 );
 

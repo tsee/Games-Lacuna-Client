@@ -17,6 +17,7 @@ our @BuildingTypes = (qw(
     Bean
     Beeldeban
     BeeldebanNest
+    BlackHoleGenerator
     Bread
     Burger
     Cheese
@@ -52,6 +53,15 @@ our @BuildingTypes = (qw(
     Lake
     Lapis
     LapisForest
+    LCOTA
+    LCOTB
+    LCOTC
+    LCOTD
+    LCOTE
+    LCOTF
+    LCOTG
+    LCOTH
+    LCOTI
     LuxuryHousing
     Malcud
     MalcudField
