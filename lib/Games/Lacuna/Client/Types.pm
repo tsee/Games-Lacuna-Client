@@ -82,6 +82,7 @@ our %EXPORT_TAGS = (
             Parliament
             PilotTraining
             PlanetaryCommand
+            PoliceStation
             Propulsion
             SAW
             Security
@@ -313,6 +314,7 @@ our %EXPORT_TAGS = (
         Pie => [qw(food)],
         PilotTraining => [qw(command infrastructure ship)],
         PlanetaryCommand => [qw(command infrastructure)],
+        PoliceStation => [qw(command infrastructure)],
         Potato => [qw(food)],
         Propulsion => [qw(command infrastructure ship)],
         PyramidJunkSculpture => [qw(happiness infrastructure sculpture waste)],

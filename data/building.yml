@@ -564,6 +564,11 @@ PlanetaryCommand:
     - command
     - infrastructure
   type: command
+PoliceStation:
+  tags:
+    - command
+    - infrastructure
+  type: command
 Potato:
   produces: food
   requires:
