@@ -102,6 +102,11 @@ foreach my $name ( sort keys %planets ) {
             $_->{task} eq 'Defend'
         } @$ships;
     
+    @$ships =
+        grep {
+            $_->{task} eq 'Docked'
+        } @$ships;
+    
     my $max_length = print_ships( $name, $ships );
     
     my $space_port_status = $space_port->view;
