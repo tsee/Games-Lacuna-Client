@@ -12,8 +12,9 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client ();
 
-my $login_attempts = 5;
-my $reattempt_wait = 0.1;
+my $ships_per_fleet = 20;
+my $login_attempts  = 5;
+my $reattempt_wait  = 0.1;
 
 my @ship_names;
 my @ship_types;
@@ -27,6 +28,7 @@ my $y;
 my $star;
 my $own_star;
 my $planet;
+my $fleet = 1;
 my $sleep;
 my $seconds;
 my $rename;
@@ -44,6 +46,7 @@ GetOptions(
     'y=i'               => \$y,
     'star=s'            => \$star,
     'planet=s'          => \$planet,
+    'fleet!'             => \$fleet,
     'own-star|own_star' => \$own_star,
     'sleep=i'           => \$sleep,
     'seconds=i'         => \$seconds,
@@ -233,22 +236,25 @@ if ( $dryrun ) {
     exit;
 }
 
-my $return = request(
-    object => $space_port,
-    method => 'send_fleet',
-    params => [
-        [ map { $_->{id} } @ships ],
-        $target,
-    ],
-);
+# send as fleet or individually?
+my @fleet;
 
-print "Sent to: $target_name\n";
+for my $ship (@ships) {
+    if ( $fleet && $ship->{type} ne 'scow' ) {
+        push @fleet, $ship;
+        
+        if ( @fleet == $ships_per_fleet ) {
+            send_fleet( \@fleet );
+            undef @fleet;
+        }
+    }
+    else {
+        send_ship( $ship );
+    }
+}
 
-for my $ship ( @{ $return->{fleet} } ) {
-    printf qq{%s "%s" arriving %s\n},
-        $ship->{ship}{type_human},
-        $ship->{ship}{name},
-        $ship->{ship}{date_arrives};
+if ( @fleet ) {
+    send_fleet( \@fleet );
 }
 
 if ( $rename ) {
@@ -276,6 +282,48 @@ if ( $rename ) {
 }
 
 exit;
+
+sub send_ship {
+    my ( $ship ) = @_;
+    
+    my $return = request(
+        object => $space_port,
+        method => 'send_ship',
+        params => [
+            $ship->{id},
+            $target,
+        ],
+    );
+    
+    print "Sent ship to: $target_name\n";
+    
+    printf qq{\t%s "%s" arriving %s\n},
+        $return->{ship}{type_human},
+        $return->{ship}{name},
+        $return->{ship}{date_arrives};
+}
+
+sub send_fleet {
+    my ( $ships ) = @_;
+    
+    my $return = request(
+        object => $space_port,
+        method => 'send_fleet',
+        params => [
+            [ map { $_->{id} } @$ships ],
+            $target,
+        ],
+    );
+    
+    print "Sent fleet to: $target_name\n";
+    
+    for my $ship ( @{ $return->{fleet} } ) {
+        printf qq{\t%s "%s" arriving %s\n},
+            $ship->{ship}{type_human},
+            $ship->{ship}{name},
+            $ship->{ship}{date_arrives};
+    }
+}
 
 sub request {
     my ( %params )= @_;
@@ -341,7 +389,8 @@ Usage: $0 lacuna.yml
        --y          COORDINATE
        --star       NAME
        --planet     NAME
-       --own_star
+       --own-star
+       --fleet
        --sleep      SECONDS
        --seconds    SECONDS
        --rename
@@ -368,10 +417,15 @@ ships.
 
 If --star is missing, the planet is assumed to be one of your own colonies.
 
-At least one of --star or --planet or --own_star or both --x and --y are
+At least one of --star or --planet or --own-star or both --x and --y are
 required.
 
---own_star and --planet cannot be used together.
+--own-star and --planet cannot be used together.
+
+If --fleet is true, will send up to 20 ships in a fleet at once.
+Fleet defaults to true.
+--nofleet will force sending all ships individually.
+Scows will always be sent individually, regardless of the value of --fleet.
 
 If --seconds is specified, what until that second of the current minute before
 sending. If that second has already passed, send immediately.
