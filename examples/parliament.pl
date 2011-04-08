@@ -116,7 +116,7 @@ Usage: $0 CONFIG_FILE
 Prompts for vote on each proposition.
 
 Options:
-    --planet GAS-GIANT NAME
+    --planet SPACE-STATION NAME
 
 Multiple --planet opts may be provided.
 If no --planet opts are provided, will search for all allied space-stations.
