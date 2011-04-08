@@ -46,7 +46,7 @@ my $empire  = $client->empire->get_status->{empire};
 # reverse hash, to key by name instead of id
 my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
-for my $name ( keys %planets ) {
+for my $name ( sort keys %planets ) {
     next if @planet && !grep { $name eq $_ } @planet;
     
     my $planet = $client->body( id => $planets{$name} );

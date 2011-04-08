@@ -42,22 +42,22 @@ my $client = Games::Lacuna::Client->new(
 
 # Load the planets
 print ++$i . " - Loading empire $client->{name}...\n";
-my $empire  = $client->empire->get_status->{empire};
-my $planets = $empire->{planets};
+my $empire = $client->empire->get_status->{empire};
+
+# reverse hash, to key by name instead of id
+my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
 # Potential build options
 my @options = ();
 
 # Scan each planet
-foreach my $planet_id ( sort keys %$planets ) {
-	my $name = $planets->{$planet_id};
-
+foreach my $name ( sort keys %planets ) {
     next if defined $planet_name && $planet_name ne $name;
 
 	print ++$i . " - Loading planet $name...\n";
 
 	# Load planet data
-	my $planet    = $client->body( id => $planet_id );
+	my $planet    = $client->body( id => $planets{$name} );
 	my $result    = $planet->get_buildings;
 	my $body      = $result->{status}->{body};
 	my $buildings = $result->{buildings};
@@ -130,7 +130,7 @@ foreach my $planet_id ( sort keys %$planets ) {
 
 		# Save as an option
 		push @options, {
-			planet   => $planet_id,
+			planet   => $planets{$name},
 			name     => $name,
 			type     => $type,
 			capacity => $capacity,
