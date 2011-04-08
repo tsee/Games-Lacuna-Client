@@ -11,6 +11,7 @@ use List::Util (qw(first));
 use Getopt::Long          (qw(GetOptions));
 
 my $planet_name;
+my $ships_per_page = 25;
 
 GetOptions(
     'planet=s' => \$planet_name,
@@ -63,8 +64,18 @@ foreach my $name ( sort keys %planets ) {
 
 my @ships;
 foreach my $sp (@spaceports) {
-  my $ships=$sp->view_ships_travelling();
-  foreach my $ship ( @{$ships->{ships_travelling}} ) {
+  my $ships = [];
+  my $page  = 1;
+  my $response;
+  
+  do {
+    $response = $sp->view_ships_travelling( $page++ );
+    
+    push @$ships, @{ $response->{ships_travelling} };
+    
+  } while ( @$ships < $response->{number_of_ships_travelling} );
+  
+  foreach my $ship ( @$ships ) {
     ( my $date_arrives = $ship->{date_arrives} ) =~ s{^(\d+)\s+(\d+)\s+}{$2/$1/};
     $ship->{date_arrives} = str2time($date_arrives);
     push @ships, $ship;
