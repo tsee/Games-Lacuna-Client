@@ -74,8 +74,12 @@ foreach my $planet_id ( sort keys %$planets ) {
 	my $pending_build = scalar grep { $_->{pending_build} } values %$buildings;
 	my $can_build     = $development_slots - $pending_build;
 
+    # space-stations don't generate/store waste
+    my @types = $body->{type} eq 'space station' ? qw( food ore water energy )
+              :                                    qw( food ore water energy waste );
+    
 	# Analysis
-	foreach my $type ( qw{ food ore water energy waste } ) {
+	foreach my $type ( @types ) {
 		my $capacity = $body->{"${type}_capacity"} || 0;
 		my $stored   = $body->{"${type}_stored"}   || 0;
 		my $hour     = $body->{"${type}_hour"}     || 0;
