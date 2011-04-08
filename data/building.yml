@@ -35,6 +35,10 @@ Archaeology:
     - glyph
     - infrastructure
   type: command
+ArtMuseum:
+  tags:
+    - space_station_module
+  type: command
 AtmosphericEvaporator:
   produces: water
   tags:
@@ -172,6 +176,10 @@ Crater:
     - decoration
     - glyph
   type: glyph
+CulinaryInstitue:
+  tags:
+    - space_station_module
+  type: command
 Dairy:
   produces: food
   requires:
@@ -331,6 +339,7 @@ HydroCarbon:
 IBS:
   tags:
     - command
+    - space_station_module
   type: command
 Intelligence:
   requires:
@@ -491,6 +500,10 @@ Observatory:
     - command
     - infrastructure
   type: command
+OperaHouse:
+  tags:
+    - space_station_module
+  type: command
 OracleOfAnid:
   tags:
     - glyph
@@ -538,6 +551,7 @@ Park:
 Parliament:
   tags:
     - command
+    - space_station_module
   type: command
 Pie:
   produces: food
@@ -568,6 +582,7 @@ PoliceStation:
   tags:
     - command
     - infrastructure
+    - space_station_module
   type: command
 Potato:
   produces: food
@@ -693,7 +708,7 @@ StationCommand:
   tags:
     - command
     - infrastructure
-    - spacestation
+    - space_station_module
   type: command
 Stockpile:
   tags:
@@ -784,6 +799,7 @@ Warehouse:
   tags:
     - command
     - storage
+    - space_station_module
   type: command
 WasteDigester:
   produces: ore
