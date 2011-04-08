@@ -52,7 +52,7 @@ my @options = ();
 foreach my $planet_id ( sort keys %$planets ) {
 	my $name = $planets->{$planet_id};
 
-        next if defined $planet_name && $planet_name ne $name;
+    next if defined $planet_name && $planet_name ne $name;
 
 	print ++$i . " - Loading planet $name...\n";
 
@@ -76,12 +76,12 @@ foreach my $planet_id ( sort keys %$planets ) {
 
 	# Analysis
 	foreach my $type ( qw{ food ore water energy waste } ) {
-		my $capacity = $body->{"${type}_capacity"};
-		my $stored   = $body->{"${type}_stored"};
-		my $hour     = $body->{"${type}_hour"};
+		my $capacity = $body->{"${type}_capacity"} || 0;
+		my $stored   = $body->{"${type}_stored"}   || 0;
+		my $hour     = $body->{"${type}_hour"}     || 0;
 		my $storage  = $capacity - $stored;
-		my $time     = int( $capacity / $hour );
-		my $left     = int( $storage  / $hour );
+		my $time     = $hour == 0 ? 0 : int( $capacity / $hour );
+		my $left     = $hour == 0 ? 0 : int( $storage  / $hour );
 		my $label    = ucfirst($type);
 
 		if ( $hour < 0 ) {
