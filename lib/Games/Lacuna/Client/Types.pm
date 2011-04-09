@@ -9,8 +9,10 @@
 #
 # Any informational changes should be made to one of:
 #
-#     data/types.yml
 #     data/building.yml
+#     data/lists.yml
+#     data/resources.yml
+#     data/ships.yml
 #
 # All changes should be followed by running data/build_types.pl
 #
