@@ -7,7 +7,7 @@ use Template;
 
 use FindBin;
 use lib "${FindBin::Bin}";
-use LoadBuilding ();
+use LoadBuilding;
 
 my $resource_input = "${FindBin::Bin}/resources.yml";
 my $list_input     = "${FindBin::Bin}/lists.yml";
