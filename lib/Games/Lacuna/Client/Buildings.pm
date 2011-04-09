@@ -12,7 +12,9 @@ require Games::Lacuna::Client::Buildings::Simple;
 
 our @BuildingTypes = (qw(
     Archaeology
+    ArtMuseum
     Capitol
+    CulinaryInstitute
     Development
     DistributionCenter
     Embassy
@@ -29,11 +31,13 @@ our @BuildingTypes = (qw(
     MissionCommand
     Network19
     Observatory
+    OperaHouse
     OracleOfAnid
     OreStorage
     Park
     Parliament
     PlanetaryCommand
+    PoliceStation
     Security
     Shipyard
     SpacePort
