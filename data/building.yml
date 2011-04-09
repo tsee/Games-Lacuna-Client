@@ -37,6 +37,7 @@ Archaeology:
   type: command
 ArtMuseum:
   tags:
+    - command
     - space_station_module
   type: command
 AtmosphericEvaporator:
@@ -176,8 +177,9 @@ Crater:
     - decoration
     - glyph
   type: glyph
-CulinaryInstitue:
+CulinaryInstitute:
   tags:
+    - command
     - space_station_module
   type: command
 Dairy:
@@ -504,6 +506,7 @@ Observatory:
   type: command
 OperaHouse:
   tags:
+    - command
     - space_station_module
   type: command
 OracleOfAnid:
@@ -800,8 +803,8 @@ Warehouse:
     - energy
   tags:
     - command
-    - storage
     - space_station_module
+    - storage
   type: command
 WasteDigester:
   produces: ore

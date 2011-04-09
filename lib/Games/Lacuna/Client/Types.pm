@@ -65,7 +65,7 @@ our %EXPORT_TAGS = (
             ArtMuseum
             Capitol
             CloakingLab
-            CulinaryInstitue
+            CulinaryInstitute
             Development
             Embassy
             Espionage
@@ -242,7 +242,7 @@ our %EXPORT_TAGS = (
         AmalgusMeadow => [qw(food glyph)],
         Apple => [qw(food)],
         Archaeology => [qw(command glyph infrastructure)],
-        ArtMuseum => [qw(space_station_module)],
+        ArtMuseum => [qw(command space_station_module)],
         AtmosphericEvaporator => [qw(water)],
         Bean => [qw(food)],
         Beeldeban => [qw(food)],
@@ -259,7 +259,7 @@ our %EXPORT_TAGS = (
         CornMeal => [qw(food)],
         CrashedShipSite => [qw(glyph ship)],
         Crater => [qw(decoration glyph)],
-        CulinaryInstitue => [qw(space_station_module)],
+        CulinaryInstitute => [qw(command space_station_module)],
         Dairy => [qw(food)],
         Denton => [qw(food)],
         DentonBrambles => [qw(food glyph)],
@@ -308,7 +308,7 @@ our %EXPORT_TAGS = (
         NaturalSpring => [qw(glyph water)],
         Network19 => [qw(command happiness infrastructure)],
         Observatory => [qw(command infrastructure)],
-        OperaHouse => [qw(space_station_module)],
+        OperaHouse => [qw(command space_station_module)],
         OracleOfAnid => [qw(glyph infrastructure)],
         OreRefinery => [qw(ore)],
         OreStorage => [qw(ore storage)],
