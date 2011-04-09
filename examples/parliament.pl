@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Getopt::Long qw( GetOptions );
 use List::Util   qw( first );
+use Try::Tiny;
 
 use FindBin;
 use lib "$FindBin::Bin/../lib";
@@ -46,6 +47,7 @@ my $empire  = $client->empire->get_status->{empire};
 # reverse hash, to key by name instead of id
 my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
+SS:
 for my $name ( sort keys %planets ) {
     next if @planet && !grep { $name eq $_ } @planet;
     
@@ -55,6 +57,8 @@ for my $name ( sort keys %planets ) {
     
     next if $result->{status}{body}{type} ne 'space station';
     
+    printf "Space Station: %s\n\n", $result->{status}{body}{name};
+    
     my $buildings = $result->{buildings};
     
     my $parliament_id = first {
@@ -63,11 +67,23 @@ for my $name ( sort keys %planets ) {
     
     my $parliament = $client->building( id => $parliament_id, type => 'Parliament' );
     
-    my $propositions = $parliament->view_propositions->{propositions};
+    my $propositions;
     
-    next if !@$propositions;
+    try {
+        $propositions = $parliament->view_propositions->{propositions};
+    }
+    catch {
+        warn "$_\n\n\n";
+        no warnings 'exiting';
+        next SS;
+    };
     
-    printf "Space Station: %s\n\n", $result->{status}{body}{name};
+    if ( ! @$propositions ) {
+        print "No propositions\n\n\n";
+        next;
+    }
+    
+    
     
     for my $prop ( @$propositions ) {
         printf "%s\n", $prop->{description};
@@ -102,7 +118,7 @@ for my $name ( sort keys %planets ) {
         }
         
         $parliament->cast_vote( $prop->{id}, $vote );
-        print "\n";
+        print "\n\n";
     }
 }
 
