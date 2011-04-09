@@ -13,7 +13,9 @@
 #     [% file %]
 [% END -%]
 #
-# All changes should be followed by running [% generator %]
+# All changes should be followed by running:
+#     [% sort_program %]
+#     [% generator %]
 #
 ###################################################
 [%

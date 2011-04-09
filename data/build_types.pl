@@ -39,6 +39,7 @@ my $output         = "${FindBin::Bin}/../lib/Games/Lacuna/Client/Types.pm";
 my $package        = 'Games::Lacuna::Client::Types';
 my $template_name  = 'data/Types.tt2';
 my $generator      = "data/${FindBin::Script}";
+my $sort_program   = 'data/sort_types.pl';
 
 my $template = abs2rel catfile $FindBin::Bin, 'Types.tt2';
 
@@ -52,6 +53,7 @@ my $types = $building_data->types;
 my $vars = {
   %resources,
   generator     => $generator,
+  sort_program  => $sort_program,
   package       => $package,
   building_meta => $types,
   building_data => $building_data,

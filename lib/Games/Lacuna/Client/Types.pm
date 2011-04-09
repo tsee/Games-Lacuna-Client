@@ -14,7 +14,9 @@
 #     data/resources.yml
 #     data/ships.yml
 #
-# All changes should be followed by running data/build_types.pl
+# All changes should be followed by running:
+#     data/sort_types.pl
+#     data/build_types.pl
 #
 ###################################################
 
