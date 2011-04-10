@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Getopt::Long qw( GetOptions );
+use IO::Interactive qw( is_interactive );
 use List::Util   qw( first );
 use Try::Tiny;
 
@@ -37,6 +38,8 @@ unless ( $cfg_file and -e $cfg_file ) {
     die "Did not provide a config file";
   }
 }
+
+my $is_interactive = is_interactive();
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file  => $cfg_file,
@@ -106,7 +109,7 @@ for my $name ( sort keys %planets ) {
             print "AUTO-VOTED YES\n";
             $vote = 1;
         }
-        else {
+        elsif ( $is_interactive ) {
             while ( !defined $vote ) {
                 print "Vote yes or no: ";
                 my $input = <STDIN>;
@@ -121,6 +124,9 @@ for my $name ( sort keys %planets ) {
                     print "Sorry, don't understand - vote again\n";
                 }
             }
+        }
+        else {
+            print "Non-interactive terminal - skipping proposition\n";
         }
         
         $parliament->cast_vote( $prop->{id}, $vote );
