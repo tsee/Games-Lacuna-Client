@@ -11,10 +11,12 @@ use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client ();
 
 my @planet;
+my @pass;
 my $help;
 
 GetOptions(
     'planet=s@' => \@planet,
+    'pass=s@'   => \@pass,
     'help|h'    => \$help,
 );
 
@@ -83,8 +85,6 @@ for my $name ( sort keys %planets ) {
         next;
     }
     
-    
-    
     for my $prop ( @$propositions ) {
         printf "%s\n", $prop->{description};
         printf "Proposed by: %s\n", $prop->{proposed_by}{name};
@@ -102,18 +102,24 @@ for my $name ( sort keys %planets ) {
         
         my $vote;
         
-        while ( !defined $vote ) {
-            print "Vote yes or no: ";
-            my $input = <STDIN>;
-            
-            if ( $input =~ /y(es)?/i ) {
-                $vote = 1;
-            }
-            elsif ( $input =~ /no?/i ) {
-                $vote = 0;
-            }
-            else {
-                print "Sorry, don't understand - vote again\n";
+        if ( @pass && first { $prop->{description} =~ /$_/i } @pass ) {
+            print "AUTO-VOTED YES\n";
+            $vote = 1;
+        }
+        else {
+            while ( !defined $vote ) {
+                print "Vote yes or no: ";
+                my $input = <STDIN>;
+                
+                if ( $input =~ /y(es)?/i ) {
+                    $vote = 1;
+                }
+                elsif ( $input =~ /no?/i ) {
+                    $vote = 0;
+                }
+                else {
+                    print "Sorry, don't understand - vote again\n";
+                }
             }
         }
         
@@ -136,6 +142,11 @@ Options:
 
 Multiple --planet opts may be provided.
 If no --planet opts are provided, will search for all allied space-stations.
+
+    --pass REGEX
+Multiple --pass opts may be provided - these are run as regexes against each
+proposition description - if it matches, the proposition is automatically
+voted 'yes'.
 
 END_USAGE
 
