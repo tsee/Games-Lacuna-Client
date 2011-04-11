@@ -5,6 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use List::Util            qw(min max);
+use List::MoreUtils       qw( uniq );
 use Getopt::Long          qw(GetOptions);
 use Games::Lacuna::Client ();
 
@@ -177,15 +178,17 @@ sub print_ships {
         for my $spec (@specs) {
             next if !$opts{$spec};
             
-            my $min = min( keys %{ $type{$type}{$spec} } );
-            my $max = max( keys %{ $type{$type}{$spec} } );
+            print " ($spec: ";
             
-            if ( $min == $max ) {
-                print " $spec: $min";
-            }
-            else {
-                print " $spec: $min-$max";
-            }
+            print
+                join ", ",
+                map {
+                    sprintf "%dx %d",
+                        $type{$type}{$spec}{$_},
+                        $_
+                } uniq sort keys %{ $type{$type}{$spec} };
+            
+            print ")";
         }
         
         print "\n";
