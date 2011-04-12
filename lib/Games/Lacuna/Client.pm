@@ -146,17 +146,22 @@ sub stats {
   return Games::Lacuna::Client::Stats->new(client => $self, @_);
 }
 
-
-sub register_destroy_hook {
-  my $self = shift;
-  my $hook = shift;
-  push @{$self->{destroy_hooks}}, $hook;
-}
+has destroy_hooks => (
+  traits => ['Array'],
+  is => 'ro',
+  isa => 'ArrayRef[CodeRef]',
+  default => sub{ [] },
+  handles => {
+    has_destroy_hooks     => 'count',
+    register_destroy_hook => 'push',
+    list_destroy_hooks    => 'elements',
+  }
+);
 
 sub DEMOLISH {
   my $self = shift;
-  if ($self->{destroy_hooks}) {
-    $_->($self) for @{$self->{destroy_hooks}};
+  if ($self->has_destroy_hooks) {
+    $_->($self) for $self->list_destroy_hooks;
   }
 
   if (not $self->session_persistent) {
