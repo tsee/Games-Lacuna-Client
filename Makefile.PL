@@ -30,6 +30,7 @@ WriteMakefile(
         'Time::HiRes'       => '0',
         'Try::Tiny'         => '0.07',
         'namespace::clean'  => '0.20',
+        'JSON::RPC::LWP'    => '0.006',
         'Moose'             => '0',
     },                                               # e.g., Module::Name => 1.1
     (

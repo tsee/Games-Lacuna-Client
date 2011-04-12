@@ -7,12 +7,6 @@ use Scalar::Util 'weaken';
 
 use Games::Lacuna::Client;
 
-use URI;
-use LWP::UserAgent;
-use JSON::RPC::Common;
-use JSON::RPC::Common::Marshal::HTTP;
-use HTTP::Request;
-use HTTP::Response;
 use IO::Interactive qw( is_interactive );
 
 our @CARP_NOT = qw(
@@ -40,6 +34,8 @@ use namespace::clean;
 
 use Moose;
 
+extends 'JSON::RPC::LWP';
+
 has client => (
   is => 'ro',
   isa => 'Games::Lacuna::Client',
@@ -47,28 +43,13 @@ has client => (
   weak_ref => 1,
 );
 
-has marshal => (
-  is => 'ro',
-  isa => 'JSON::RPC::Common::Marshal::HTTP',
-  init_arg => undef,
-  default => sub{
-    JSON::RPC::Common::Marshal::HTTP->new;
-  },
+# was always called with ( id => "1" )
+has '+id_generator' => (
+  default => sub{sub{1}},
 );
 
-has ua => (
-  is => 'ro',
-  isa => 'LWP::UserAgent',
-  init_arg => undef,
-  default => sub{
-    my $lwp = LWP::UserAgent->new(
-      env_proxy => 1,
-      keep_alive => 1,
-    );
-  },
-);
-
-sub call {
+around call => sub {
+  my $orig = shift;
   my $self = shift;
   my $uri = shift;
   my $method = shift;
@@ -85,21 +66,10 @@ sub call {
     while ($trying) {
         $trying = 0;
 
-        my $req = $self->marshal->call_to_request(
-            JSON::RPC::Common::Procedure::Call->inflate(
-                jsonrpc => "2.0",
-                id      => "1",
-                method  => $method,
-                params  => $params,
-            ),
-            uri => URI->new($uri),
-        );
-        my $resp = $self->ua->request($req);
+        $res = $self->$orig($uri,$method,$params);
 
         # Throttle per 3.0 changes
         sleep($self->{client}->rpc_sleep) if $self->{client}->rpc_sleep;
-
-        $res = $self->marshal->response_to_result($resp);
 
         if ($res and $res->error and $res->error->code eq '1016'
                 and $is_interactive
@@ -129,8 +99,7 @@ sub call {
      ) if $res->error;
 
      return $res->deflate;
-}
-
+};
 
 
 no Moose;
