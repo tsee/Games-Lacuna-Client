@@ -9,7 +9,7 @@ BEGIN { use_ok('Games::Lacuna::Client') };
 eval {
 	Games::Lacuna::Client->new;
 };
-like($@, qr/Need the following parameters: uri name password/, 'Exception without params');
+like($@, qr/^Attribute/, 'Exception without params');
 
 # TODO test if really need those params and what if mallformed params (eg. uri) are given?
 
