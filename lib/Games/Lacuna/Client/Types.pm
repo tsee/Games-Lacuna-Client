@@ -29,13 +29,14 @@ use List::MoreUtils qw(any);
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types get_tags tag_list meta_building_list meta_type meta_type_list ship_tags_list ship_tags ship_type_human );
+our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types get_tags tag_list meta_building_list meta_type meta_type_list ship_tags_list ship_tags ship_type_human is_food_type is_ore_type );
 our %EXPORT_TAGS = (
     list     => [qw( food_types ore_types ship_types ship_attribute_types )],
     resource => [qw( food_types ore_types )],
     tag      => [qw( get_tags tag_list )],
     meta     => [qw( meta_building_list meta_type meta_type_list )],
     ship     => [qw( ship_types ship_attribute_types ship_tags_list ship_tags ship_type_human )],
+    is       => [qw( is_food_type is_ore_type )],
     all      => [@EXPORT],
 );
 
@@ -44,12 +45,20 @@ our %EXPORT_TAGS = (
     sub food_types {
         return @food;
     }
+    sub is_food_type {
+        my( $check ) = @_;
+        return any { $check eq $_ } @food;
+    }
 }
 
 {
     my @ore = qw( anthracite bauxite beryl chalcopyrite chromite fluorite galena goethite gold gypsum halite kerogen magnetite methane monazite rutile sulfur trona uraninite zircon );
     sub ore_types {
         return @ore;
+    }
+    sub is_ore_type {
+        my( $check ) = @_;
+        return any { $check eq $_ } @ore;
     }
 }
 
@@ -714,6 +723,10 @@ Games::Lacuna::Client::Types
 =item ship_tags
 
 =item ship_type_human
+
+=item is_food_type
+
+=item is_ore_type
 
 =back
 

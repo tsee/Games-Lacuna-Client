@@ -19,9 +19,11 @@
 #
 ###################################################
 [%
+    is_functions = [];
     resource_lists = [];
     FOREACH resource;
         resource_lists.push("${key}_types");
+        is_functions.push("is_${key}_type");
     END;
     lists = [
         'ship_types',
@@ -37,7 +39,7 @@
         'meta_type_list'
     ];
     list_functions = [];
-    !list_functions.import(
+    CALL list_functions.import(
         resource_lists,
         lists,
     );
@@ -49,13 +51,13 @@
         'ship_type_human',
     ];
     functions = [];
-    # shh!
-    !functions.import(
+    CALL functions.import(
         resource_lists,
         lists,
         tag_functions,
         meta_functions,
         ship_functions,
+        is_functions,
     );
 %]
 package [% package %];
@@ -74,6 +76,7 @@ our %EXPORT_TAGS = (
     tag      => [qw( [%  tag_functions.unique.join(' ') %] )],
     meta     => [qw( [% meta_functions.unique.join(' ') %] )],
     ship     => [qw( [% ship_functions.unique.join(' ') %] )],
+    is       => [qw( [%   is_functions.unique.join(' ') %] )],
     all      => [@EXPORT],
 );
 [% FOREACH resource %]
@@ -81,6 +84,10 @@ our %EXPORT_TAGS = (
     my @[% key %] = qw( [% value.join(' ') %] );
     sub [% key %]_types {
         return @[% key %];
+    }
+    sub is_[% key %]_type {
+        my( $check ) = @_;
+        return any { $check eq $_ } @[% key %];
     }
 }
 [% END %]
