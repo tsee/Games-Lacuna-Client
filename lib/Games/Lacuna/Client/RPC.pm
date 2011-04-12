@@ -71,9 +71,12 @@ around call => sub {
         # Throttle per 3.0 changes
         sleep($self->{client}->rpc_sleep) if $self->{client}->rpc_sleep;
 
-        if ($res and $res->error and $res->error->code eq '1016'
-                and $is_interactive
-                and $self->{client}->prompt_captcha and ++$captcha_attempts <= 3) {
+        if ($res and $res->has_error
+            and $res->error->code eq '1016'
+            and $is_interactive
+            and $self->{client}->prompt_captcha
+            and ++$captcha_attempts <= 3
+        ) {
             my $captcha = $self->{client}->captcha;
             my $answer = $captcha->prompt_for_solution;
             $captcha->solve($answer);
