@@ -9,10 +9,14 @@
 #
 # Any informational changes should be made to one of:
 #
-#     data/types.yml
 #     data/building.yml
+#     data/lists.yml
+#     data/resources.yml
+#     data/ships.yml
 #
-# All changes should be followed by running data/build_types.pl
+# All changes should be followed by running:
+#     data/sort_types.pl
+#     data/build_types.pl
 #
 ###################################################
 
@@ -25,13 +29,14 @@ use List::MoreUtils qw(any);
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types get_tags tag_list meta_building_list meta_type meta_type_list ship_tags_list ship_tags ship_type_human );
+our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types get_tags tag_list meta_building_list meta_type meta_type_list ship_tags_list ship_tags ship_type_human is_food_type is_ore_type );
 our %EXPORT_TAGS = (
     list     => [qw( food_types ore_types ship_types ship_attribute_types )],
     resource => [qw( food_types ore_types )],
     tag      => [qw( get_tags tag_list )],
     meta     => [qw( meta_building_list meta_type meta_type_list )],
     ship     => [qw( ship_types ship_attribute_types ship_tags_list ship_tags ship_type_human )],
+    is       => [qw( is_food_type is_ore_type )],
     all      => [@EXPORT],
 );
 
@@ -40,12 +45,20 @@ our %EXPORT_TAGS = (
     sub food_types {
         return @food;
     }
+    sub is_food_type {
+        my( $check ) = @_;
+        return any { $check eq $_ } @food;
+    }
 }
 
 {
     my @ore = qw( anthracite bauxite beryl chalcopyrite chromite fluorite galena goethite gold gypsum halite kerogen magnetite methane monazite rutile sulfur trona uraninite zircon );
     sub ore_types {
         return @ore;
+    }
+    sub is_ore_type {
+        my( $check ) = @_;
+        return any { $check eq $_ } @ore;
     }
 }
 
@@ -62,8 +75,10 @@ our %EXPORT_TAGS = (
     my %meta_types = (
         command => [qw(
             Archaeology
+            ArtMuseum
             Capitol
             CloakingLab
+            CulinaryInstitute
             Development
             Embassy
             Espionage
@@ -77,11 +92,13 @@ our %EXPORT_TAGS = (
             MunitionsLab
             Network19
             Observatory
+            OperaHouse
             Oversight
             Park
             Parliament
             PilotTraining
             PlanetaryCommand
+            PoliceStation
             Propulsion
             SAW
             Security
@@ -226,7 +243,7 @@ our %EXPORT_TAGS = (
     }
 }
 {
-    my @tags = qw(alliance colony command decoration defense energy essentia food glyph happiness infrastructure intelligence ore planet sculpture ship spacestation storage trade waste water);
+    my @tags = qw(alliance colony command decoration defense energy essentia food glyph happiness infrastructure intelligence ore planet sculpture ship space_station_module storage trade waste water);
     sub tag_list {
         return @tags;
     }
@@ -238,6 +255,7 @@ our %EXPORT_TAGS = (
         AmalgusMeadow => [qw(food glyph)],
         Apple => [qw(food)],
         Archaeology => [qw(command glyph infrastructure)],
+        ArtMuseum => [qw(command space_station_module)],
         AtmosphericEvaporator => [qw(water)],
         Bean => [qw(food)],
         Beeldeban => [qw(food)],
@@ -254,6 +272,7 @@ our %EXPORT_TAGS = (
         CornMeal => [qw(food)],
         CrashedShipSite => [qw(glyph ship)],
         Crater => [qw(decoration glyph)],
+        CulinaryInstitute => [qw(command space_station_module)],
         Dairy => [qw(food)],
         Denton => [qw(food)],
         DentonBrambles => [qw(food glyph)],
@@ -275,16 +294,16 @@ our %EXPORT_TAGS = (
         GeoThermalVent => [qw(energy glyph)],
         GratchsGauntlet => [qw(glyph)],
         GreatBallOfJunk => [qw(happiness infrastructure sculpture waste)],
-        Grove => [qw(glyph)],
+        Grove => [qw(decoration glyph)],
         HallsOfVrbansk => [qw(glyph)],
         HydroCarbon => [qw(energy)],
-        IBS => [qw(command)],
+        IBS => [qw(command space_station_module)],
         Intelligence => [qw(command infrastructure intelligence)],
         InterDimensionalRift => [qw(glyph storage)],
         JunkHengeSculpture => [qw(happiness infrastructure sculpture waste)],
         KalavianRuins => [qw(glyph happiness)],
         KasternsKeep => [qw(glyph)],
-        Lagoon => [qw(glyph)],
+        Lagoon => [qw(decoration glyph)],
         Lake => [qw(decoration glyph)],
         Lapis => [qw(food)],
         LapisForest => [qw(food glyph)],
@@ -302,6 +321,7 @@ our %EXPORT_TAGS = (
         NaturalSpring => [qw(glyph water)],
         Network19 => [qw(command happiness infrastructure)],
         Observatory => [qw(command infrastructure)],
+        OperaHouse => [qw(command space_station_module)],
         OracleOfAnid => [qw(glyph infrastructure)],
         OreRefinery => [qw(ore)],
         OreStorage => [qw(ore storage)],
@@ -309,10 +329,11 @@ our %EXPORT_TAGS = (
         Pancake => [qw(food)],
         PantheonOfHagness => [qw(glyph planet)],
         Park => [qw(command happiness infrastructure)],
-        Parliament => [qw(command)],
+        Parliament => [qw(command space_station_module)],
         Pie => [qw(food)],
         PilotTraining => [qw(command infrastructure ship)],
         PlanetaryCommand => [qw(command infrastructure)],
+        PoliceStation => [qw(command infrastructure space_station_module)],
         Potato => [qw(food)],
         Propulsion => [qw(command infrastructure ship)],
         PyramidJunkSculpture => [qw(happiness infrastructure sculpture waste)],
@@ -331,7 +352,7 @@ our %EXPORT_TAGS = (
         Soup => [qw(food)],
         SpaceJunkPark => [qw(happiness infrastructure sculpture waste)],
         SpacePort => [qw(command ship)],
-        StationCommand => [qw(command infrastructure spacestation)],
+        StationCommand => [qw(command infrastructure space_station_module)],
         Stockpile => [qw(command storage)],
         SubspaceSupplyDepot => [qw(command)],
         SupplyPod => [qw(storage)],
@@ -345,7 +366,7 @@ our %EXPORT_TAGS = (
         Transporter => [qw(command infrastructure trade)],
         University => [qw(command infrastructure)],
         Volcano => [qw(glyph ore)],
-        Warehouse => [qw(command storage)],
+        Warehouse => [qw(command space_station_module storage)],
         WasteDigester => [qw(ore waste)],
         WasteEnergy => [qw(energy waste)],
         WasteRecycling => [qw(waste)],
@@ -702,6 +723,10 @@ Games::Lacuna::Client::Types
 =item ship_tags
 
 =item ship_type_human
+
+=item is_food_type
+
+=item is_ore_type
 
 =back
 

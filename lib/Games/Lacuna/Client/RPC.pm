@@ -7,12 +7,6 @@ use Scalar::Util 'weaken';
 
 use Games::Lacuna::Client;
 
-use URI;
-use LWP::UserAgent;
-use JSON::RPC::Common;
-use JSON::RPC::Common::Marshal::HTTP;
-use HTTP::Request;
-use HTTP::Response;
 use IO::Interactive qw( is_interactive );
 
 our @CARP_NOT = qw(
@@ -27,10 +21,6 @@ our @CARP_NOT = qw(
   Games::Lacuna::Client::Stats
 );
 
-use Class::XSAccessor {
-  getters => [qw(ua marshal)],
-};
-
 use Exception::Class (
     'LacunaException',
     'LacunaRPCException' => {
@@ -40,23 +30,26 @@ use Exception::Class (
     },
 );
 
-sub new {
-  my $class = shift;
-  my %opt = @_;
-  $opt{client} || croak("Need Games::Lacuna::Client");
-  
-  my $self = bless {
-    %opt,
-    ua => LWP::UserAgent->new(env_proxy => 1, keep_alive => 1),
-    marshal => JSON::RPC::Common::Marshal::HTTP->new,
-  } => $class;
-  
-  weaken($self->{client});
-  
-  return $self;
-}
+use namespace::clean;
 
-sub call {
+use Moose;
+
+extends 'JSON::RPC::LWP';
+
+has client => (
+  is => 'ro',
+  isa => 'Games::Lacuna::Client',
+  required => 1,
+  weak_ref => 1,
+);
+
+# was always called with ( id => "1" )
+has '+id_generator' => (
+  default => sub{sub{1}},
+);
+
+around call => sub {
+  my $orig = shift;
   my $self = shift;
   my $uri = shift;
   my $method = shift;
@@ -73,25 +66,17 @@ sub call {
     while ($trying) {
         $trying = 0;
 
-        my $req = $self->marshal->call_to_request(
-            JSON::RPC::Common::Procedure::Call->inflate(
-                jsonrpc => "2.0",
-                id      => "1",
-                method  => $method,
-                params  => $params,
-            ),
-            uri => URI->new($uri),
-        );
-        my $resp = $self->ua->request($req);
+        $res = $self->$orig($uri,$method,$params);
 
         # Throttle per 3.0 changes
         sleep($self->{client}->rpc_sleep) if $self->{client}->rpc_sleep;
 
-        $res = $self->marshal->response_to_result($resp);
-
-        if ($res and $res->error and $res->error->code eq '1016'
-                and $is_interactive
-                and $self->{client}->prompt_captcha and ++$captcha_attempts <= 3) {
+        if ($res and $res->has_error
+            and $res->error->code eq '1016'
+            and $is_interactive
+            and $self->{client}->prompt_captcha
+            and ++$captcha_attempts <= 3
+        ) {
             my $captcha = $self->{client}->captcha;
             my $answer = $captcha->prompt_for_solution;
             $captcha->solve($answer);
@@ -117,10 +102,11 @@ sub call {
      ) if $res->error;
 
      return $res->deflate;
-}
+};
 
 
-
+no Moose;
+__PACKAGE__->meta->make_immutable;
 1;
 __END__
 

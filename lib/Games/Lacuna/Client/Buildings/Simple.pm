@@ -14,6 +14,16 @@ our @BuildingTypes = (qw(
     AmalgusMeadow
     Apple
     AtmosphericEvaporator
+    Beach1
+    Beach2
+    Beach3
+    Beach4
+    Beach5
+    Beach6
+    Beach7
+    Beach8
+    Beach9
+    Beach10
     Bean
     Beeldeban
     BeeldebanNest
