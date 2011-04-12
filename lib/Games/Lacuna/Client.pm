@@ -7,7 +7,6 @@ use File::Temp qw( tempfile );
 use Cwd        qw( abs_path );
 
 our $VERSION = '0.01';
-use constant DEBUG => 1;
 
 use Games::Lacuna::Client::Module; # base module class
 use Data::Dumper ();
