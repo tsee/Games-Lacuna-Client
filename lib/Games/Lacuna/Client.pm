@@ -13,26 +13,65 @@ use Games::Lacuna::Client::Module; # base module class
 use Data::Dumper ();
 use YAML::Any ();
 
-#our @ISA = qw(JSON::RPC::Client);
-use Class::XSAccessor {
-  getters => [qw(
-    rpc
-    uri name password api_key
-    cache_dir
-  )],
-  accessors => [qw(
-    debug
-    session_id
-    session_start
-    session_timeout
-    session_persistent
-    cfg_file
-    rpc_sleep
-    prompt_captcha
-  )],
-};
+use namespace::clean;
+
+use Moose;
+
+for my $login_attr ( qw'name uri password api_key' ){
+  has $login_attr => (
+    is => 'ro',
+    isa => 'Str',
+    required => 1,
+  );
+}
+
+has cache_dir => (
+  is => 'ro',
+  isa => 'Maybe[Str]',
+);
 
 require Games::Lacuna::Client::RPC;
+has rpc => (
+  is => 'ro',
+  isa => 'Games::Lacuna::Client::RPC',
+  init_arg => undef,
+  lazy => 1,
+  default => sub{
+    my($self) = @_;
+    Games::Lacuna::Client::RPC->new(client => $self);
+  },
+);
+
+has debug => (
+  is => 'rw',
+  default => 0,
+);
+has session_id => (
+  is => 'rw',
+  default => 0,
+);
+has session_start => (
+  is => 'rw',
+  default => 0,
+);
+has session_timeout => (
+  is => 'rw',
+  default => 3600*1.8, # server says it's 2h, but let's play it safe.
+);
+has session_persistent => (
+  is => 'rw',
+  isa => 'Bool',
+  default => 0,
+);
+has cfg_file => (
+  is => 'rw',
+);
+has rpc_sleep => (
+  is => 'rw',
+);
+has prompt_captcha => (
+  is => 'rw',
+);
 
 require Games::Lacuna::Client::Alliance;
 require Games::Lacuna::Client::Body;
@@ -43,8 +82,8 @@ require Games::Lacuna::Client::Inbox;
 require Games::Lacuna::Client::Map;
 require Games::Lacuna::Client::Stats;
 
-
-sub new {
+around BUILDARGS => sub {
+  my $orig  = shift;
   my $class = shift;
   my %opt = @_;
   if ($opt{cfg_file}) {
@@ -61,29 +100,11 @@ sub new {
       }
     }
   }
-  my @req = qw(uri name password api_key);
-  croak("Need the following parameters: @req")
-    if not exists $opt{uri}
-       or not exists $opt{name}
-       or not exists $opt{password}
-       or not exists $opt{api_key};
   $opt{uri} =~ s/\/+$//;
   
-  my $self = bless {
-    session_start      => 0,
-    session_id         => 0,
-    session_timeout    => 3600*1.8, # server says it's 2h, but let's play it safe.
-    session_persistent => 0,
-    cfg_file           => undef,
-    debug              => 0,
-    %opt
-  } => $class;
-  
-  # the actual RPC client
-  $self->{rpc} = Games::Lacuna::Client::RPC->new(client => $self);
+  return $class->$orig(\%opt);
+};
 
-  return $self,
-}
 
 sub empire {
   my $self = shift;
@@ -132,7 +153,7 @@ sub register_destroy_hook {
   push @{$self->{destroy_hooks}}, $hook;
 }
 
-sub DESTROY {
+sub DEMOLISH {
   my $self = shift;
   if ($self->{destroy_hooks}) {
     $_->($self) for @{$self->{destroy_hooks}};
@@ -232,6 +253,8 @@ sub get_config_file {
 }
 
 
+no Moose;
+__PACKAGE__->meta->make_immutable;
 1;
 __END__
 
