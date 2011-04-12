@@ -6,13 +6,13 @@ use Games::Lacuna::Client;
 use Scalar::Util qw'blessed';
 use List::MoreUtils qw'any';
 
-our @opt = qw{
-  call_limit
-  building
-  planet_id
-  planet_name
-  filter
-};
+use MooseX::Types::Moose qw'Str Int';
+use Games::Lacuna::Client::TypeConstraints qw'Sellable';
+
+use Games::Lacuna::Client::Market::Trade;
+
+use namespace::clean;
+use Moose;
 
 {
   my @filter = qw'food ore water waste energy glyph prisoner ship plan';
@@ -22,42 +22,45 @@ our @opt = qw{
   }
 }
 
-sub new{
-  my($class,%opt) = @_;
-  $class = blessed $class || $class;
+has filter => (
+  is => 'rw',
+  isa => Sellable,
+  predicate => 'has_filter',
+);
 
-  my $client = Games::Lacuna::Client->new(
-    %opt
-  );
+has call_limit => (
+  is => 'rw',
+  isa => Int,
+  default => 20,
+);
 
-  my $self = bless {
-    client => $client,
-    call_limit => 20,
-  }, $class;
+has building => (
+  is => 'rw',
+  isa => Str,
+);
 
-  @$self{@opt} = @opt{@opt};
+has planet_id => (
+  is => 'rw',
+  isa => Int,
+);
 
-  if( my $filter = $opt{filter} ){
-    my($package, $filename, $line) = caller;
-    die "Invalid filter $filter at $filename line $line\n"
-      unless _valid_filter($filter);
+has planet_name => (
+  is => 'rw',
+  isa => Str,
+);
+
+has client => (
+  is => 'ro',
+  isa => 'Games::Lacuna::Client',
+);
+
+sub BUILD{
+  my( $self, $args ) = @_;
+  unless( $args->{client} ){
+    $self->{client} = Games::Lacuna::Client->new(
+      %$args
+    );
   }
-
-  return $self;
-}
-
-sub _args{
-  my($self,$wanted,$args) = @_;
-  my %return;
-  for my $arg(@$wanted){
-    if( $args->{$arg} ){
-      $return{$arg} = $args->{$arg};
-    }elsif( $self->{$arg} ){
-      $return{$arg} = $self->{$arg};
-    }
-  }
-  return %return if wantarray;
-  return \%return;
 }
 
 sub _search_for_building{
@@ -83,14 +86,6 @@ sub available_trades{
   my $client = $self->{client};
   my $status = $client->empire->get_status();
   my $planets = $status->{empire}{planets};
-
-  %arg = $self->_args(\@opt,\%arg);
-
-  if( my $filter = $arg{filter} ){
-    my($package, $filename, $line) = caller;
-    die "Invalid filter $filter at $filename line $line\n"
-      unless _valid_filter($filter);
-  }
 
   my $p_id;
   if( $arg{planet_name} and not $arg{planet_id} ){
@@ -136,7 +131,7 @@ sub available_trades{
     my $result = $building->view_market($page_num, $filter)
   ){
     push @trades, map{
-      Games::Lacuna::Client::Market::Trade->new($_,$type);
+      Games::Lacuna::Client::Market::Trade->new( %$_, type => $type );
     } @{$result->{trades}};
 
     # stop if this is the last page
@@ -149,205 +144,7 @@ sub available_trades{
   return \@trades;
 }
 
+no Moose;
+__PACKAGE__->meta->make_immutable;
 
-{
-  package Games::Lacuna::Client::Market::Trade;
-  use Scalar::Util qw'blessed';
-
-  sub new{
-    my($class,$trade,$type) = @_;
-    $class = blessed $class || $class;
-
-    my $self = bless $trade, $class;
-    $trade->{type} = $type;
-
-    my @offer = map {
-      Games::Lacuna::Client::Market::Trade::Item->new($_)
-    } @{$trade->{offer}};
-
-    $trade->{offer} = \@offer;
-
-    return $self;
-  }
-  sub ask{
-    my($self) = @_;
-    return $self->{ask};
-  }
-  sub price{
-    my($self) = @_;
-    return $self->{ask};
-  }
-  sub cost{
-    # Asking price plus Transporter "tax"
-    my($self) = @_;
-    my $cost = $self->ask;
-    if( $self->{type} eq 'Transporter' ){
-      $cost++;
-    }
-    return $cost;
-  }
-  sub offer{
-    my($self) = @_;
-    my @offer = @{$self->{offer}};
-    return @offer if wantarray;
-    return \@offer;
-  }
-  sub size{
-    my($self) = @_;
-    my $size = 0;
-    for my $offer ( $self->offer ){
-      $size += $offer->size;
-    }
-    return $size;
-  }
-  sub empire{
-    my($self) = @_;
-    return $self->{empire}{name}
-  }
-  sub empire_id{
-    my($self) = @_;
-    return $self->{empire}{id}
-  }
-}
-{
-  package Games::Lacuna::Client::Market::Trade::Item;
-
-  sub new{
-    my($class,$item) = @_;
-
-    my $self = \$item;
-    if( $item =~ /^(.*?)\s+\(.*?\)$/ ){
-      bless $self, 'Games::Lacuna::Client::Market::Trade::Ship';
-    }elsif( $item =~ /\bglyph$/ ){
-      bless $self, 'Games::Lacuna::Client::Market::Trade::Glyph';
-    }elsif( $item =~ /\bplan$/ ){
-      bless $self, 'Games::Lacuna::Client::Market::Trade::Plan';
-    }else{
-      bless $self, 'Games::Lacuna::Client::Market::Trade::SimpleItem';
-    }
-    return $self;
-  }
-}
-{
-  package Games::Lacuna::Client::Market::Trade::SimpleItem;
-  use Games::Lacuna::Client::Types ':list';
-  use List::MoreUtils qw'any';
-
-  sub type{
-    my($self) = @_;
-    my $type;
-    if( ($type) = $$self =~ m(\s(\w+)$) ){
-      if( any { $_ eq $type } food_types() ){
-        return 'food';
-      }elsif( any { $_ eq $type } ore_types() ){
-        return 'ore';
-      }elsif( any { $_ eq $type } qw'waste water energy' ){
-        return $type;
-      }
-    }
-    if( $$self =~ /prisoner/ ){
-      return 'prisoner';
-    }
-
-    return;
-  }
-
-  sub sub_type{
-    my($self) = @_;
-    my($type) = $$self =~ / (.*)$/;
-  }
-
-  sub size{
-    my($self) = @_;
-    my($amount) = $$self =~ /(.*)\s/;
-    $amount =~ s/,//;
-    return $amount;
-  }
-
-  sub quantity{
-    my($self) = @_;
-    return $self->size;
-  }
-
-  sub desc{
-    my($self) = @_;
-    return $$self;
-  }
-}
-{
-  package Games::Lacuna::Client::Market::Trade::Plan;
-  our @ISA = 'Games::Lacuna::Client::Market::Trade::SimpleItem';
-  use Games::Lacuna::Client::Types ':meta';
-
-  sub type{ 'plan' }
-  sub size{ 10_000 }
-  sub quantity{ 1 }
-
-  sub plan_type{
-    my($self) = @_;
-    my($name) = $$self =~ /^(.*?) \(/;
-    return meta_type($name);
-  }
-  sub sub_type{ plan_type(@_) }
-  sub level{
-    my($self) = @_;
-    my($level) = $$self =~ /\((\d*[+]?\d*)\)/;
-    return $level || 1;
-  }
-}
-{
-  package Games::Lacuna::Client::Market::Trade::Glyph;
-  our @ISA = 'Games::Lacuna::Client::Market::Trade::SimpleItem';
-
-  sub type{ 'glyph' }
-  sub size{ 100 }
-  sub quantity{ 1 }
-  sub sub_type{
-    my($self) = @_;
-    my($type) = $$self =~ /^(.*) glyph$/;
-    return $type;
-  }
-}
-{
-  package Games::Lacuna::Client::Market::Trade::Ship;
-  our @ISA = 'Games::Lacuna::Client::Market::Trade::SimpleItem';
-
-  sub type{ 'ship' }
-  sub size{ 50_000 }
-  sub quantity{ 1 }
-
-  sub ship_type{
-    my($self) = @_;
-    my($type) = $$self =~ /^([^\(]+?) \(.*\)/;
-    return $type;
-  }
-  sub sub_type{ ship_type(@_) }
-
-  sub info{
-    my($self) = @_;
-    my($data) = $$self =~ /\((.*)\)/;
-
-    my %data = split /[,:] /, $data;
-    s/,// for values %data;
-
-    return %data if wantarray;
-    return \%data;
-  }
-  sub speed{
-    my($self) = @_;
-    return $self->info->{speed}
-  }
-  sub stealth{
-    my($self) = @_;
-    return $self->info->{stealth}
-  }
-  sub hold_size{
-    my($self) = @_;
-    return $self->info->{'hold size'}
-  }
-  sub combat{
-    my($self) = @_;
-    return $self->info->{combat}
-  }
-}
 1;
