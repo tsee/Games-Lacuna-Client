@@ -27,10 +27,6 @@ our @CARP_NOT = qw(
   Games::Lacuna::Client::Stats
 );
 
-use Class::XSAccessor {
-  getters => [qw(ua marshal)],
-};
-
 use Exception::Class (
     'LacunaException',
     'LacunaRPCException' => {
@@ -40,21 +36,37 @@ use Exception::Class (
     },
 );
 
-sub new {
-  my $class = shift;
-  my %opt = @_;
-  $opt{client} || croak("Need Games::Lacuna::Client");
-  
-  my $self = bless {
-    %opt,
-    ua => LWP::UserAgent->new(env_proxy => 1, keep_alive => 1),
-    marshal => JSON::RPC::Common::Marshal::HTTP->new,
-  } => $class;
-  
-  weaken($self->{client});
-  
-  return $self;
-}
+use namespace::clean;
+
+use Moose;
+
+has client => (
+  is => 'ro',
+  isa => 'Games::Lacuna::Client',
+  required => 1,
+  weak_ref => 1,
+);
+
+has marshal => (
+  is => 'ro',
+  isa => 'JSON::RPC::Common::Marshal::HTTP',
+  init_arg => undef,
+  default => sub{
+    JSON::RPC::Common::Marshal::HTTP->new;
+  },
+);
+
+has ua => (
+  is => 'ro',
+  isa => 'LWP::UserAgent',
+  init_arg => undef,
+  default => sub{
+    my $lwp = LWP::UserAgent->new(
+      env_proxy => 1,
+      keep_alive => 1,
+    );
+  },
+);
 
 sub call {
   my $self = shift;
@@ -121,6 +133,8 @@ sub call {
 
 
 
+no Moose;
+__PACKAGE__->meta->make_immutable;
 1;
 __END__
 
