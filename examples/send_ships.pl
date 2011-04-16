@@ -260,6 +260,10 @@ if ( @fleet ) {
 if ( $rename ) {
     print "\n";
     
+    # renaming isn't time-sensitive, so try to avoid hitting the max
+    # requests per minute
+    $client->rpc_sleep(1);
+    
     for my $ship (@ships) {
         
         my $name = sprintf "%s (%s)",
