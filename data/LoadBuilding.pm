@@ -4,10 +4,6 @@ use warnings;
 
 use YAML qw'LoadFile thaw';
 use Scalar::Util qw'reftype blessed';
-require Exporter;
-
-our @ISA = 'Exporter';
-our @EXPORT_OK = qw'LoadBuilding';
 
 sub _load{
   my($input) = @_;
@@ -18,11 +14,6 @@ sub _load{
   }else{
     return LoadFile $input;
   }
-}
-
-sub LoadBuilding{
-  my( $config ) = @_;
-  __PACKAGE__->Load( $config );
 }
 
 sub Load{
@@ -73,3 +64,4 @@ sub tag_list{
   return @tags if wantarray;
   return \@tags;
 }
+1;

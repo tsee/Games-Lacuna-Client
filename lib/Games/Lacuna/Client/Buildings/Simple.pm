@@ -14,9 +14,20 @@ our @BuildingTypes = (qw(
     AmalgusMeadow
     Apple
     AtmosphericEvaporator
+    Beach1
+    Beach2
+    Beach3
+    Beach4
+    Beach5
+    Beach6
+    Beach7
+    Beach8
+    Beach9
+    Beach10
     Bean
     Beeldeban
     BeeldebanNest
+    BlackHoleGenerator
     Bread
     Burger
     Cheese
@@ -52,6 +63,15 @@ our @BuildingTypes = (qw(
     Lake
     Lapis
     LapisForest
+    LCOTA
+    LCOTB
+    LCOTC
+    LCOTD
+    LCOTE
+    LCOTF
+    LCOTG
+    LCOTH
+    LCOTI
     LuxuryHousing
     Malcud
     MalcudField

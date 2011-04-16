@@ -103,15 +103,10 @@ while( my($name,$id) = each %planets ){
   
   my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
   
-  my $ship_count;
-  my $page = 1;
-  my @ships;
-  
-  do{
-    my $return = $space_port->view_all_ships( $page++ );
-    $ship_count = $return->{number_of_ships};
-    push @ships, @{ $return->{ships} };
-  } while ( @ships < $ship_count );
+  my $return = $space_port->view_all_ships(
+    { no_paging => 1 },
+  );
+  my @ships = @{ $return->{ships} };
   
   if( $opts{type} ){
     @ships = grep {

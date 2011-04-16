@@ -77,10 +77,8 @@ my $to_dock_count;
     
     my $space_port_id = first {
         $to_buildings->{$_}->{url} eq '/spaceport'
-    }
-      grep { $to_buildings->{$_}->{level} > 0 and $to_buildings->{$_}->{efficiency} == 100 }
-      keys %$to_buildings;
-
+    } keys %$to_buildings;
+    
     die "No spaceport found on target planet\n"
         if !$space_port_id;
     

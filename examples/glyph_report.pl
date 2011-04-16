@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use List::Util            (qw(first));
+use List::Util            (qw( first sum ));
 use Games::Lacuna::Client ();
 use Getopt::Long          (qw(GetOptions));
 
@@ -90,6 +90,8 @@ foreach my $name ( sort keys %planets ) {
     map {
         printf "%s (%d)\n", ucfirst( $_ ), $glyphs{$_};
     } sort keys %glyphs;
+    
+    printf "\t(%d glyphs)\n", sum values %glyphs;
     
     print "\n";
 }

@@ -11,6 +11,7 @@ use List::Util (qw(first));
 use Getopt::Long          (qw(GetOptions));
 
 my $planet_name;
+my $ships_per_page = 25;
 
 GetOptions(
     'planet=s' => \$planet_name,
@@ -37,28 +38,44 @@ my $client = Games::Lacuna::Client->new(
 	# debug    => 1,
 );
 
-my $empire = $client->empire;
-my $estatus = $empire->get_status->{empire};
-my %planets_by_name = map { ($estatus->{planets}->{$_} => $client->body(id => $_)) }
-                      grep { $planet_name ? $planet_name eq $_ : 1 }
-                      keys %{$estatus->{planets}};
-# Beware. I think these might contain asteroids, too.
-# TODO: The body status has a 'type' field that should be listed as 'habitable planet'
+# Load the planets
+my $empire  = $client->empire->get_status->{empire};
+
+# reverse hash, to key by name instead of id
+my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
 my @spaceports;
 
-foreach my $planet (values %planets_by_name) {
-  my %buildings = %{ $planet->get_buildings->{buildings} };
-
-  my @b = first {$buildings{$_}{name} eq 'Space Port'}
-                  keys %buildings;
-  push @spaceports, map  { $client->building(type => 'SpacePort', id => $_) } @b;
+foreach my $name ( sort keys %planets ) {
+  next if defined $planet_name && $planet_name ne $name;
+  
+  # Load planet data
+  my $planet    = $client->body( id => $planets{$name} );
+  my $buildings = $planet->get_buildings->{buildings};
+  
+  my $id = first {
+    $buildings->{$_}{name} eq 'Space Port'
+  } keys %$buildings;
+  
+  next if !$id;
+  
+  push @spaceports, $client->building( id => $id, type => 'SpacePort' );
 }
 
 my @ships;
 foreach my $sp (@spaceports) {
-  my $ships=$sp->view_ships_travelling();
-  foreach my $ship ( @{$ships->{ships_travelling}} ) {
+  my $ships = [];
+  my $page  = 1;
+  my $response;
+  
+  do {
+    $response = $sp->view_ships_travelling( $page++ );
+    
+    push @$ships, @{ $response->{ships_travelling} };
+    
+  } while ( @$ships < $response->{number_of_ships_travelling} );
+  
+  foreach my $ship ( @$ships ) {
     ( my $date_arrives = $ship->{date_arrives} ) =~ s{^(\d+)\s+(\d+)\s+}{$2/$1/};
     $ship->{date_arrives} = str2time($date_arrives);
     push @ships, $ship;

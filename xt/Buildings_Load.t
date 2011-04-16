@@ -25,6 +25,8 @@ is_deeply \@sorted, [uniq @sorted], 'Look for duplicates in simple list';
 
   my $dir_name = catdir $FindBin::Bin, updir, 'lib', split /::/, $package;
 
+  my @skip = 'Modules';
+
   my @fail;
 
   opendir my($dir_h), $dir_name;
@@ -33,7 +35,7 @@ is_deeply \@sorted, [uniq @sorted], 'Look for duplicates in simple list';
     next if $file eq 'Simple.pm';
 
     my $p = $1;
-    if( none { $p eq $_ } @load ){
+    if( none { $p eq $_ } @load, @skip ){
       push @fail, $p;
     }
   }

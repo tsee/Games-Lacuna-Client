@@ -49,6 +49,6 @@ my @uniq = uniq @load, @simple;
     diag q[these don't have any type information];
     diag '  ', $_ for sort @fail;
     diag 'Add these to data/building.yml';
-    diag 'Then run data/sort_building.pl and data/build_types.pl)';
+    diag 'Then run data/sort_types.pl and data/build_types.pl)';
   }
 }

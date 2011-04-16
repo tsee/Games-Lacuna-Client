@@ -1,73 +1,159 @@
 #!/usr/bin/perl
-#
-# Just a proof of concept to make sure dump works for each storage
 
 use strict;
 use warnings;
+use Getopt::Long qw( GetOptions );
+use IO::Interactive qw( is_interactive );
+use List::Util   qw( first );
+use Try::Tiny;
+
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use List::Util            (qw(first));
-use Games::Lacuna::Client;
-use Getopt::Long qw(GetOptions);
-use YAML;
-use YAML::Dumper;
+use Games::Lacuna::Client ();
 
-#  my $space_station = "Regulus Lex";
-  my $space_station = "Tromso";
+my @planet;
+my @pass;
+my $help;
 
+GetOptions(
+    'planet=s@' => \@planet,
+    'pass=s@'   => \@pass,
+    'help|h'    => \$help,
+);
 
-  my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+usage() if $help;
+
+my $cfg_file = shift(@ARGV) || 'lacuna.yml';
+unless ( $cfg_file and -e $cfg_file ) {
+  $cfg_file = eval{
+    require File::HomeDir;
+    require File::Spec;
+    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+    File::Spec->catfile(
+      $dist,
+      'login.yml'
+    ) if $dist;
+  };
   unless ( $cfg_file and -e $cfg_file ) {
     die "Did not provide a config file";
   }
+}
 
-  my $dump_file = "data/data_parliament.yml";
-    GetOptions(
-    'o=s' => \$dump_file,
-  );
-  
-  my $client = Games::Lacuna::Client->new(
-    cfg_file => $cfg_file,
-    # debug    => 1,
-  );
+my $is_interactive = is_interactive();
 
-  my $dumper = YAML::Dumper->new;
-  $dumper->indent_width(4);
-  open(OUTPUT, ">", "$dump_file") || die "Could not open $dump_file";
+my $client = Games::Lacuna::Client->new(
+	cfg_file  => $cfg_file,
+	# debug    => 1,
+);
 
-  my $data = $client->empire->view_species_stats();
+# Load the planets
+my $empire  = $client->empire->get_status->{empire};
 
-# Get planets
-  my $planets        = $data->{status}->{empire}->{planets};
-  my $home_planet_id = $data->{status}->{empire}->{home_planet_id}; 
+# reverse hash, to key by name instead of id
+my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
-  my $output ="";
-  my $parl;
-  for my $pid (keys %$planets) {
-    my $buildings = $client->body(id => $pid)->get_buildings()->{buildings};
-    my $planet_name = $client->body(id => $pid)->get_status()->{body}->{name};
-    next unless ($planet_name eq "$space_station"); # Test Planet
-    print "$planet_name\n";
+SS:
+for my $name ( sort keys %planets ) {
+    next if @planet && !grep { $name eq $_ } @planet;
+    
+    my $planet = $client->body( id => $planets{$name} );
+    
+    my $result = $planet->get_buildings;
+    
+    next if $result->{status}{body}{type} ne 'space station';
+    
+    printf "Space Station: %s\n\n", $result->{status}{body}{name};
+    
+    my $buildings = $result->{buildings};
+    
+    my $parliament_id = first {
+            $buildings->{$_}->{url} eq '/parliament'
+        } keys %$buildings;
+    
+    my $parliament = $client->building( id => $parliament_id, type => 'Parliament' );
+    
+    my $propositions;
+    
+    try {
+        $propositions = $parliament->view_propositions->{propositions};
+    }
+    catch {
+        warn "$_\n\n\n";
+        no warnings 'exiting';
+        next SS;
+    };
+    
+    if ( ! @$propositions ) {
+        print "No propositions\n\n\n";
+        next;
+    }
+    
+    for my $prop ( @$propositions ) {
+        printf "%s\n", $prop->{description};
+        printf "Proposed by: %s\n", $prop->{proposed_by}{name};
+        printf "Will automatically pass at: %s\n", $prop->{date_ends};
+        printf "Votes needed: %d\n", $prop->{votes_needed};
+        printf "Votes so far: %d yes, %d no\n",
+            $prop->{votes_yes},
+            $prop->{votes_no};
+        
+        if ( exists $prop->{my_vote} ) {
+            printf "You have already voted: %s\n\n",
+                $prop->{my_vote} ? 'yes' : 'no';
+            next;
+        }
+        
+        my $vote;
+        
+        if ( @pass && first { $prop->{description} =~ /$_/i } @pass ) {
+            print "AUTO-VOTED YES\n";
+            $vote = 1;
+        }
+        elsif ( $is_interactive ) {
+            while ( !defined $vote ) {
+                print "Vote yes or no: ";
+                my $input = <STDIN>;
+                
+                if ( $input =~ /y(es)?/i ) {
+                    $vote = 1;
+                }
+                elsif ( $input =~ /no?/i ) {
+                    $vote = 0;
+                }
+                else {
+                    print "Sorry, don't understand - vote again\n";
+                }
+            }
+        }
+        else {
+            print "Non-interactive terminal - skipping proposition\n";
+        }
+        
+        $parliament->cast_vote( $prop->{id}, $vote );
+        print "\n\n";
+    }
+}
 
-    my @bit = grep { $buildings->{$_}->{name} eq 'Parliament' } keys %$buildings;
-    $parl = $bit[0] if @bit;
-    last;
-  }
+exit;
 
-  my @out;
-#  $output = $client->building( id => $parl, type => 'Parliament' )->view_propositions();
-#  push @out, $output;
-  $output = $client->building( id => $parl, type => 'Parliament' )->cast_vote(1, "yes");
-  push @out, $output;
-  $output = $client->building( id => $parl, type => 'Parliament' )->cast_vote(2, "yes");
-  push @out, $output;
-  $output = $client->building( id => $parl, type => 'Parliament' )->cast_vote(3, "yes");
-  push @out, $output;
 
-  print OUTPUT $dumper->dump(\@out);
-  close(OUTPUT);
+sub usage {
+    die <<"END_USAGE";
+Usage: $0 CONFIG_FILE
 
-  print "RPC Count Used: ";
-  if ($output) {
-    print "$output->{status}->{empire}->{rpc_count} \n";
-  }
+Prompts for vote on each proposition.
+
+Options:
+    --planet SPACE-STATION NAME
+
+Multiple --planet opts may be provided.
+If no --planet opts are provided, will search for all allied space-stations.
+
+    --pass REGEX
+Multiple --pass opts may be provided - these are run as regexes against each
+proposition description - if it matches, the proposition is automatically
+voted 'yes'.
+
+END_USAGE
+
+}
