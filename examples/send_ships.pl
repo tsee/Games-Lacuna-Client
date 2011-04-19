@@ -29,6 +29,7 @@ my $star;
 my $own_star;
 my $planet;
 my $fleet = 1;
+my $fleet_speed = 0;
 my $sleep;
 my $seconds;
 my $rename;
@@ -47,6 +48,7 @@ GetOptions(
     'star=s'            => \$star,
     'planet=s'          => \$planet,
     'fleet!'            => \$fleet,
+    'fleet-speed=i'     => \$fleet_speed,
     'own-star|own_star' => \$own_star,
     'sleep=i'           => \$sleep,
     'seconds=i'         => \$seconds,
@@ -209,6 +211,14 @@ die "No ships available to send\n"
 
 splice @ships, $use_count;
 
+# check fleet-speed is valid
+if ( $fleet_speed ) {
+    die "--fleet-speed: '$fleet_speed' exceeds slowest ship selected to send\n"
+        if first {
+            $_->{speed} < $fleet_speed
+        } @ships;
+}
+
 # send immediately?
 
 if ($seconds) {
@@ -320,6 +330,7 @@ sub send_fleet {
         params => [
             [ map { $_->{id} } @$ships ],
             $target,
+            $fleet_speed,
         ],
     );
     
@@ -386,21 +397,22 @@ RPC_ATTEMPT:
 sub usage {
   die <<"END_USAGE";
 Usage: $0 lacuna.yml
-       --ship       NAME
-       --type       TYPE
-       --speed      SPEED
-       --max        MAX
-       --leave      COUNT
-       --share      PROPORTION OF AVAILABLE SHIPS TO SEND
-       --from       NAME  (required)
-       --x          COORDINATE
-       --y          COORDINATE
-       --star       NAME
-       --planet     NAME
+       --ship        NAME
+       --type        TYPE
+       --speed       SPEED
+       --max         MAX
+       --leave       COUNT
+       --share       PROPORTION OF AVAILABLE SHIPS TO SEND
+       --from        NAME  (required)
+       --x           COORDINATE
+       --y           COORDINATE
+       --star        NAME
+       --planet      NAME
        --own-star
        --fleet
-       --sleep      SECONDS
-       --seconds    SECONDS
+       --fleet-speed SPEED
+       --sleep       SECONDS
+       --seconds     SECONDS
        --rename
        --dryrun
 
@@ -434,6 +446,10 @@ If --fleet is true, will send up to 20 ships in a fleet at once.
 Fleet defaults to true.
 --nofleet will force sending all ships individually.
 Scows will always be sent individually, regardless of the value of --fleet.
+If only 1 ship is being sent, it will not be sent as a fleet.
+
+If --fleet-speed is set, all ships will travel at that speed.
+It is a fatal error to specify a speed greater than the slowest ship being sent.
 
 If --seconds is specified, what until that second of the current minute before
 sending. If that second has already passed, send immediately.
