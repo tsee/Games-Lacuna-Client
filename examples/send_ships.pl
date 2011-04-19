@@ -46,7 +46,7 @@ GetOptions(
     'y=i'               => \$y,
     'star=s'            => \$star,
     'planet=s'          => \$planet,
-    'fleet!'             => \$fleet,
+    'fleet!'            => \$fleet,
     'own-star|own_star' => \$own_star,
     'sleep=i'           => \$sleep,
     'seconds=i'         => \$seconds,
@@ -236,7 +236,11 @@ if ( $dryrun ) {
     exit;
 }
 
-# send as fleet or individually?
+# don't send 1 ship as a fleet
+if ( @ships == 1 ) {
+    undef $fleet;
+}
+
 my @fleet;
 
 for my $ship (@ships) {
