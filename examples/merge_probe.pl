@@ -14,12 +14,14 @@ use utf8;
 
 my $import_file = "data/probe_data_raw.yml";
 my $merge_file  = "data/probe_data_cmb.yml";
+my $star_file   = "data/stars.csv";
 my $help = 0;
 
 GetOptions(
   'help'     => \$help,
   'import=s' => \$import_file,
   'merge=s'  => \$merge_file,
+  'stars=s'  => \$star_file,
 );
 
   usage() if $help;
@@ -28,26 +30,59 @@ GetOptions(
   my $import = YAML::XS::LoadFile($import_file);
   my $merged = YAML::XS::LoadFile($merge_file);
 
+  my $stars;
+  if (-e "$star_file") {
+    $stars  = get_stars("$star_file");
+  }
+  else {
+    print STDERR "$star_file not found!\n";
+    die;
+  }
+
   my %mhash;
+  my %checked;
   for my $elem (@$merged) {
-    if (defined($mhash{$elem->{id}})) {
-      if ($elem->{observatory}->{stime} > $mhash{$elem->{id}}->{observatory}->{stime}) {
-        $mhash{$elem->{id}} = $elem;
-        print STDERR "$elem->{id} dupe!\n"; # This shouldn't actually happen
+    my $mkey = join("","x:",$elem->{x},"y:",$elem->{y});
+    unless (defined($elem->{observatory})) {
+      $elem->{observatory}->{empire} = "none",
+      $elem->{observatory}->{oid} = 0,
+      $elem->{observatory}->{pid} = 0,
+      $elem->{observatory}->{pname} = "none",
+      $elem->{observatory}->{stime} = 0,
+      $elem->{observatory}->{ststr} = "",
+    }
+    if (defined($mhash{$mkey})) {
+      if ($elem->{observatory}->{stime} > $mhash{$mkey}->{observatory}->{stime}) {
+        $mhash{$mkey} = $elem;
       }
+      print STDERR "$mkey dupe!\n"; # This shouldn't actually happen
     }
     else {
-      $mhash{$elem->{id}} = $elem;
+      $mhash{$mkey} = $elem;
     }
   }
   for my $elem ( @$import ) {
-    if (defined($mhash{$elem->{id}})) {
-#      print "Updating $mhash{$elem->{id}}->{name}\n";
-      $mhash{$elem->{id}} = merge_probe($mhash{$elem->{id}}, $elem);
+    my $mkey = join("","x:",$elem->{x},"y:",$elem->{y});
+    unless (defined($elem->{observatory})) {
+      $elem->{observatory}->{empire} = "none",
+      $elem->{observatory}->{oid} = 0,
+      $elem->{observatory}->{pid} = 0,
+      $elem->{observatory}->{pname} = "none",
+      $elem->{observatory}->{stime} = 0,
+      $elem->{observatory}->{ststr} = "",
+    }
+    if (defined($mhash{$mkey})) {
+#      print "Updating $mhash{$mkey}->{name}\n";
+      check_sname($elem, $stars);
+      $mhash{$mkey} = merge_probe($mhash{$mkey}, $elem);
     }
     else {
-      print "Adding $elem->{name}\n";
-      $mhash{$elem->{id}} = $elem;
+      unless (defined($checked{"$elem->{star_id}"})) {
+        print "Adding $elem->{name}\n";
+        $checked{"$elem->{star_id}"} = 1;
+      }
+      check_sname($elem, $stars);
+      $mhash{$mkey} = $elem;
     }
   }
   my @merged = map { $mhash{$_} } sort keys %mhash;
@@ -72,13 +107,15 @@ sub merge_probe {
   my $data_e = '';
   $data_e = $data->{empire}->{name} if (defined($data->{empire}));
 
-
+  if (defined($data->{last_excavated})) {
+    $orig->{last_excavated} = $data->{last_excavated};
+  }
   if ($orig->{observatory}->{stime} > $data->{observatory}->{stime}) {
     printf "Adding old move data to $orig->{name}\n";
     $orig->{observatory}->{moved} = update_vacate($orig_m, $data_m, $orig_e, $data_e);
   }
   else {
-    my $old_key = mk_key($orig, $orig_e);
+    my $old_own = ownership_test($orig, $orig_e);
     $orig->{observatory}->{moved} = update_vacate($data_m, $orig_m, $data_e, $orig_e);
     $orig->{name} = $data->{name};
     $orig->{observatory}->{empire} = $data->{observatory}->{empire};
@@ -93,8 +130,11 @@ sub merge_probe {
       $orig->{empire}->{is_isolationist} = $data->{empire}->{is_isolationist};
       $orig->{empire}->{name}            = $data->{empire}->{name};
     }
-    my $new_key = mk_key($orig, $orig_e);
-    printf "Importing $orig->{name}\n" if ($old_key ne $new_key);
+    my $new_own = ownership_test($orig, $orig_e);
+    unless (defined($checked{"$orig->{star_id}"})) {
+      printf "Importing $orig->{name}\n" if ($old_own ne $new_own);
+      $checked{"$orig->{star_id}"} = 1;
+    }
     if ($orig_e ne "" and $data_e eq "") {
       delete $orig->{empire};
       delete $orig->{building_count};
@@ -120,10 +160,29 @@ sub merge_probe {
       delete $orig->{water_stored};
     }
   }
+  if ($orig->{type} ne $data->{type}) {
+# We probably have a new space station to account for
+    printf "Changing type of %s from %s:%s to %s:%s\n",
+             $data->{name}, $orig->{image}, $orig->{type},
+             $data->{image}, $data->{type};
+    $orig = copy_body($orig, $data);
+  }
   return $orig;
 }
 
-sub mk_key {
+sub copy_body {
+  my($orig, $data) = @_;
+#Easier to swap info into new and return it.
+  if (defined($orig->{empire})) {
+    %{$data->{empire}} = %{$orig->{empire}};
+  }
+  if (defined($orig->{observatory})) {
+    %{$data->{observatory}} = %{$orig->{observatory}};
+  }
+  return $data;
+}
+
+sub ownership_test {
   my ($elem, $ename) = @_;
   return join(":",$elem->{name}, $elem->{observatory}->{empire},
               $elem->{observatory}->{oid}, $elem->{observatory}->{pid}, $ename);
@@ -148,6 +207,39 @@ sub update_vacate {
   return \@new_t;
 }
 
+sub check_sname {
+  my ($elem, $stars) = @_;
+  unless (defined($elem->{star_name})) {
+    $elem->{star_name} = $stars->{$elem->{star_id}}->{name};
+  }
+  if ($elem->{star_name} ne $stars->{$elem->{star_id}}->{name}) {
+    $elem->{star_name} = $stars->{$elem->{star_id}}->{name};
+  }
+}
+
+sub get_stars {
+  my ($sfile) = @_;
+
+  my $fh;
+  open ($fh, "<", "$sfile") or die;
+
+  my $fline = <$fh>;
+  my %star_hash;
+  while(<$fh>) {
+    chomp;
+    my ($id, $name, $x, $y, $color, $zone) = split(/,/, $_, 6);
+    $star_hash{$id} = {
+      id    => $id,
+      name  => $name,
+      x     => $x,
+      y     => $y,
+      color => $color,
+      zone  => $zone,
+    }
+  }
+  return \%star_hash;
+}
+
 sub usage {
     diag(<<END);
 Usage: $0 [options]
@@ -155,8 +247,10 @@ Usage: $0 [options]
 This program takes all data from two probe files and merges them.
 
 Options:
+
   --help                 - Prints this out
-  --output <file>        - Output file, default: data/probe_data_raw.yml
+  --import <file>        - File to import, default: data/probe_data_raw.yml
+  --merge  <file>        - Main file to merge into, default: data/probe_data_cmb.yml
 
 END
  exit 1;
