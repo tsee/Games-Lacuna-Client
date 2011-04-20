@@ -52,34 +52,24 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 # Load planet data
 my $body = $client->body( id => $planets{$planet_name} );
 
-# GLOBAL
+# GLOBALS
 my $buildings = $body->get_buildings->{buildings};
+my $devmin;
 
 # if --max isn't provided, find out how many plans we have
 $max ||= plan_count( $buildings );
 
-my $queue_length = queue_length( $buildings );
-my $status;
-
-# fill build-queue
-for ( 1 .. $queue_length ) {
-    exit if $max-- == 0;
+do {
+    my $queue_length = queue_length( $buildings );
     
-    $status = build_halls();
-}
-
-# are there still halls to build?
-for ( 1 .. $max ) {
-    exit if $max-- == 0;
+    # fill build-queue
+    for ( 1 .. $queue_length ) {
+        exit if $max-- == 0;
+        
+        build_halls();
+    }
     
-    my $last_build = $status->{building}{pending_build}{seconds_remaining};
-    $last_build += 5;
-    
-    print "Waiting for build to complete... sleeping for $last_build secs\n";
-    sleep $last_build;
-    
-    build_halls();
-}
+} while ( $max );
 
 exit;
 
@@ -105,16 +95,18 @@ sub plan_count {
 sub queue_length {
     my ( $buildings ) = @_;
     
-    my $dev = first {
-        $buildings->{$_}{url} eq '/development'
-    } keys %$buildings;
+    if ( !defined $devmin ) {
+        my $id = first {
+            $buildings->{$_}{url} eq '/development'
+        } keys %$buildings;
+        
+        die "No Development Ministry on planet\n"
+            if !defined $id;
+        
+        $devmin = $client->building( id => $id, type => 'Development' );
+    }
     
-    die "No Development Ministry on planet\n"
-        if !defined $dev;
-    
-    $dev = $client->building( id => $dev, type => 'Development' );
-    
-    my $status = $dev->view;
+    my $status = $devmin->view;
     
     # is there already anything building?
     my $build_time = build_remaining( $buildings );
@@ -125,7 +117,7 @@ sub queue_length {
         sleep $build_time;
         
         # refresh the surface
-        $dev->view;
+        $devmin->view;
     }
     
     # how many builds can we queue?
