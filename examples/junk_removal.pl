@@ -43,12 +43,13 @@ my $client = Games::Lacuna::Client->new(
 );
 
 # Load the planets
-my $empire	= $client->empire->get_status->{empire};
+my $status	= $client->empire->get_status;
+my $empire  = $status->{empire};
 my $planets = $empire->{planets};
 
 my $available_slots = 0;
 
-if($empire->{rpc_count} > 9000) {
+if( $empire->{rpc_count} > ( $status->{server}{rpc_limit} * 0.9 ) ) {
 	print "High RPC Count ($empire->{rpc_count}). Exiting.\n";
 	exit 1;
 }
