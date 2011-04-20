@@ -64,13 +64,10 @@ foreach my $planet_id ( sort keys %$planets ) {
 
 	# Load planet data
 	my $planet		= $client->body( id => $planet_id );
-	my $result		= $planet->get_buildings;
+	my $result		= $planet->get_buildable($x_loc, $y_loc, 'Happiness');
 	my $body		= $result->{status}->{body};
 	
-	my $buildings = $result->{buildings};
-
-	my $buildable = $planet->get_buildable($x_loc, $y_loc, 'Happiness');
-	my $bb = $buildable->{buildable};
+	my $bb = $result->{buildable};
 
 	my $usebuilding;
 	my $buildname;
@@ -95,7 +92,7 @@ foreach my $planet_id ( sort keys %$planets ) {
 		print "Using $buildname to purge trash\n";
 	}
 	else {
-		die "No junk building available";
+		die "No junk building available\n";
 	}
 	
     my $waste_stored = $body->{waste_stored};
