@@ -98,11 +98,17 @@ foreach my $planet_id ( sort keys %$planets ) {
 		die "No junk building available";
 	}
 	
+    my $waste_stored = $body->{waste_stored};
+    my $waste_cost   = 0 - $bb->{$buildname}->{build}->{cost}->{waste};
+    
 	my $junk = $client->building( type => "$junktype" );
 		
 	if (exists $bb->{$buildname}) {
 		while(1) {
-			print "$buildname purging " . $bb->{$buildname}->{build}->{cost}->{waste} . " trash, ";
+            last if $waste_stored < $waste_cost;
+            $waste_stored -= $waste_cost;
+            
+			print "$buildname purging $waste_cost trash, ";
 			sleep 1;
 			
 			my $ok = eval {
