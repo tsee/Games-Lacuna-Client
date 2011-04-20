@@ -52,21 +52,28 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 # Load planet data
 my $body = $client->body( id => $planets{$planet_name} );
 
-# GLOBALS
-my $buildings = $body->get_buildings->{buildings};
-my $devmin;
-
-# if --max isn't provided, find out how many plans we have
-$max ||= plan_count( $buildings );
 
 do {
+    my $buildings = $body->get_buildings->{buildings};
+    
+    # if --max isn't provided, find out how many plans we have
+    $max ||= plan_count( $buildings );
+    
+    my $build_time = build_time( $buildings );
+    
+    if ( $build_time ) {
+        $build_time += 5;
+        print "Sleeping for $build_time while build queue empties\n";
+        sleep $build_time;
+    }
+    
     my $queue_length = queue_length( $buildings );
     
     # fill build-queue
     for ( 1 .. $queue_length ) {
         exit if $max-- == 0;
         
-        build_halls();
+        build_halls( $buildings );
     }
     
 } while ( $max );
@@ -89,52 +96,41 @@ sub plan_count {
         $_->{name} eq 'Halls of Vrbansk'
     } @$plans;
     
+    die "No Halls of Vrbansk plans available\n"
+        if !@halls;
+    
     return scalar @halls
+}
+
+sub build_time {
+    my ( $buildings ) = @_;
+    
+    my $id = first {
+        $buildings->{$_}{url} eq '/development'
+    } keys %$buildings;
+    
+    die "No DevMin found\n"
+        if !$id;
+    
+    die "DevMin is still building\n"
+        if $buildings->{$id}{level} == 0;
+    
+    return $buildings->{$id}{work}{seconds_remaining};
 }
 
 sub queue_length {
     my ( $buildings ) = @_;
     
-    if ( !defined $devmin ) {
-        my $id = first {
-            $buildings->{$_}{url} eq '/development'
-        } keys %$buildings;
-        
-        die "No Development Ministry on planet\n"
-            if !defined $id;
-        
-        $devmin = $client->building( id => $id, type => 'Development' );
-    }
+    my $id = first {
+        $buildings->{$_}{url} eq '/development'
+    } keys %$buildings;
     
-    my $status = $devmin->view;
-    
-    # is there already anything building?
-    my $build_time = build_remaining( $buildings );
-    
-    if ( $build_time ) {
-        $build_time += 5;
-        print "Already something building... sleeping for $build_time secs\n";
-        sleep $build_time;
-        
-        # refresh the surface
-        $devmin->view;
-    }
-    
-    # how many builds can we queue?
-    return 1 + $status->{building}{level};
-}
-
-sub build_remaining {
-    my ( $buildings ) = @_;
-    
-    return
-        max
-        grep { defined }
-        map { $buildings->{$_}{pending_build}{seconds_remaining} }
-            keys %$buildings;
+    return 1 + $buildings->{$id}{level};;
 }
 
 sub build_halls {
+    my ( $buildings ) = @_;
+    
     my ( $x, $y ) = next_empty_plot( $buildings );
     
     die "No remaining empty spaces to build on\n"
