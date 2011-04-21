@@ -127,6 +127,7 @@ for my $name ( sort keys %planets ) {
         }
         else {
             print "Non-interactive terminal - skipping proposition\n";
+            next;
         }
         
         $parliament->cast_vote( $prop->{id}, $vote );
