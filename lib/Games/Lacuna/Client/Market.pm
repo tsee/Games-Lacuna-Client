@@ -104,9 +104,6 @@ sub available_trades{
     die "Invalid trade building: $type\n"
   }
 
-  my($class,%opt) = @_;
-  $class = blessed $class || $class;
-
   my $b_id;
 
   if( defined $p_id ){
