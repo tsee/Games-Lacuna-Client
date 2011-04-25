@@ -70,8 +70,10 @@ foreach my $name ( sort keys %planets ) {
     # Find the first Space Port
     my $space_port_id = List::Util::first {
             $buildings->{$_}->{name} eq 'Space Port'
-    } keys %$buildings;
-    
+    }
+      grep { $buildings->{$_}->{level} > 0 and $buildings->{$_}->{efficiency} == 100 }
+      keys %$buildings;
+
     next if !$space_port_id;
     
     my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
