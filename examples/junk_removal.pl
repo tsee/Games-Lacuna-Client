@@ -108,12 +108,11 @@ foreach my $planet_id ( sort keys %$planets ) {
         while (1) {
             $waste_stored -= $waste_cost;
 
-            print "$buildname purging $waste_cost trash, ";
+            print "$buildname purging $waste_cost trash\n";
             sleep 1;
 
             my $ok = eval {
                 my $return = $junk->build( $planet_id, $x_loc, $y_loc );
-                print "blowing up junk.\n";
             };
             unless ($ok) {
                 if ( my $e = Exception::Class->caught('LacunaRPCException') ) {
@@ -130,7 +129,7 @@ foreach my $planet_id ( sort keys %$planets ) {
               if $waste_stored < $waste_cost;
 
             $junk->demolish( $ok->{building}->{id} )
-              if $demolish && !$last;
+              unless !$demolish && $last;
 
             last if $last;
 
