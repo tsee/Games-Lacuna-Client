@@ -102,7 +102,6 @@ foreach my $planet_id ( sort keys %$planets ) {
 		
 	if (exists $bb->{$buildname}) {
 		while(1) {
-            last if $waste_stored < $waste_cost;
             $waste_stored -= $waste_cost;
             
 			print "$buildname purging $waste_cost trash, ";
@@ -123,6 +122,8 @@ foreach my $planet_id ( sort keys %$planets ) {
 					ref $e ? $e->rethrow : die "$e\n";
 				}
 			}
+            
+            last if $waste_stored < $waste_cost;
 			
 			sleep 15; # Server takes a few seconds to register demo
 		}
