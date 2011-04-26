@@ -14,11 +14,13 @@ use Games::Lacuna::Client ();
 my $planet_name;
 my $x_loc = 5;
 my $y_loc = -5;
+my $keep;
 
 GetOptions(
 	'planet=s' => \$planet_name,
-	'x=i' => \$x_loc,
-	'y=i' => \$y_loc,
+	'x=i'  => \$x_loc,
+	'y=i'  => \$y_loc,
+    'keep' => \$keep,
 );
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
@@ -101,6 +103,8 @@ foreach my $planet_id ( sort keys %$planets ) {
 	my $junk = $client->building( type => "$junktype" );
 		
 	if (exists $bb->{$buildname}) {
+        my $last;
+        
 		while(1) {
             $waste_stored -= $waste_cost;
             
@@ -110,7 +114,6 @@ foreach my $planet_id ( sort keys %$planets ) {
 			my $ok = eval {
 				my $return = $junk->build($planet_id, $x_loc, $y_loc);
 				print "blowing up junk.\n";
-				$junk->demolish($return->{building}->{id});
 			};
 			unless($ok) {
 				if (my $e = Exception::Class->caught('LacunaRPCException')) {
@@ -123,8 +126,14 @@ foreach my $planet_id ( sort keys %$planets ) {
 				}
 			}
             
-            last if $waste_stored < $waste_cost;
+            $last = 1
+                if $waste_stored < $waste_cost;
 			
+            $junk->demolish( $ok->{building}->{id} )
+                unless $last && $keep;
+            
+            last if $last;
+            
 			sleep 15; # Server takes a few seconds to register demo
 		}
 	}
