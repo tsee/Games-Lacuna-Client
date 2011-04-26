@@ -12,15 +12,15 @@ use Getopt::Long          (qw(GetOptions));
 use Games::Lacuna::Client ();
 
 my $planet_name;
-my $x_loc = 5;
-my $y_loc = -5;
-my $keep;
+my $x_loc    = 5;
+my $y_loc    = -5;
+my $demolish = 1;
 
 GetOptions(
-    'planet=s' => \$planet_name,
-    'x=i'      => \$x_loc,
-    'y=i'      => \$y_loc,
-    'keep'     => \$keep,
+    'planet=s'  => \$planet_name,
+    'x=i'       => \$x_loc,
+    'y=i'       => \$y_loc,
+    'demolish!' => \$demolish,
 );
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
@@ -130,7 +130,7 @@ foreach my $planet_id ( sort keys %$planets ) {
               if $waste_stored < $waste_cost;
 
             $junk->demolish( $ok->{building}->{id} )
-              unless $last && $keep;
+              if $demolish && !$last;
 
             last if $last;
 
