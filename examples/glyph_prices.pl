@@ -49,6 +49,7 @@ undef $market;
 
 # convert the trade information to a more useful form
 my %glyph_prices;
+my %glyph_prices_single;
 for my $trade ( @trades ){
   my @offers = $trade->offer;
   next unless @offers;
@@ -60,10 +61,14 @@ for my $trade ( @trades ){
   my $cost = $trade->cost;
   if( @offers > 1 ){
     $cost = $cost / @offers;
-    
-    # force it to be fractional
-    if( $cost != int $cost ){
-      $cost += 0.0000001;
+  }else{
+    my $glyph = $offers[0]->sub_type;
+    unless(
+      exists $glyph_prices_single{$glyph}
+      &&
+      $glyph_prices_single{$glyph} <= $cost
+    ){
+      $glyph_prices_single{$glyph} = $cost;
     }
   }
   
@@ -90,7 +95,7 @@ for my $glyph ( keys %glyph_prices ){
   my $min   = min @prices;
   
   # smallest price for single glyph
-  my $min_s = min grep { $_ == int $_ } @prices;
+  my $min_s = $glyph_prices_single{$glyph} || '';
   
   my $sum   = sum @prices;
   my $mean = $sum / @prices;
