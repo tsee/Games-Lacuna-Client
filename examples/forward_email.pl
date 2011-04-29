@@ -68,7 +68,8 @@ unless ( $email_file and -e $email_file ) {
 my $email_conf = LoadFile($email_file);
 
 my $client = Games::Lacuna::Client->new(
-    cfg_file => $cfg_file,
+    cfg_file  => $cfg_file,
+    rpc_sleep => 2,
     # debug    => 1,
 );
 
