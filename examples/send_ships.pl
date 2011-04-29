@@ -247,7 +247,7 @@ if ( $dryrun ) {
 }
 
 # don't send 1 ship as a fleet
-if ( @ships == 1 ) {
+if ( $fleet && !$fleet_speed && @ships == 1 ) {
     undef $fleet;
 }
 
@@ -445,7 +445,8 @@ required.
 If --fleet is true, will send up to 20 ships in a fleet at once.
 Fleet defaults to true.
 --nofleet will force sending all ships individually.
-If only 1 ship is being sent, it will not be sent as a fleet.
+If only 1 ship is being sent and --fleet-speed is not set, it will not be sent
+as a fleet.
 
 If --fleet-speed is set, all ships will travel at that speed.
 It is a fatal error to specify a speed greater than the slowest ship being sent.
