@@ -212,7 +212,7 @@ die "No ships available to send\n"
 splice @ships, $use_count;
 
 # check fleet-speed is valid
-if ( $fleet_speed ) {
+if ( $fleet && $fleet_speed ) {
     die "--fleet-speed: '$fleet_speed' exceeds slowest ship selected to send\n"
         if first {
             $_->{speed} < $fleet_speed
