@@ -254,7 +254,7 @@ if ( @ships == 1 ) {
 my @fleet;
 
 for my $ship (@ships) {
-    if ( $fleet && $ship->{type} ne 'scow' ) {
+    if ( $fleet ) {
         push @fleet, $ship;
         
         if ( @fleet == $ships_per_fleet ) {
@@ -445,7 +445,6 @@ required.
 If --fleet is true, will send up to 20 ships in a fleet at once.
 Fleet defaults to true.
 --nofleet will force sending all ships individually.
-Scows will always be sent individually, regardless of the value of --fleet.
 If only 1 ship is being sent, it will not be sent as a fleet.
 
 If --fleet-speed is set, all ships will travel at that speed.
