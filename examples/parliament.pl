@@ -50,7 +50,7 @@ my $is_interactive = is_interactive();
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file  => $cfg_file,
-	# debug    => 1,
+	rpc_sleep => 2,
 );
 
 # Load the planets
