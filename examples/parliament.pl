@@ -61,9 +61,9 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
 SS:
 for my $name ( sort keys %planets ) {
-    next if @station && !grep { $name eq $_ } @station;
+    next if @station && !grep { lc $name eq lc $_ } @station;
     
-    next if @ignore && first { $name eq $_ } @ignore;
+    next if @ignore && first { lc $name eq lc $_ } @ignore;
     
     my $planet = $client->body( id => $planets{$name} );
     
