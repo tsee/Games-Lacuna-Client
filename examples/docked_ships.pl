@@ -63,9 +63,9 @@ foreach my $name ( sort keys %planets ) {
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );
     my $result    = $planet->get_buildings;
-    my $body      = $result->{status}->{body};
-    
     my $buildings = $result->{buildings};
+    
+    next if $result->{status}{body}{type} eq 'space station';
 
     # Find the first Space Port
     my $space_port_id = List::Util::first {
