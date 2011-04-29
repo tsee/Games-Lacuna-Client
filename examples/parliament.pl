@@ -11,17 +11,22 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client ();
 
-my @planet;
+my @old_planet;
+my @station;
 my @pass;
 my $help;
 
 GetOptions(
-    'planet=s@' => \@planet,
-    'pass=s@'   => \@pass,
-    'help|h'    => \$help,
+    'planet=s@'  => \@old_planet,
+    'station=s@' => \@station,
+    'pass=s@'    => \@pass,
+    'help|h'     => \$help,
 );
 
 usage() if $help;
+
+die "--planet opt has been renamed to --station\n"
+    if @old_planet;
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
@@ -54,7 +59,7 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
 SS:
 for my $name ( sort keys %planets ) {
-    next if @planet && !grep { $name eq $_ } @planet;
+    next if @station && !grep { $name eq $_ } @station;
     
     my $planet = $client->body( id => $planets{$name} );
     
@@ -145,15 +150,19 @@ Usage: $0 CONFIG_FILE
 Prompts for vote on each proposition.
 
 Options:
-    --planet SPACE-STATION NAME
+    --station SPACE-STATION NAME
 
-Multiple --planet opts may be provided.
-If no --planet opts are provided, will search for all allied space-stations.
+Multiple --station opts may be provided.
+If no --station opts are provided, will search for all allied space-stations.
 
     --pass REGEX
 Multiple --pass opts may be provided - these are run as regexes against each
 proposition description - if it matches, the proposition is automatically
 voted 'yes'.
+
+Changes:
+The --planet opt has been renamed to --station.
+Using --planet will throw an error.
 
 END_USAGE
 
