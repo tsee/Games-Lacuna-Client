@@ -13,12 +13,14 @@ use Games::Lacuna::Client ();
 
 my @old_planet;
 my @station;
+my @ignore;
 my @pass;
 my $help;
 
 GetOptions(
     'planet=s@'  => \@old_planet,
     'station=s@' => \@station,
+    'ignore=s@'  => \@ignore,
     'pass=s@'    => \@pass,
     'help|h'     => \$help,
 );
@@ -60,6 +62,8 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 SS:
 for my $name ( sort keys %planets ) {
     next if @station && !grep { $name eq $_ } @station;
+    
+    next if @ignore && first { $name eq $_ } @ignore;
     
     my $planet = $client->body( id => $planets{$name} );
     
@@ -150,10 +154,14 @@ Usage: $0 CONFIG_FILE
 Prompts for vote on each proposition.
 
 Options:
-    --station SPACE-STATION NAME
+    --station STATION NAME
 
 Multiple --station opts may be provided.
 If no --station opts are provided, will search for all allied space-stations.
+
+    --ignore PLANET/STATION NAME
+Save RPCs by specifying your planet names, so we don't have to get its status
+from the server to find that out.
 
     --pass REGEX
 Multiple --pass opts may be provided - these are run as regexes against each
