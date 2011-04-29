@@ -58,7 +58,7 @@ my @all_ships;
 # Scan each planet
 foreach my $name ( sort keys %planets ) {
 
-    next if defined $opts{planet} && $opts{planet} ne $name;
+    next if defined $opts{planet} && lc $opts{planet} ne lc $name;
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );
