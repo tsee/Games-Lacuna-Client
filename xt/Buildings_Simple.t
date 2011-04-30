@@ -15,7 +15,20 @@ ok scalar @simple, 'Make sure there is a list of simple buildings';
 
 use List::MoreUtils qw'any uniq';
 
-my @sorted = sort { lc $a cmp lc $b } @simple;
+# beach9 comes before beach10
+# Lagoon comes before LCOTA
+sub mixed_sort{
+  map {
+    $_->[2]
+  } sort {
+    $a->[0] cmp $b->[0] || $a->[1] <=> $a->[1]
+  } map {
+    my ($l,$n) = /([a-z]*)(\d*)/i;
+    [ lc($l), $n, $_ ]
+  } @_
+}
+
+my @sorted = mixed_sort @simple;
 is_deeply \@simple, \@sorted, 'Check if simple list is sorted';
 is_deeply \@sorted, [uniq @sorted], 'Look for duplicates in simple list';
 
