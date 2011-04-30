@@ -4,11 +4,30 @@ use strict;
 use warnings;
 use Carp 'croak';
 
-use Class::XSAccessor {
-  getters => [qw(client uri)],
-};
-
 require Games::Lacuna::Client;
+
+use namespace::clean;
+use Moose;
+
+has client => (
+  is => 'ro',
+  isa => 'Games::Lacuna::Client',
+  required => 1,
+  handles => {
+    session_id => 'assert_session',
+  },
+);
+
+has uri => (
+  is => 'ro',
+  isa => 'Str',
+  init_arg => undef,
+  lazy => 1,
+  default => sub{
+    my($self) = @_;
+    $self->client->uri . '/' . $self->module_prefix;
+  },
+);
 
 sub api_methods_without_session { croak("unimplemented"); }
 sub api_methods_with_session { croak("unimplemented"); }
@@ -18,24 +37,6 @@ sub module_prefix {
   my $class = ref($self)||$self;
   $class =~ /::(\w+)+$/ or croak("unimplemented");
   return lc($1);
-}
-
-sub session_id {
-  my $self = shift;
-  return $self->client->assert_session();
-}
-
-sub new {
-  my $class = shift;
-  my %opt = @_;
-  my $client = $opt{client} || croak("Need Games::Lacuna::Client");
-  
-  my $self = bless {
-    %opt,
-  } => $class;
-  $self->{uri} = $self->client->uri . '/' . $self->module_prefix;
-  
-  return $self;
 }
 
 sub init {
@@ -106,6 +107,8 @@ sub _find_target_name {
   return $target;
 }
 
+no Moose;
+__PACKAGE__->meta->make_immutable;
 1;
 __END__
 
