@@ -76,6 +76,7 @@ our %EXPORT_TAGS = (
         command => [qw(
             Archaeology
             ArtMuseum
+            BlackHoleGenerator
             Capitol
             CloakingLab
             CulinaryInstitute
@@ -295,6 +296,7 @@ our %EXPORT_TAGS = (
         Bean => [qw(food)],
         Beeldeban => [qw(food)],
         BeeldebanNest => [qw(food glyph)],
+        BlackHoleGenerator => [qw(command energy space_station_module)],
         Bread => [qw(food)],
         Burger => [qw(food)],
         Capitol => [qw(command infrastructure)],

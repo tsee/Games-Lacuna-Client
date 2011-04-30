@@ -139,6 +139,13 @@ BeeldebanNest:
     - food
     - glyph
   type: glyph
+BlackHoleGenerator:
+  produces: energy
+  tags:
+    - command
+    - energy
+    - space_station_module
+  type: command
 Bread:
   produces: food
   requires:
