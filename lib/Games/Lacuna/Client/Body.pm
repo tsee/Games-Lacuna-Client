@@ -2,15 +2,15 @@ package Games::Lacuna::Client::Body;
 use 5.0080000;
 use strict;
 use warnings;
-use Carp 'croak';
 
-use Games::Lacuna::Client;
-use Games::Lacuna::Client::Module;
-our @ISA = qw(Games::Lacuna::Client::Module);
+use Moose;
+extends qw(Games::Lacuna::Client::Module);
 
-use Class::XSAccessor {
-  getters => [qw(body_id)],
-};
+has body_id => (
+  is => 'ro',
+  isa => 'Int',
+  init_arg => 'id',
+);
 
 sub api_methods {
   return {
@@ -22,18 +22,9 @@ sub api_methods {
   };
 }
 
-sub new {
-  my $class = shift;
-  my %opt = @_;
-  my $self = $class->SUPER::new(@_);
-  bless $self => $class;
-  $self->{body_id} = $opt{id};
-  return $self;
-}
-
-
+no Moose;
+__PACKAGE__->meta->make_immutable;
 __PACKAGE__->init();
-
 1;
 __END__
 
