@@ -17,6 +17,11 @@
 # If you do not provide any 'mime_lite' values, it will default to using
 # the local `sendmail` program
 #
+# You can provide 'archive' and 'trash' lists - these are matched against all
+# mails (whether read or not) as a case-insensitive regex, and the email is
+# archived or trashed if the subject line matches.
+# Matching emails are never forwarded to your email.
+#
 # This only forwards the short 'body_preview' from the inbox listing
 # this ensures all mail is left flagged as unread.
 # 
@@ -31,6 +36,12 @@
 #mime_lite:
 #    - smtp
 #    - 'smtp.example.com'
+#
+#archive:
+#    - '^Probe Detected!$'
+#
+#trash:
+#    - '^Glyph Discovered!$'
 
 use strict;
 use warnings;
@@ -68,7 +79,8 @@ unless ( $email_file and -e $email_file ) {
 my $email_conf = LoadFile($email_file);
 
 my $client = Games::Lacuna::Client->new(
-    cfg_file => $cfg_file,
+    cfg_file  => $cfg_file,
+    rpc_sleep => 2,
     # debug    => 1,
 );
 
@@ -90,6 +102,9 @@ my $mime_lite_conf = $email_conf->{mime_lite} || [];
 die "mime_lite key in forward_email config file must be a list"
     if ref($mime_lite_conf) ne 'ARRAY';
 
+my $archive_match = $email_conf->{archive} || [];
+my $trash_match   = $email_conf->{trash}   || [];
+
 # Load Inbox
 my $inbox = $client->inbox->view_inbox;
 
@@ -105,11 +120,28 @@ my $cache = -e $cache_file_path ? LoadFile($cache_file_path)
           :                       {};
 
 my $last_seen_id = $cache->{last_seen_id} || 0;
+my @archive_id;
+my @trash_id;
 
 # Check messages
+MESSAGE:
 for my $message ( reverse @{ $inbox->{messages} } ) {
     
     next if $message->{id} <= $last_seen_id;
+    
+    for my $regex ( @$archive_match ) {
+        if ( $message->{subject}  =~ m/$regex/i ) {
+            push @archive_id, $message->{id};
+            next MESSAGE;
+        }
+    }
+    
+    for my $regex ( @$trash_match ) {
+        if ( $message->{subject} =~ m/$regex/i ) {
+            push @trash_id, $message->{id};
+            next MESSAGE;
+        }
+    }
     
     next if $message->{has_read};
     
@@ -137,6 +169,20 @@ BODY
 $cache->{last_seen_id} = $last_seen_id;
 
 DumpFile( $cache_file_path, $cache );
+
+# archive messages
+if ( @archive_id ) {
+    $client->inbox->archive_messages(
+        \@archive_id,
+    );
+}
+
+# delete messages
+if ( @trash_id ) {
+    $client->inbox->trash_messages(
+        \@trash_id,
+    );
+}
 
 # announcements
 if (   $email_conf->{forward_announcements}
