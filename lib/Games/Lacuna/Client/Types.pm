@@ -183,6 +183,15 @@ our %EXPORT_TAGS = (
             Lagoon
             Lake
             LapisForest
+            LCOTA
+            LCOTB
+            LCOTC
+            LCOTD
+            LCOTE
+            LCOTF
+            LCOTG
+            LCOTH
+            LCOTI
             LibraryOfJith
             MalcudField
             MassadsHenge
@@ -329,6 +338,15 @@ our %EXPORT_TAGS = (
         JunkHengeSculpture => [qw(happiness infrastructure sculpture waste)],
         KalavianRuins => [qw(glyph happiness)],
         KasternsKeep => [qw(glyph)],
+        LCOTA => [qw(glyph)],
+        LCOTB => [qw(glyph)],
+        LCOTC => [qw(glyph)],
+        LCOTD => [qw(glyph)],
+        LCOTE => [qw(glyph)],
+        LCOTF => [qw(glyph)],
+        LCOTG => [qw(glyph)],
+        LCOTH => [qw(glyph)],
+        LCOTI => [qw(glyph)],
         Lagoon => [qw(decoration glyph)],
         Lake => [qw(decoration glyph)],
         Lapis => [qw(food)],

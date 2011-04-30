@@ -440,6 +440,42 @@ KasternsKeep:
   tags:
     - glyph
   type: glyph
+LCOTA:
+  tags:
+    - glyph
+  type: glyph
+LCOTB:
+  tags:
+    - glyph
+  type: glyph
+LCOTC:
+  tags:
+    - glyph
+  type: glyph
+LCOTD:
+  tags:
+    - glyph
+  type: glyph
+LCOTE:
+  tags:
+    - glyph
+  type: glyph
+LCOTF:
+  tags:
+    - glyph
+  type: glyph
+LCOTG:
+  tags:
+    - glyph
+  type: glyph
+LCOTH:
+  tags:
+    - glyph
+  type: glyph
+LCOTI:
+  tags:
+    - glyph
+  type: glyph
 Lagoon:
   tags:
     - decoration
