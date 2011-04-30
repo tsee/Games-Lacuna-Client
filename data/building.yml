@@ -45,6 +45,71 @@ AtmosphericEvaporator:
   tags:
     - water
   type: water
+Beach1:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach10:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach11:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach12:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach13:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach2:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach3:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach4:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach5:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach6:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach7:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach8:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach9:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
 Bean:
   produces: food
   requires:

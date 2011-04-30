@@ -154,6 +154,19 @@ our %EXPORT_TAGS = (
         glyph => [qw(
             AlgaePond
             AmalgusMeadow
+            Beach1
+            Beach10
+            Beach11
+            Beach12
+            Beach13
+            Beach2
+            Beach3
+            Beach4
+            Beach5
+            Beach6
+            Beach7
+            Beach8
+            Beach9
             BeeldebanNest
             CitadelOfKnope
             CrashedShipSite
@@ -257,6 +270,19 @@ our %EXPORT_TAGS = (
         Archaeology => [qw(command glyph infrastructure)],
         ArtMuseum => [qw(command space_station_module)],
         AtmosphericEvaporator => [qw(water)],
+        Beach1 => [qw(decoration glyph)],
+        Beach10 => [qw(decoration glyph)],
+        Beach11 => [qw(decoration glyph)],
+        Beach12 => [qw(decoration glyph)],
+        Beach13 => [qw(decoration glyph)],
+        Beach2 => [qw(decoration glyph)],
+        Beach3 => [qw(decoration glyph)],
+        Beach4 => [qw(decoration glyph)],
+        Beach5 => [qw(decoration glyph)],
+        Beach6 => [qw(decoration glyph)],
+        Beach7 => [qw(decoration glyph)],
+        Beach8 => [qw(decoration glyph)],
+        Beach9 => [qw(decoration glyph)],
         Bean => [qw(food)],
         Beeldeban => [qw(food)],
         BeeldebanNest => [qw(food glyph)],
