@@ -212,7 +212,7 @@ die "No ships available to send\n"
 splice @ships, $use_count;
 
 # check fleet-speed is valid
-if ( $fleet_speed ) {
+if ( $fleet && $fleet_speed ) {
     die "--fleet-speed: '$fleet_speed' exceeds slowest ship selected to send\n"
         if first {
             $_->{speed} < $fleet_speed
@@ -247,14 +247,14 @@ if ( $dryrun ) {
 }
 
 # don't send 1 ship as a fleet
-if ( @ships == 1 ) {
+if ( $fleet && !$fleet_speed && @ships == 1 ) {
     undef $fleet;
 }
 
 my @fleet;
 
 for my $ship (@ships) {
-    if ( $fleet && $ship->{type} ne 'scow' ) {
+    if ( $fleet ) {
         push @fleet, $ship;
         
         if ( @fleet == $ships_per_fleet ) {
@@ -445,8 +445,8 @@ required.
 If --fleet is true, will send up to 20 ships in a fleet at once.
 Fleet defaults to true.
 --nofleet will force sending all ships individually.
-Scows will always be sent individually, regardless of the value of --fleet.
-If only 1 ship is being sent, it will not be sent as a fleet.
+If only 1 ship is being sent and --fleet-speed is not set, it will not be sent
+as a fleet.
 
 If --fleet-speed is set, all ships will travel at that speed.
 It is a fatal error to specify a speed greater than the slowest ship being sent.
