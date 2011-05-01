@@ -5,9 +5,11 @@ use Carp 'croak';
 use warnings;
 
 use Games::Lacuna::Client;
-use Games::Lacuna::Client::Buildings;
 
-our @ISA = qw(Games::Lacuna::Client::Buildings::Simple);
+use namespace::clean;
+use Moose;
+
+extends 'Games::Lacuna::Client::Buildings::Simple';
 
 sub api_methods {
   return {
@@ -32,6 +34,8 @@ sub api_methods {
   };
 }
 
+no Moose;
+__PACKAGE__->meta->make_immutable;
 __PACKAGE__->init();
 
 1;
