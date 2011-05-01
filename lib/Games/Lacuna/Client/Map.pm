@@ -5,8 +5,11 @@ use warnings;
 use Carp 'croak';
 
 use Games::Lacuna::Client;
-use Games::Lacuna::Client::Module;
-our @ISA = qw(Games::Lacuna::Client::Module);
+
+use namespace::clean;
+use Moose;
+
+extends 'Games::Lacuna::Client::Module';
 
 sub api_methods {
   return {
@@ -19,15 +22,8 @@ sub api_methods {
   };
 }
 
-#sub new {
-#  my $class = shift;
-#  my %opt = @_;
-#  my $self = $class->SUPER::new(@_);
-#  bless $self => $class;
-#  $self->{star_id} = $opt{id};
-#  return $self;
-#}
-
+no Moose;
+__PACKAGE__->meta->make_immutable;
 __PACKAGE__->init();
 
 1;
