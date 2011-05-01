@@ -14,14 +14,6 @@ use Games::Lacuna::Client::Market::Trade;
 use namespace::clean;
 use Moose;
 
-{
-  my @filter = qw'food ore water waste energy glyph prisoner ship plan';
-  sub _valid_filter{
-    my($filter) = @_;
-    return any { $_ eq $filter } @filter;
-  }
-}
-
 has filter => (
   is => 'rw',
   isa => Sellable,
