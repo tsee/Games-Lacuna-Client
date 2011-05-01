@@ -5,13 +5,16 @@ use warnings;
 use Carp 'croak';
 
 use Games::Lacuna::Client;
-use Games::Lacuna::Client::Module;
-our @ISA = qw(Games::Lacuna::Client::Module);
 
+use namespace::clean;
+use Moose;
 
-use Class::XSAccessor {
-  getters => [qw(empire_id)],
-};
+extends 'Games::Lacuna::Client::Module';
+
+has empire_id => (
+  is => 'ro',
+  init_arg => 'id',
+);
 
 sub api_methods {
   return {
@@ -54,16 +57,6 @@ sub api_methods {
   };
 }
 
-sub new {
-  my $class = shift;
-  my %opt = @_;
-  my $self = $class->SUPER::new(@_);
-  bless $self => $class;
-  $self->{empire_id} = $opt{id};
-  return $self;
-}
-
-
 sub logout {
   my $self = shift;
   my $client = $self->client;
@@ -76,6 +69,8 @@ sub logout {
   }
 }
 
+no Moose;
+__PACKAGE__->meta->make_immutable;
 __PACKAGE__->init();
 
 1;
