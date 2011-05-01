@@ -6,7 +6,6 @@ use Carp 'croak';
 
 use Games::Lacuna::Client;
 use Games::Lacuna::Client::Module;
-our @ISA = qw(Games::Lacuna::Client::Module);
 
 require Games::Lacuna::Client::Buildings::Simple;
 
@@ -58,47 +57,18 @@ for my $building_type ( @BuildingTypes ){
     die "Unable to load building type module $building_type: $@" if $@;
 }
 
-use Class::XSAccessor {
-  getters => [qw(building_id)],
-};
-
-sub api_methods {
-  return {
-    build               => { default_args => [qw(session_id)] },
-    view                => { default_args => [qw(session_id building_id)] },
-    upgrade             => { default_args => [qw(session_id building_id)] },
-    demolish            => { default_args => [qw(session_id building_id)] },
-    downgrade           => { default_args => [qw(session_id building_id)] },
-    get_stats_for_level => { default_args => [qw(session_id building_id)] },
-    repair              => { default_args => [qw(session_id building_id)] },
-  };
-}
-
 sub new {
   my $class = shift;
-  $class = ref($class)||$class; # no cloning
   my %opt = @_;
   my $btype = delete $opt{type};
   
   # redispatch in factory mode
   if (defined $btype) {
-    if ($class ne 'Games::Lacuna::Client::Buildings') {
-      croak("Cannot call ->new on Games::Lacuna::Client::Buildings subclass ($class) and pass the 'type' parameter");
-    }
     my $realclass = $class->subclass_for($btype);
     return $realclass->new(%opt);
+  }else{
+    croak('Requires building type');
   }
-  my $id = delete $opt{id};
-  my $self = $class->SUPER::new(%opt);
-  $self->{building_id} = $id;
-  # We could easily support the body_id as default argument for ->build
-  # here, but that would mean you had to specify the body_id at build time
-  # or require building construction via $body->building(...)
-  # Let's keep it simple for now.
-  #$self->{body_id} = $opt{body_id};
-  
-  bless $self => $class;
-  return $self;
 }
 
 sub build {
@@ -141,9 +111,6 @@ sub subclass_for {
   $type = $class->type_for($type);
   return "Games::Lacuna::Client::Buildings::$type";
 }
-
-
-__PACKAGE__->init();
 
 1;
 __END__

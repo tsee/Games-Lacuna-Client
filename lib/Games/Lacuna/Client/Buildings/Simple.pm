@@ -6,7 +6,11 @@ use Carp 'croak';
 
 use Games::Lacuna::Client;
 use Games::Lacuna::Client::Module;
-use Class::MOP;
+
+use namespace::clean;
+use Moose;
+
+extends 'Games::Lacuna::Client::Module';
 
 our @BuildingTypes = (qw(
     Algae
@@ -125,18 +129,86 @@ our @BuildingTypes = (qw(
 
 #  WasteDigester => url is 'wastetreatment' according to docs, but I don't believe it!
 
-sub init {
+{
   my $class = shift;
+  my $simple_file = $INC{'Games/Lacuna/Client/Buildings/Simple.pm'};
   foreach my $type (@BuildingTypes) {
     my $class_name = "Games::Lacuna::Client::Buildings::$type";
-    Class::MOP::Class->create(
+    Moose::Meta::Class->create(
       $class_name => (
         superclasses => ['Games::Lacuna::Client::Buildings'],
       )
     );
+
+    # this prevents "require" from trying to load the module
+    my $inc_name = $class_name.'.pm';
+    $inc_name =~ s(::){/}g;
+    $INC{$inc_name} = $simple_file;
   }
 }
 
+
+has building_id => (
+  is => 'ro',
+  isa => 'Int',
+  init_arg => 'id',
+);
+
+sub api_methods {
+  return {
+    build               => { default_args => [qw(session_id)] },
+    view                => { default_args => [qw(session_id building_id)] },
+    upgrade             => { default_args => [qw(session_id building_id)] },
+    demolish            => { default_args => [qw(session_id building_id)] },
+    downgrade           => { default_args => [qw(session_id building_id)] },
+    get_stats_for_level => { default_args => [qw(session_id building_id)] },
+    repair              => { default_args => [qw(session_id building_id)] },
+  };
+}
+
+sub build {
+  my $self = shift;
+  # assign id for this object after building
+  my $rv = $self->_build(@_);
+  $self->{building_id} = $rv->{building}{id};
+  return $rv;
+}
+
+{
+  my %type_for;
+
+  sub type_for {
+    my ($class, $hint) = @_;
+
+    if (! keys %type_for) { # initialise mapping if needed
+      %type_for = map { lc($_) => $_ }
+        @Games::Lacuna::Client::Buildings::BuildingTypes,
+        @Games::Lacuna::Client::Buildings::Simple::BuildingTypes;
+    }
+
+    $hint =~ s{.*/}{}mxs;
+    $hint = lc($hint);
+    return $type_for{$hint} || undef;
+  }
+}
+
+sub type_from_url {
+  my $url = shift;
+  croak "URL is undefined" if not $url;
+  $url =~ m{/([^/]+)$} or croak("Bad URL: '$url'");
+  my $url_elem = $1;
+  my $type = type_for(__PACKAGE__, $url) or croak("Bad URL: '$url'");
+  return $type;
+}
+
+sub subclass_for {
+  my ($class, $type) = @_;
+  $type = $class->type_for($type);
+  return "Games::Lacuna::Client::Buildings::$type";
+}
+
+no Moose;
+__PACKAGE__->meta->make_immutable( inline_constructor => 0 );
 __PACKAGE__->init();
 
 1;
