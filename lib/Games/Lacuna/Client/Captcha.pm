@@ -5,26 +5,24 @@ use warnings;
 use Carp 'croak';
 
 use Games::Lacuna::Client;
-use Games::Lacuna::Client::Module;
-our @ISA = qw(Games::Lacuna::Client::Module);
 
-use Class::XSAccessor {
-    getters => [qw(guid url)],
-};
+use namespace::clean;
+use Moose;
+
+extends 'Games::Lacuna::Client::Module';
+
+has guid => (
+  is => 'ro',
+);
+has url => (
+  is => 'ro',  
+);
 
 sub api_methods {
     return {
         fetch => { default_args => [qw(session_id)] },
         solve => { default_args => [qw(session_id guid)] },
     };
-}
-
-sub new {
-    my $class = shift;
-    my %opt = @_;
-    my $self = $class->SUPER::new(@_);
-    bless $self => $class;
-    return $self;
 }
 
 sub fetch {
@@ -44,6 +42,8 @@ sub prompt_for_solution {
     return $answer;
 }
 
+no Moose;
+__PACKAGE__->meta->make_immutable;
 __PACKAGE__->init();
 
 1;
