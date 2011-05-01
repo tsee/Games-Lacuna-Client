@@ -7,7 +7,7 @@ use warnings;
 use Games::Lacuna::Client;
 use Games::Lacuna::Client::Buildings;
 
-our @ISA = qw(Games::Lacuna::Client::Buildings);
+our @ISA = qw(Games::Lacuna::Client::Buildings::Simple);
 
 sub build {
   croak "SpaceStation modules don't inherit a 'build' method from Buildings\n";

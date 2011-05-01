@@ -7,7 +7,7 @@ use Carp 'croak';
 use Games::Lacuna::Client;
 use Games::Lacuna::Client::Buildings;
 
-our @ISA = qw(Games::Lacuna::Client::Buildings);
+our @ISA = qw(Games::Lacuna::Client::Buildings::Simple);
 
 sub api_methods {
   return {
