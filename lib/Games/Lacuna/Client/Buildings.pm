@@ -52,19 +52,26 @@ our @BuildingTypes = (qw(
     WaterStorage
   ),
 );
-for my $building_type ( @BuildingTypes ){
-    eval "require Games::Lacuna::Client::Buildings::$building_type;";
-    die "Unable to load building type module $building_type: $@" if $@;
-}
 
 sub new {
   my $class = shift;
   my %opt = @_;
   my $btype = delete $opt{type};
   
-  # redispatch in factory mode
   if (defined $btype) {
     my $realclass = $class->subclass_for($btype);
+
+    # run it if it's already loaded
+    my $code = $realclass->can('new');
+    if( $code ){
+        return $realclass->$code(%opt);
+    }
+
+    unless( eval "require $realclass;" ){
+        my $building_type = $class->type_for($btype);
+        die "Unable to load building type module $building_type: $@";
+    }
+
     return $realclass->new(%opt);
   }else{
     croak('Requires building type');
@@ -109,6 +116,7 @@ sub type_from_url {
 sub subclass_for {
   my ($class, $type) = @_;
   $type = $class->type_for($type);
+  croak "Unknown building type $type" unless $type;
   return "Games::Lacuna::Client::Buildings::$type";
 }
 
