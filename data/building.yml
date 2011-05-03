@@ -45,6 +45,71 @@ AtmosphericEvaporator:
   tags:
     - water
   type: water
+Beach1:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach10:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach11:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach12:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach13:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach2:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach3:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach4:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach5:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach6:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach7:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach8:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
+Beach9:
+  tags:
+    - decoration
+    - glyph
+  type: glyph
 Bean:
   produces: food
   requires:
@@ -74,6 +139,13 @@ BeeldebanNest:
     - food
     - glyph
   type: glyph
+BlackHoleGenerator:
+  produces: energy
+  tags:
+    - command
+    - energy
+    - space_station_module
+  type: command
 Bread:
   produces: food
   requires:
@@ -372,6 +444,42 @@ KalavianRuins:
     - happiness
   type: glyph
 KasternsKeep:
+  tags:
+    - glyph
+  type: glyph
+LCOTA:
+  tags:
+    - glyph
+  type: glyph
+LCOTB:
+  tags:
+    - glyph
+  type: glyph
+LCOTC:
+  tags:
+    - glyph
+  type: glyph
+LCOTD:
+  tags:
+    - glyph
+  type: glyph
+LCOTE:
+  tags:
+    - glyph
+  type: glyph
+LCOTF:
+  tags:
+    - glyph
+  type: glyph
+LCOTG:
+  tags:
+    - glyph
+  type: glyph
+LCOTH:
+  tags:
+    - glyph
+  type: glyph
+LCOTI:
   tags:
     - glyph
   type: glyph
