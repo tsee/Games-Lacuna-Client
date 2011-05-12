@@ -79,6 +79,8 @@ for my $name ( sort keys %planets ) {
             $buildings->{$_}->{url} eq '/parliament'
         } keys %$buildings;
     
+    next if !defined $parliament_id;
+    
     my $parliament = $client->building( id => $parliament_id, type => 'Parliament' );
     
     my $propositions;
