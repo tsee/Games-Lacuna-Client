@@ -51,7 +51,7 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 my %all_glyphs;
 foreach my $name ( sort keys %planets ) {
 
-    next if defined $planet_name && $planet_name ne $name;
+    next if defined $planet_name && lc $planet_name ne lc $name;
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );

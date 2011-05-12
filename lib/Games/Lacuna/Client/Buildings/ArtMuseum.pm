@@ -5,9 +5,9 @@ use warnings;
 use Carp 'croak';
 
 use Games::Lacuna::Client;
-use Games::Lacuna::Client::Buildings::Modules;
+use Games::Lacuna::Client::Buildings;
 
-our @ISA = qw(Games::Lacuna::Client::Buildings::Modules);
+our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 __PACKAGE__->init();
 

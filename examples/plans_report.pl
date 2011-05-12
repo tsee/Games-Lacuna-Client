@@ -62,6 +62,8 @@ foreach my $name ( sort keys %planets ) {
             $buildings->{$_}{url} eq $command_url
     } keys %$buildings;
     
+    next if !defined $command_id;
+    
     my $command_type = Games::Lacuna::Client::Buildings::type_from_url($command_url);
     
     my $command = $client->building( id => $command_id, type => $command_type );
