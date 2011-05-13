@@ -37,6 +37,7 @@ unless ( $cfg_file and -e $cfg_file ) {
 my $from;
 my $to;
 my $ship_type;
+my $ship_name;
 my $fill_ratio = 0.5;
 my $min_level  = 100_000;
 my $max_ships;
@@ -48,6 +49,7 @@ GetOptions(
     'from=s'       => \$from,
     'to=s'         => \$to,
     'ship_type=s'  => \$ship_type,
+    'ship_name=s'  => \$ship_name,
     'fill_ratio=s' => \$fill_ratio,
     'min_level=i'  => \$min_level,
     'max_ships=i'  => \$max_ships,
@@ -96,6 +98,14 @@ if ($ship_type) {
     @ships = grep
         {
             $_->{type} =~ m/$ship_type/i;
+        }
+        @ships;
+}
+
+if ($ship_name) {
+    @ships = grep
+        {
+            $_->{name} =~ m/$ship_name/i;
         }
         @ships;
 }
