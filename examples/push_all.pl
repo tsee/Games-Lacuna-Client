@@ -46,16 +46,16 @@ my $dryrun;
 my $debug;
 
 GetOptions(
-    'from=s'       => \$from,
-    'to=s'         => \$to,
-    'ship_type=s'  => \$ship_type,
-    'ship_name=s'  => \$ship_name,
-    'fill_ratio=s' => \$fill_ratio,
-    'min_level=i'  => \$min_level,
-    'max_ships=i'  => \$max_ships,
-    'verbose'      => \$verbose,
-    'dryrun'       => \$dryrun,
-    'debug'        => \$debug,
+    'from=s'                  => \$from,
+    'to=s'                    => \$to,
+    'ship_type|ship-type=s'   => \$ship_type,
+    'ship_name|ship-type=s'   => \$ship_name,
+    'fill_ratio|fill-ratio=s' => \$fill_ratio,
+    'min_level|min-level=i'   => \$min_level,
+    'max_ships|max-ships=i'   => \$max_ships,
+    'verbose'                 => \$verbose,
+    'dryrun'                  => \$dryrun,
+    'debug'                   => \$debug,
 );
 
 usage() if !$from || !$to;
