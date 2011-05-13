@@ -75,13 +75,13 @@ my $empire  = $client->empire->get_status->{empire};
 my $planets = $empire->{planets};
 
 # reverse hash, to key by name instead of id
-my %planets_by_name = map { $planets->{$_}, $_ } keys %$planets;
+my %planets_by_name = map { lc( $planets->{$_} ), $_ } keys %$planets;
 
-my $to_id = $planets_by_name{$to}
+my $to_id = $planets_by_name{ lc $to }
     or die "to planet not found";
 
 # Load planet data
-my $body      = $client->body( id => $planets_by_name{$from} );
+my $body      = $client->body( id => $planets_by_name{ lc $from } );
 my $result    = $body->get_buildings;
 my $buildings = $result->{buildings};
 
