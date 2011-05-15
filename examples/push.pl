@@ -19,18 +19,9 @@ GetOptions(
     'ship=s' => \$ship_name,
 );
 my $cfg_file = Games::Lacuna::Client->get_config_file([shift @ARGV, 'login.yml', 'lacuna.yml']);
-my $push_file = Games::Lacuna::Client->get_config_file([shift @ARGV, 'push.yml']);
+my $push_file = Games::Lacuna::Client->get_config_file([shift @ARGV, 'push.yml'], 1);
 
-unless ( $cfg_file && -e $cfg_file ) {
-    die "config file not found: '$cfg_file'";
-}
-
-unless ( $push_file && -e $push_file ) {
-    die "push config file not found: '$push_file'";
-}
-
-
-my $push_config = LoadFile( $push_file );
+my $push_config = LoadFile( $push_file ) if $push_file;
 
 $from      ||= $push_config->{from};
 $to        ||= $push_config->{to};
