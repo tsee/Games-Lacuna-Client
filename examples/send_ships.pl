@@ -34,6 +34,7 @@ my $sleep;
 my $seconds;
 my $rename;
 my $dryrun;
+my $count = undef;
 
 GetOptions(
     'ship=s@'           => \@ship_names,
@@ -53,6 +54,7 @@ GetOptions(
     'sleep=i'           => \$sleep,
     'seconds=i'         => \$seconds,
     'rename'            => \$rename,
+    'count=i'           => \$count,
     'dryrun|dry-run'    => \$dryrun,
 );
 
@@ -163,6 +165,7 @@ for my $ship ( @$ships ) {
     next if @ship_types && !grep { $ship->{type} eq $_ } @ship_types;
     
     push @ships, $ship;
+    last if defined $count && scalar @ships == $count;
 }
 
 # if --leave is used, try to leave as many as possible of the *wrong*
@@ -213,10 +216,12 @@ splice @ships, $use_count;
 
 # check fleet-speed is valid
 if ( $fleet && $fleet_speed ) {
-    die "--fleet-speed: '$fleet_speed' exceeds slowest ship selected to send\n"
-        if first {
-            $_->{speed} < $fleet_speed
-        } @ships;
+    my $slowShip = first {
+        $_->{speed} < $fleet_speed
+    } @ships;
+
+    die "--fleet-speed: '$fleet_speed' exceeds slowest ship ($slowShip->{type} - $slowShip->{speed}) selected to send\n"
+        if $slowShip;
 }
 
 # send immediately?
