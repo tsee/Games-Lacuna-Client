@@ -154,7 +154,7 @@ foreach my $name ( sort keys %planets ) {
 }
 
 print_ships( "Total Ships", \@all_ships )
-    unless $opts{planet};
+    unless $opts{planet} && @{ $opts{planet} } > 1;
 
 exit;
 
