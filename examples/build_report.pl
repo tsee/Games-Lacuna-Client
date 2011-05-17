@@ -10,41 +10,28 @@ use Getopt::Long          qw(GetOptions);
 use Games::Lacuna::Client ();
 
 my $planet_name;
+my $use_seconds_left = 0;
 
 GetOptions(
     'planet=s' => \$planet_name,
+    'seconds!' => \$use_seconds_left,
 );
+require Time::Duration if $use_seconds_left;
 
-my $cfg_file = shift(@ARGV) || 'lacuna.yml';
-unless ( $cfg_file and -e $cfg_file ) {
-  $cfg_file = eval{
-    require File::HomeDir;
-    require File::Spec;
-    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
-    File::Spec->catfile(
-      $dist,
-      'login.yml'
-    ) if $dist;
-  };
-  unless ( $cfg_file and -e $cfg_file ) {
-    die "Did not provide a config file";
-  }
-}
+my $cfg_file = Games::Lacuna::Client->get_config_file([shift(@ARGV) || 'lacuna.yml']);
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
 	# debug    => 1,
 );
 
-my @types = qw( food ore water energy waste );
-
 # Load the planets
 my $empire  = $client->empire->get_status->{empire};
-my $planets = $empire->{planets};
+my $planets = {reverse(%{$empire->{planets}})};
 
 # Scan each planet
-foreach my $planet_id ( sort keys %$planets ) {
-    my $name = $planets->{$planet_id};
+foreach my $name ( sort keys %$planets ) {
+    my $planet_id = $planets->{$name};
 
     next if defined $planet_name && $planet_name ne $name;
 
@@ -66,10 +53,10 @@ foreach my $planet_id ( sort keys %$planets ) {
     print "=" x length $name;
     print "\n";
     
-    for my $building (@build) {
+    for my $building (sort { $a->{pending_build}{seconds_remaining} <=> $b->{pending_build}{seconds_remaining} } @build) {
         printf "%s: %s\n",
             $building->{name},
-            $building->{pending_build}{end};
+            $use_seconds_left ? Time::Duration::duration($building->{pending_build}{seconds_remaining}) : $building->{pending_build}{end};
     }
     
     print "\n";
