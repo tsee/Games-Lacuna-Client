@@ -8,6 +8,7 @@ use Games::Lacuna::Client;
 use Date::Parse;
 use Date::Format;
 use List::Util (qw(first));
+use List::MoreUtils       qw( none );
 use Getopt::Long          (qw(GetOptions));
 
 my @planets;
