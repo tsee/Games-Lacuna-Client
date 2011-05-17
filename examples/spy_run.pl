@@ -85,7 +85,7 @@ for my $spy (@spies) {
     eval {
         $return = $intel->assign_spy( $spy->{id}, $assignment );
     };
-    
+    last;
     if ($@) {
         warn "Error: $@\n";
         next;

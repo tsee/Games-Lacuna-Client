@@ -10,11 +10,11 @@ use Date::Format;
 use List::Util (qw(first));
 use Getopt::Long          (qw(GetOptions));
 
-my $planet_name;
+my @planets;
 my $ships_per_page = 25;
 
 GetOptions(
-    'planet=s' => \$planet_name,
+    'planet=s' => \@planets,
 );
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
@@ -47,7 +47,8 @@ my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 my @spaceports;
 
 foreach my $name ( sort keys %planets ) {
-  next if defined $planet_name && $planet_name ne $name;
+  
+  next if @planets && none { $name eq $_ } @planets;
   
   # Load planet data
   my $planet    = $client->body( id => $planets{$name} );
