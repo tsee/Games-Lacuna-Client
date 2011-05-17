@@ -48,7 +48,7 @@ my @spaceports;
 
 foreach my $name ( sort keys %planets ) {
   
-  next if @planets && none { $name eq $_ } @planets;
+  next if @planets && none { lc $name eq lc $_ } @planets;
   
   # Load planet data
   my $planet    = $client->body( id => $planets{$name} );
