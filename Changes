@@ -1,6 +1,7 @@
 Revision history for Perl extension Games::Lacuna::Client.
 
 {{$NEXT}}
+  - Ran data/sort_types.pl and data/build_types.pl to update all the building meta files for the waste exchanger [halkeye]
 
 0.002     2011-05-19 19:41:37 America/Vancouver
   - original version
