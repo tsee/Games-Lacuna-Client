@@ -935,6 +935,10 @@ WasteSequestration:
     - storage
     - waste
   type: storage
+WasteExchanger:
+  tags:
+    - waste
+  type: waste
 WasteTreatment:
   tags:
     - waste
