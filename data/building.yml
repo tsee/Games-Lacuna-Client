@@ -926,6 +926,10 @@ WasteEnergy:
     - energy
     - waste
   type: energy
+WasteExchanger:
+  tags:
+    - waste
+  type: waste
 WasteRecycling:
   tags:
     - waste
@@ -935,10 +939,6 @@ WasteSequestration:
     - storage
     - waste
   type: storage
-WasteExchanger:
-  tags:
-    - waste
-  type: waste
 WasteTreatment:
   tags:
     - waste
