@@ -459,6 +459,17 @@ Functional Recipes:
     quantity:
       halite: 1
       magnetite: 1
+  Oracle of Anid:
+    order:
+      - gold
+      - uraninite
+      - bauxite
+      - goethite
+    quantity:
+      bauxite: 1
+      goethite: 1
+      gold: 1
+      uraninite: 1
   Pantheon of Hagness:
     order:
       - gypsum
