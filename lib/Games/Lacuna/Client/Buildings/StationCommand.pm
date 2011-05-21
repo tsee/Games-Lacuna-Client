@@ -9,7 +9,7 @@ use Games::Lacuna::Client;
 use namespace::clean;
 use Moose;
 
-extends 'Games::Lacuna::Client::Buildings::Modules';
+extends 'Games::Lacuna::Client::Buildings::Simple';
 
 sub api_methods {
   return {
