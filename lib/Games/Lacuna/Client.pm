@@ -157,7 +157,10 @@ has destroy_hooks => (
 
 sub DEMOLISH {
   my $self = shift;
-  if ($self->has_destroy_hooks) {
+  if (
+    ref $self->{destroy_hooks}
+    and @{$self->{destroy_hooks}}
+  ) {
     $_->($self) for $self->list_destroy_hooks;
   }
 
