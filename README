@@ -1,2 +1,95 @@
-Client for http://www.lacunaexpanse.com/ written in Perl 5.8
+NAME
+    Games::Lacuna::Client - An RPC client for the Lacuna Expanse
+
+SYNOPSIS
+      use Games::Lacuna::Client;
+      my $client = Games::Lacuna::Client->new(cfg_file => 'path/to/myempire.yml');
+  
+      # or manually:
+      my $client = Games::Lacuna::Client->new(
+        uri      => 'https://path/to/server',
+        api_key  => 'your api key here',
+        name     => 'empire name',
+        password => 'sekrit',
+        #session_peristent => 1, # only makes sense with cfg_file set!
+        #debug    => 1,
+      );
+  
+      my $res = $client->alliance->find("The Understanding");
+      my $id = $res->{alliances}->[0]->{id};
+  
+      use Data::Dumper;
+      print Dumper $client->alliance->view_profile( $res->{alliances}->[0]->{id} );
+
+DESCRIPTION
+    This module implements the Lacuna Expanse API as of 10.10.2010.
+
+    You will need to have a basic familiarity with the Lacuna RPC API
+    itself, so check out <http://gameserver.lacunaexpanse.com/api/> where
+    "gameserver" is the server you intend to use it on. As of this writing,
+    the only server is "us1".
+
+    The different API *modules* are available by calling the respective
+    module name as a method on the client object. The returned object then
+    implements the various methods.
+
+    The return values of the methods are (currently) just exactly "result"
+    portion of the deflated JSON responses. This is subject to change!
+
+    On failure, the methods "croak" with a simple to parse message. Example:
+
+      RPC Error (1002): Empire does not exist. at ...
+
+    The number is the error code number (see API docs). The text after the
+    colon is the human-readable error message from the server.
+
+    You do not need to login explicitly. The client will do this on demand.
+    It will also handle session-timeouts and logging out for you. (Log out
+    happens in the destructor.)
+
+    All methods that take a session id as first argument in the JSON-RPC API
+    DO NOT REQUIRE that you pass the session_id manually. This is handled
+    internally and the client will automatically log in for you as
+    necessary.
+
+Methods
+  new
+      Games::Lacuna::Client->new(
+        name      => 'My empire',                # empire_name in config file
+        password  => 'password of the empire',   # empire_password in config file
+        uri       => 'https://us1.lacunaexpanse.com/',   # server_uri in config file
+        api_key   => 'public api key',
+      );
+
+CONFIGURATION FILE
+    Some of the parameters of the constructor can also be supplied in a
+    configuration file in YAML format. You can find a template in the
+    examples subdirectory.
+
+      empire_name: The name of my Empire
+      empire_password: The password
+      server_uri: https://us1.lacunaexpanse.com/
+
+      uri:        will overwrite the server_uri key (might be a bug)
+      api_key:
+
+      session_start:
+      session_id:
+      session_persistent:
+
+SEE ALSO
+    API docs at <http://us1.lacunaexpanse.com/api>.
+
+    A few ready-to-use tools of varying quality live in the examples
+    subdirectory.
+
+AUTHOR
+    Steffen Mueller, <smueller@cpan.org>
+
+COPYRIGHT AND LICENSE
+    Copyright (C) 2010 by Steffen Mueller
+
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself, either Perl version 5.10.0 or, at
+    your option, any later version of Perl 5 you may have available.
 

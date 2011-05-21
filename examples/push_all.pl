@@ -37,6 +37,7 @@ unless ( $cfg_file and -e $cfg_file ) {
 my $from;
 my $to;
 my $ship_type;
+my $ship_name;
 my $fill_ratio = 0.5;
 my $min_level  = 100_000;
 my $max_ships;
@@ -45,15 +46,16 @@ my $dryrun;
 my $debug;
 
 GetOptions(
-    'from=s'       => \$from,
-    'to=s'         => \$to,
-    'ship_type=s'  => \$ship_type,
-    'fill_ratio=s' => \$fill_ratio,
-    'min_level=i'  => \$min_level,
-    'max_ships=i'  => \$max_ships,
-    'verbose'      => \$verbose,
-    'dryrun'       => \$dryrun,
-    'debug'        => \$debug,
+    'from=s'                  => \$from,
+    'to=s'                    => \$to,
+    'ship_type|ship-type=s'   => \$ship_type,
+    'ship_name|ship-type=s'   => \$ship_name,
+    'fill_ratio|fill-ratio=s' => \$fill_ratio,
+    'min_level|min-level=i'   => \$min_level,
+    'max_ships|max-ships=i'   => \$max_ships,
+    'verbose'                 => \$verbose,
+    'dryrun'                  => \$dryrun,
+    'debug'                   => \$debug,
 );
 
 usage() if !$from || !$to;
@@ -73,13 +75,13 @@ my $empire  = $client->empire->get_status->{empire};
 my $planets = $empire->{planets};
 
 # reverse hash, to key by name instead of id
-my %planets_by_name = map { $planets->{$_}, $_ } keys %$planets;
+my %planets_by_name = map { lc( $planets->{$_} ), $_ } keys %$planets;
 
-my $to_id = $planets_by_name{$to}
+my $to_id = $planets_by_name{ lc $to }
     or die "to planet not found";
 
 # Load planet data
-my $body      = $client->body( id => $planets_by_name{$from} );
+my $body      = $client->body( id => $planets_by_name{ lc $from } );
 my $result    = $body->get_buildings;
 my $buildings = $result->{buildings};
 
@@ -96,6 +98,14 @@ if ($ship_type) {
     @ships = grep
         {
             $_->{type} =~ m/$ship_type/i;
+        }
+        @ships;
+}
+
+if ($ship_name) {
+    @ships = grep
+        {
+            $_->{name} =~ m/$ship_name/i;
         }
         @ships;
 }

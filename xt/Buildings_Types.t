@@ -50,5 +50,8 @@ my @uniq = uniq @load, @simple;
     diag '      ', $_ for sort @fail;
     diag '    Add these to data/building.yml';
     diag '    Then run data/sort_types.pl and data/build_types.pl';
+    diag '    If you are satisfied with the result, run the following commands';
+    diag '      git add data/building.yml lib/Games/Lacuna/Client/Types.pm';
+    diag '      git commit';
   }
 }

@@ -63,22 +63,12 @@ my $space_port_id = first {
 my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
 
 # get all defending ships
-my $ships = $space_port->view_all_ships(
-    {
-        no_paging => 1,
-    },
-    {
-        task => 'Defend',
-    },
-    )->{ships};
-
-# filter ships
-if ( exists $opts{orbiting} ) {
-    @$ships =
-        grep {
-            $_->{orbiting}{name} eq $opts{orbiting}
-        } @$ships;
-}
+my $ships = $space_port->get_ships_for(
+        $planets{ $opts{planet} },
+        {
+            body_name => $opts{orbiting},
+        },
+    )->{orbiting};
 
 if ( exists $opts{type} ) {
     @$ships =

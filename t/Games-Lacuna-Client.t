@@ -24,7 +24,7 @@ isa_ok($client, 'Games::Lacuna::Client');
 eval {
 	Games::Lacuna::Client::Empire->new;
 };
-like($@, qr/Need Games::Lacuna::Client/, 'needs client to create an Empire object');
+like($@, qr/Attribute \(client\) is required/, 'needs client to create an Empire object');
 
 my $empire = Games::Lacuna::Client::Empire->new(client => $client);
 isa_ok($empire, 'Games::Lacuna::Client::Empire');

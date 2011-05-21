@@ -232,6 +232,7 @@ our %EXPORT_TAGS = (
         )],
         waste => [qw(
             DeployedBleeder
+            WasteExchanger
             WasteRecycling
             WasteTreatment
         )],
@@ -415,6 +416,7 @@ our %EXPORT_TAGS = (
         Warehouse => [qw(command space_station_module storage)],
         WasteDigester => [qw(ore waste)],
         WasteEnergy => [qw(energy waste)],
+        WasteExchanger => [qw(waste)],
         WasteRecycling => [qw(waste)],
         WasteSequestration => [qw(storage waste)],
         WasteTreatment => [qw(waste)],
