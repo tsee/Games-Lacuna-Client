@@ -97,7 +97,7 @@ around BUILDARGS => sub {
       }
     }
   }
-  $opt{uri} =~ s/\/+$//;
+  $opt{uri} =~ s/\/+$// if defined $opt{uri};
   
   return $class->$orig(\%opt);
 };
