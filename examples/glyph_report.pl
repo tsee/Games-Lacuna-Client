@@ -18,6 +18,8 @@ GetOptions(
     'planet=s' => \$planet_name,
     'c|color!' => \$Games::Lacuna::Client::PrettyPrint::ansi_color,
     't|type=s' => sub { $opt_glyph_type->{$_[1]} = 1; },
+    'f|functional!' => sub { $opt_glyph_type->{'Functional Recipes'} = 1; },
+    'd|decorative!' => sub { $opt_glyph_type->{'Decorative Recipes'} = 1; },
 );
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
@@ -284,13 +286,6 @@ Decorative Recipes:
     quantity:
       trona: 1
 Functional Recipes:
-  Amalgus Meadow:
-    order:
-      - beryl
-      - trona
-    quantity:
-      beryl: 1
-      trona: 1
   Algae Pond:
     order:
       - uraninite
@@ -298,6 +293,22 @@ Functional Recipes:
     quantity:
       methane: 1
       uraninite: 1
+  Amalgus Meadow:
+    order:
+      - beryl
+      - trona
+    quantity:
+      beryl: 1
+      trona: 1
+  Beeldeban Nest:
+    order:
+      - anthracite
+      - trona
+      - kerogen
+    quantity:
+      anthracite: 1
+      trona: 1
+      kerogen: 1
   Citadel of Knope:
     order:
       - beryl
@@ -345,6 +356,17 @@ Functional Recipes:
     quantity:
       chalcopyrite: 1
       sulfur: 1
+  Gratch's Gauntlet:
+    order:
+      - chromite
+      - bauxite
+      - gold
+      - kerogen
+    quantity:
+      chromite: 1
+      bauxite: 1
+      gold: 1
+      kerogen: 1
   Halls of Vrbansk (A):
     order:
       - goethite
