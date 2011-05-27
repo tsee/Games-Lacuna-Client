@@ -22,7 +22,7 @@ GetOptions(
 
 usage() if !@glyphs;
 
-my $cfg_file = Games::Lacuna::Client->get_config_file(shift(@ARGV) || 'lacuna.yml');
+my $cfg_file = Games::Lacuna::Client->get_config_file([shift(@ARGV), 'lacuna.yml']);
 sleep((localtime)[2]) if ($use_delay);
 
 my $client = Games::Lacuna::Client->new(

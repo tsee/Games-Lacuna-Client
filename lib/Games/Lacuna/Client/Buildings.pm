@@ -49,6 +49,7 @@ our @BuildingTypes = (qw(
     Trade
     Transporter
     Warehouse
+    WasteExchanger
     WasteRecycling
     WaterStorage
   ),

@@ -94,8 +94,8 @@ sub print_plans {
     my $status = $sslab->view->{make_plan};
     my $types  = $status->{types};
     
-    while ( my ( $k, $v ) = each %$types ) {
-        print "$k = $v\n";
+    foreach my $plan ( @$types ) {
+        print "$plan->{name}\n";
     }
     
     if ( my $making = $status->{making} ) {

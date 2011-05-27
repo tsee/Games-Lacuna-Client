@@ -8,44 +8,6 @@ use List::Util            (qw(first));
 use Games::Lacuna::Client ();
 use Getopt::Long          (qw(GetOptions));
 use YAML::Any             (qw(LoadFile));
-my $cfg_file;
-my $push_file;
-
-if ( @ARGV && $ARGV[0] !~ /^--/) {
-	$cfg_file = shift @ARGV;
-}
-else {
-	$cfg_file = 'lacuna.yml';
-}
-unless ( $cfg_file and -e $cfg_file ) {
-  $cfg_file = eval{
-    require File::HomeDir;
-    require File::Spec;
-    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
-    File::Spec->catfile(
-      $dist,
-      'login.yml'
-    ) if $dist;
-  };
-  unless ( $cfg_file and -e $cfg_file ) {
-    die "Did not provide a config file";
-  }
-}
-
-if ( @ARGV && $ARGV[0] !~ /^--/) {
-    $push_file = shift @ARGV;
-}
-else {
-    $push_file = 'push.yml';
-}
-
-unless ( $cfg_file && -e $cfg_file ) {
-    die "config file not found: '$cfg_file'";
-}
-
-unless ( $push_file && -e $push_file ) {
-    die "push config file not found: '$push_file'";
-}
 
 my $from;
 my $to;
@@ -56,8 +18,10 @@ GetOptions(
     'to=s'   => \$to,
     'ship=s' => \$ship_name,
 );
+my $cfg_file = Games::Lacuna::Client->get_config_file([shift @ARGV, 'login.yml', 'lacuna.yml']);
+my $push_file = Games::Lacuna::Client->get_config_file([shift @ARGV, 'push.yml'], 1);
 
-my $push_config = LoadFile( $push_file );
+my $push_config = LoadFile( $push_file ) if $push_file;
 
 $from      ||= $push_config->{from};
 $to        ||= $push_config->{to};
