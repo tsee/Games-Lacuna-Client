@@ -5,9 +5,9 @@ use warnings;
 use Carp 'croak';
 
 use Games::Lacuna::Client;
-use Games::Lacuna::Client::Buildings::Modules;
+use Games::Lacuna::Client::Buildings;
 
-our @ISA = qw(Games::Lacuna::Client::Buildings::Modules);
+our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
@@ -24,6 +24,7 @@ sub api_methods {
     propose_rename_star                               => { default_args => [qw(session_id building_id)] },
     propose_broadcast_on_network19                    => { default_args => [qw(session_id building_id)] },
     propose_rename_asteroid                           => { default_args => [qw(session_id building_id)] },
+    propose_rename_uninhabited                        => { default_args => [qw(session_id building_id)] },
     propose_members_only_mining_rights                => { default_args => [qw(session_id building_id)] },
     propose_evict_mining_platform                     => { default_args => [qw(session_id building_id)] },
     propose_fire_bfg                                  => { default_args => [qw(session_id building_id)] },

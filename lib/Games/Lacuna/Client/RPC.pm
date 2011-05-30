@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Carp 'croak';
 use Scalar::Util 'weaken';
+use Time::HiRes qw( sleep );
 
 use Games::Lacuna::Client;
 

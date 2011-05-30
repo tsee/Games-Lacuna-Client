@@ -25,6 +25,7 @@ our @BuildingTypes = (qw(
     HallsOfVrbansk
     IBS
     Intelligence
+    IntelTraining
     LibraryOfJith
     MercenariesGuild
     MiningMinistry
