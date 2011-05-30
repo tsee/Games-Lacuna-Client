@@ -46,9 +46,12 @@ my @uniq = uniq @load, @simple;
   }
   ok !@fail, q[Check for buildings that don't have any type information];
   if( @fail ){
-    diag q[these don't have any type information];
-    diag '  ', $_ for sort @fail;
-    diag 'Add these to data/building.yml';
-    diag 'Then run data/sort_types.pl and data/build_types.pl)';
+    diag q[    These buildings don't have any type information:];
+    diag '      ', $_ for sort @fail;
+    diag '    Add these to data/building.yml';
+    diag '    Then run data/sort_types.pl and data/build_types.pl';
+    diag '    If you are satisfied with the result, run the following commands';
+    diag '      git add data/building.yml lib/Games/Lacuna/Client/Types.pm';
+    diag '      git commit';
   }
 }

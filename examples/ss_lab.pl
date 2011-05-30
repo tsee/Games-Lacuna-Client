@@ -54,7 +54,7 @@ my $client = Games::Lacuna::Client->new(
 my $empire = $client->empire->get_status->{empire};
 
 # reverse hash, to key by name instead of id
-my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
+my %planets = reverse %{ $empire->{planets} };
 
 # Load planet data
 my $body   = $client->body( id => $planets{ $opts{planet} } );
@@ -94,8 +94,8 @@ sub print_plans {
     my $status = $sslab->view->{make_plan};
     my $types  = $status->{types};
     
-    while ( my ( $k, $v ) = each %$types ) {
-        print "$k = $v\n";
+    foreach my $plan ( @$types ) {
+        print "$plan->{name}\n";
     }
     
     if ( my $making = $status->{making} ) {

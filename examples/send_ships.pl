@@ -29,10 +29,12 @@ my $star;
 my $own_star;
 my $planet;
 my $fleet = 1;
+my $fleet_speed = 0;
 my $sleep;
 my $seconds;
 my $rename;
 my $dryrun;
+my $count = undef;
 
 GetOptions(
     'ship=s@'           => \@ship_names,
@@ -46,11 +48,13 @@ GetOptions(
     'y=i'               => \$y,
     'star=s'            => \$star,
     'planet=s'          => \$planet,
-    'fleet!'             => \$fleet,
+    'fleet!'            => \$fleet,
+    'fleet-speed=i'     => \$fleet_speed,
     'own-star|own_star' => \$own_star,
     'sleep=i'           => \$sleep,
     'seconds=i'         => \$seconds,
     'rename'            => \$rename,
+    'count=i'           => \$count,
     'dryrun|dry-run'    => \$dryrun,
 );
 
@@ -93,7 +97,7 @@ my $empire = request(
 )->{empire};
 
 # reverse hash, to key by name instead of id
-my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
+my %planets = reverse %{ $empire->{planets} };
 
 die "--from colony '$from' not found"
     if !$planets{$from};
@@ -161,6 +165,7 @@ for my $ship ( @$ships ) {
     next if @ship_types && !grep { $ship->{type} eq $_ } @ship_types;
     
     push @ships, $ship;
+    last if defined $count && scalar @ships == $count;
 }
 
 # if --leave is used, try to leave as many as possible of the *wrong*
@@ -209,6 +214,16 @@ die "No ships available to send\n"
 
 splice @ships, $use_count;
 
+# check fleet-speed is valid
+if ( $fleet && $fleet_speed ) {
+    my $slowShip = first {
+        $_->{speed} < $fleet_speed
+    } @ships;
+
+    die "--fleet-speed: '$fleet_speed' exceeds slowest ship ($slowShip->{type} - $slowShip->{speed}) selected to send\n"
+        if $slowShip;
+}
+
 # send immediately?
 
 if ($seconds) {
@@ -236,11 +251,15 @@ if ( $dryrun ) {
     exit;
 }
 
-# send as fleet or individually?
+# don't send 1 ship as a fleet
+if ( $fleet && !$fleet_speed && @ships == 1 ) {
+    undef $fleet;
+}
+
 my @fleet;
 
 for my $ship (@ships) {
-    if ( $fleet && $ship->{type} ne 'scow' ) {
+    if ( $fleet ) {
         push @fleet, $ship;
         
         if ( @fleet == $ships_per_fleet ) {
@@ -259,6 +278,10 @@ if ( @fleet ) {
 
 if ( $rename ) {
     print "\n";
+    
+    # renaming isn't time-sensitive, so try to avoid hitting the max
+    # requests per minute
+    $client->rpc_sleep(1);
     
     for my $ship (@ships) {
         
@@ -312,6 +335,7 @@ sub send_fleet {
         params => [
             [ map { $_->{id} } @$ships ],
             $target,
+            $fleet_speed,
         ],
     );
     
@@ -378,21 +402,22 @@ RPC_ATTEMPT:
 sub usage {
   die <<"END_USAGE";
 Usage: $0 lacuna.yml
-       --ship       NAME
-       --type       TYPE
-       --speed      SPEED
-       --max        MAX
-       --leave      COUNT
-       --share      PROPORTION OF AVAILABLE SHIPS TO SEND
-       --from       NAME  (required)
-       --x          COORDINATE
-       --y          COORDINATE
-       --star       NAME
-       --planet     NAME
+       --ship        NAME
+       --type        TYPE
+       --speed       SPEED
+       --max         MAX
+       --leave       COUNT
+       --share       PROPORTION OF AVAILABLE SHIPS TO SEND
+       --from        NAME  (required)
+       --x           COORDINATE
+       --y           COORDINATE
+       --star        NAME
+       --planet      NAME
        --own-star
        --fleet
-       --sleep      SECONDS
-       --seconds    SECONDS
+       --fleet-speed SPEED
+       --sleep       SECONDS
+       --seconds     SECONDS
        --rename
        --dryrun
 
@@ -425,7 +450,11 @@ required.
 If --fleet is true, will send up to 20 ships in a fleet at once.
 Fleet defaults to true.
 --nofleet will force sending all ships individually.
-Scows will always be sent individually, regardless of the value of --fleet.
+If only 1 ship is being sent and --fleet-speed is not set, it will not be sent
+as a fleet.
+
+If --fleet-speed is set, all ships will travel at that speed.
+It is a fatal error to specify a speed greater than the slowest ship being sent.
 
 If --seconds is specified, what until that second of the current minute before
 sending. If that second has already passed, send immediately.
