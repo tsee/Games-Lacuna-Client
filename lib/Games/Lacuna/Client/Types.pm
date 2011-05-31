@@ -88,6 +88,7 @@ our %EXPORT_TAGS = (
             GeneticsLab
             IBS
             Intelligence
+            IntelTraining
             MercenariesGuild
             MissionCommand
             MunitionsLab
@@ -337,6 +338,7 @@ our %EXPORT_TAGS = (
         HydroCarbon => [qw(energy)],
         IBS => [qw(command space_station_module)],
         Intelligence => [qw(command infrastructure intelligence)],
+        IntelTraining => [qw(command infrastructure intelligence)],
         InterDimensionalRift => [qw(glyph storage)],
         JunkHengeSculpture => [qw(happiness infrastructure sculpture waste)],
         KalavianRuins => [qw(glyph happiness)],
