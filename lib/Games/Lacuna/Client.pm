@@ -331,7 +331,7 @@ F<examples> subdirectory.
 
 =head1 SEE ALSO
 
-API docs at L<http://us1.lacunaexpanse.com/api>.
+API docs at L<http://us1.lacunaexpanse.com/api/>.
 
 A few ready-to-use tools of varying quality live
 in the F<examples> subdirectory.

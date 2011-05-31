@@ -97,7 +97,7 @@ my $empire = request(
 )->{empire};
 
 # reverse hash, to key by name instead of id
-my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
+my %planets = reverse %{ $empire->{planets} };
 
 die "--from colony '$from' not found"
     if !$planets{$from};
