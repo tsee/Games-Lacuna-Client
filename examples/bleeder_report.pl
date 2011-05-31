@@ -53,9 +53,9 @@ for my $name ( sort keys %planets ) {
     
     my $buildings = $result->{buildings};
 
-    # Find the Archaeology Ministry
+    # Find the Deployed Bleeders
     my @bleeders = grep {
-            $buildings->{$_}->{url} eq 'deployedbleeder'
+            $buildings->{$_}->{url} eq '/deployedbleeder'
     } keys %$buildings;
     
     if (@bleeders) {
