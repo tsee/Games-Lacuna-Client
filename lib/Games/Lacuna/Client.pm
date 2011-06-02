@@ -6,7 +6,6 @@ use Carp 'croak';
 use File::Temp qw( tempfile );
 use Cwd        qw( abs_path );
 
-our $VERSION = '0.01';
 use constant DEBUG => 1;
 
 use Games::Lacuna::Client::Module; # base module class
@@ -213,22 +212,31 @@ sub assert_session {
 }
 
 sub get_config_file {
-  my ($class, $cfg_file) = @_;
-  unless ( $cfg_file and -e $cfg_file ) {
-    $cfg_file = eval{
-      require File::HomeDir;
-      require File::Spec;
-      my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
-      File::Spec->catfile(
-        $dist,
-        'login.yml'
-      ) if $dist;
-    };
-    unless ( $cfg_file and -e $cfg_file ) {
-      die "Did not provide a config file";
-    }
+  my ($class, $files, $optional) = @_;
+  $files = ref $files eq 'ARRAY' ? $files : [ $files ];
+  $files = [map { 
+      my @values = ($_);
+      my $dist_file = eval {
+          require File::HomeDir;
+          File::HomeDir->VERSION(0.93);
+          require File::Spec;
+          my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+          File::Spec->catfile(
+            $dist,
+            $_
+          ) if $dist;
+      };
+      warn $@ if $@;
+      push @values, $dist_file if $dist_file;
+      @values;
+  } grep { $_ } @$files];
+
+  foreach my $file (@$files) {
+      return $file if ( $file and -e $file );
   }
-  return $cfg_file;
+
+  die "Did not provide a config file (" . join(',', @$files) . ")" unless $optional;
+  return;
 }
 
 
@@ -323,7 +331,7 @@ F<examples> subdirectory.
 
 =head1 SEE ALSO
 
-API docs at L<http://us1.lacunaexpanse.com/api>.
+API docs at L<http://us1.lacunaexpanse.com/api/>.
 
 A few ready-to-use tools of varying quality live
 in the F<examples> subdirectory.

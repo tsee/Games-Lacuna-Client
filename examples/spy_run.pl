@@ -38,6 +38,7 @@ unless ( $cfg_file and -e $cfg_file ) {
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
+	prompt_captcha => 1,
 	# debug    => 1,
 );
 
@@ -45,7 +46,7 @@ my $client = Games::Lacuna::Client->new(
 my $empire  = $client->empire->get_status->{empire};
 
 # reverse hash, to key by name instead of id
-my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
+my %planets = reverse %{ $empire->{planets} };
 
 my $body      = $client->body( id => $planets{$planet_name} );
 my $buildings = $body->get_buildings->{buildings};

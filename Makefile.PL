@@ -1,46 +1,75 @@
-use 5.008000;
-use ExtUtils::MakeMaker;
 
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
-WriteMakefile(
-    NAME         => 'Games::Lacuna::Client',
-    VERSION_FROM => 'lib/Games/Lacuna/Client.pm',    # finds $VERSION
-    PREREQ_PM    => {
-        'JSON::RPC::Common' => '0',
-        'HTTP::Request'     => '0',
-        'HTTP::Response'    => '0',
-        'LWP::UserAgent'    => '0',
-        'Data::Dumper'      => '0',
-        'Class::XSAccessor' => '1.07',
-        'Scalar::Util'      => '0',
-        'URI'               => '0',
-        'Class::MOP'        => '0',
-        'YAML::Any'         => '0',
-        'AnyEvent'          => '0',
-        'Date::Parse'       => '0',
-        'Date::Format'      => '0',
-        'DateTime'          => '0',
-        'Number::Format'    => '0',
-        'FindBin'           => '0',
-        'IO::Interactive'   => '0',
-        'MIME::Lite'        => '0',
-        'Crypt::SSLeay'     => '0', # or IO::Socket::SSL
-        'Exception::Class'  => '0',
-        'Time::HiRes'       => '0',
-        'Try::Tiny'         => '0.07',
-        'namespace::clean'  => '0.20',
-        'JSON::RPC::LWP'    => '0.006',
-        'Moose'             => '0',
-    },                                               # e.g., Module::Name => 1.1
-    (
-        $] >= 5.005
-        ?    ## Add these new keywords supported since 5.005
-          (
-            ABSTRACT_FROM =>
-              'lib/Games/Lacuna/Client.pm',    # retrieve abstract from module
-            AUTHOR => 'Steffen Mueller <smueller@cpan.org>'
-          )
-        : ()
-    ),
+use strict;
+use warnings;
+
+
+
+use ExtUtils::MakeMaker 6.30;
+
+
+
+my %WriteMakefileArgs = (
+  'ABSTRACT' => 'An RPC client for the Lacuna Expanse',
+  'AUTHOR' => 'Steffen Mueller <smueller@cpan.org>, Gavin Mogan <halkeye@cpan.org>',
+  'BUILD_REQUIRES' => {},
+  'CONFIGURE_REQUIRES' => {
+    'ExtUtils::MakeMaker' => '6.30'
+  },
+  'DISTNAME' => 'Games-Lacuna-Client',
+  'EXE_FILES' => [],
+  'LICENSE' => 'perl',
+  'NAME' => 'Games::Lacuna::Client',
+  'PREREQ_PM' => {
+    'AnyEvent' => '0',
+    'Class::MOP' => '0',
+    'Class::XSAccessor' => '1.07',
+    'Crypt::SSLeay' => '0',
+    'Data::Dumper' => '0',
+    'Date::Format' => '0',
+    'Date::Parse' => '0',
+    'DateTime' => '0',
+    'Exception::Class' => '0',
+    'FindBin' => '0',
+    'HTTP::Request' => '0',
+    'HTTP::Response' => '0',
+    'IO::Interactive' => '0',
+    'JSON::RPC::Common' => '0',
+    'JSON::RPC::LWP' => '0.006',
+    'LWP::UserAgent' => '0',
+    'MIME::Lite' => '0',
+    'Moose' => '0',
+    'Number::Format' => '0',
+    'Scalar::Util' => '0',
+    'Time::HiRes' => '0',
+    'Try::Tiny' => '0.07',
+    'URI' => '0',
+    'YAML::Any' => '0',
+    'namespace::clean' => '0.20'
+  },
+  'VERSION' => '0.002',
+  'test' => {
+    'TESTS' => 't/*.t'
+  }
 );
+
+
+unless ( eval { ExtUtils::MakeMaker->VERSION(6.56) } ) {
+  my $br = delete $WriteMakefileArgs{BUILD_REQUIRES};
+  my $pp = $WriteMakefileArgs{PREREQ_PM};
+  for my $mod ( keys %$br ) {
+    if ( exists $pp->{$mod} ) {
+      $pp->{$mod} = $br->{$mod} if $br->{$mod} > $pp->{$mod};
+    }
+    else {
+      $pp->{$mod} = $br->{$mod};
+    }
+  }
+}
+
+delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
+  unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
+
+WriteMakefile(%WriteMakefileArgs);
+
+
+
