@@ -13,6 +13,7 @@ sub api_methods {
   return {
     prepare_experiment => { default_args => [qw(session_id building_id)] },
     run_experiment     => { default_args => [qw(session_id building_id)] },
+    rename_species     => { default_args => [qw(session_id building_id)] },
   };
 }
 
