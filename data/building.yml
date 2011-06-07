@@ -6,6 +6,7 @@ Algae:
   tags:
     - food
   type: food
+  label: 'Algae Cropper'
 AlgaePond:
   produces: food
   requires:
@@ -14,12 +15,14 @@ AlgaePond:
     - food
     - glyph
   type: glyph
+  label: 'Algae Pond'
 AmalgusMeadow:
   produces: food
   tags:
     - food
     - glyph
   type: glyph
+  label: 'Amalgus Meadow'
 Apple:
   produces: food
   requires:
@@ -29,87 +32,104 @@ Apple:
   tags:
     - food
   type: food
+  label: 'Apple Orchard'
 Archaeology:
   tags:
     - command
     - glyph
     - infrastructure
   type: command
+  label: 'Archaeology Ministry'
 ArtMuseum:
   tags:
     - command
     - space_station_module
   type: command
+  label: 'Art Museum'
 AtmosphericEvaporator:
   produces: water
   tags:
     - water
   type: water
+  label: 'Atmospheric Evaporator'
 Beach1:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [1]'
 Beach10:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [10]'
 Beach11:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [11]'
 Beach12:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [12]'
 Beach13:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [13]'
 Beach2:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [2]'
 Beach3:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [3]'
 Beach4:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [4]'
 Beach5:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [5]'
 Beach6:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [6]'
 Beach7:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [7]'
 Beach8:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [8]'
 Beach9:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Beach [9]'
 Bean:
   produces: food
   requires:
@@ -119,6 +139,7 @@ Bean:
   tags:
     - food
   type: food
+  label: 'Amalgus Bean Plantation'
 Beeldeban:
   produces: food
   requires:
@@ -129,6 +150,7 @@ Beeldeban:
   tags:
     - food
   type: food
+  label: 'Beeldeban Herder'
 BeeldebanNest:
   produces: food
   requires:
@@ -139,6 +161,7 @@ BeeldebanNest:
     - food
     - glyph
   type: glyph
+  label: 'Beeldeban Nest'
 BlackHoleGenerator:
   produces: energy
   tags:
@@ -146,6 +169,7 @@ BlackHoleGenerator:
     - energy
     - space_station_module
   type: command
+  label: 'Black Hole Generator'
 Bread:
   produces: food
   requires:
@@ -158,6 +182,7 @@ Bread:
   tags:
     - food
   type: food
+  label: 'Bread Bakery'
 Burger:
   produces: food
   requires:
@@ -173,6 +198,7 @@ Burger:
   tags:
     - food
   type: food
+  label: 'Malcud Burger Packer'
 Capitol:
   requires:
     PlanetaryCommand: 10
@@ -180,6 +206,7 @@ Capitol:
     - command
     - infrastructure
   type: command
+  label: 'Capitol'
 Cheese:
   produces: food
   requires:
@@ -189,6 +216,7 @@ Cheese:
   tags:
     - food
   type: food
+  label: 'Cheese Maker'
 Chip:
   produces: food
   requires:
@@ -199,6 +227,7 @@ Chip:
   tags:
     - food
   type: food
+  label: 'Denton Root Chip Frier'
 Cider:
   produces: food
   requires:
@@ -208,17 +237,20 @@ Cider:
   tags:
     - food
   type: food
+  label: 'Apple Cider Bottler'
 CitadelOfKnope:
   tags:
     - glyph
     - ship
   type: glyph
+  label: 'Citadel of Knope'
 CloakingLab:
   tags:
     - command
     - infrastructure
     - ship
   type: command
+  label: 'Cloaking Lab'
 Corn:
   produces: food
   requires:
@@ -229,6 +261,7 @@ Corn:
   tags:
     - food
   type: food
+  label: 'Corn Plantation'
 CornMeal:
   produces: food
   requires:
@@ -239,21 +272,25 @@ CornMeal:
   tags:
     - food
   type: food
+  label: 'Corn Meal Grinder'
 CrashedShipSite:
   tags:
     - glyph
     - ship
   type: glyph
+  label: 'Crashed Ship Site'
 Crater:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Crater'
 CulinaryInstitute:
   tags:
     - command
     - space_station_module
   type: command
+  label: 'Culinary Institute'
 Dairy:
   produces: food
   requires:
@@ -264,6 +301,7 @@ Dairy:
   tags:
     - food
   type: food
+  label: 'Dairy Farm'
 Denton:
   produces: food
   requires:
@@ -274,22 +312,26 @@ Denton:
   tags:
     - food
   type: food
+  label: 'Denton Root Patch'
 DentonBrambles:
   produces: food
   tags:
     - food
     - glyph
   type: glyph
+  label: 'Denton Brambles'
 DeployedBleeder:
   produces: waste
   tags:
     - waste
   type: waste
+  label: 'Deployed Bleeder'
 Development:
   tags:
     - command
     - infrastructure
   type: command
+  label: 'Development Ministry'
 DistributionCenter:
   stores:
     - food
@@ -299,12 +341,14 @@ DistributionCenter:
   tags:
     - storage
   type: storage
+  label: 'Distribution Center'
 Embassy:
   tags:
     - alliance
     - command
     - infrastructure
   type: command
+  label: 'Embassy'
 EnergyReserve:
   stores:
     - energy
@@ -312,12 +356,14 @@ EnergyReserve:
     - energy
     - storage
   type: storage
+  label: 'Energy Reserve'
 Entertainment:
   produces: happiness
   tags:
     - happiness
     - infrastructure
   type: happiness
+  label: 'Entertainment District'
 Espionage:
   requires:
     Intelligence: 1
@@ -326,12 +372,14 @@ Espionage:
     - infrastructure
     - intelligence
   type: command
+  label: 'Espionage Ministry'
 EssentiaVein:
   produces: essentia
   tags:
     - essentia
     - glyph
   type: glyph
+  label: 'Essentia Vein'
 Fission:
   produces: energy
   requires:
@@ -339,6 +387,7 @@ Fission:
   tags:
     - energy
   type: energy
+  label: 'Fission Reactor'
 FoodReserve:
   stores:
     - food
@@ -346,6 +395,7 @@ FoodReserve:
     - food
     - storage
   type: storage
+  label: 'Food Reserve'
 Fusion:
   produces: energy
   requires:
@@ -353,23 +403,27 @@ Fusion:
   tags:
     - energy
   type: energy
+  label: 'Fusion Reactor'
 GasGiantLab:
   tags:
     - command
     - infrastructure
     - ship
   type: command
+  label: 'Gas Giant Lab'
 GasGiantPlatform:
   tags:
     - command
     - infrastructure
     - ship
   type: command
+  label: 'Gas Giant Settlement Platform'
 GeneticsLab:
   tags:
     - command
     - infrastructure
   type: command
+  label: 'Genetics Lab'
 Geo:
   produces: energy
   requires:
@@ -377,16 +431,19 @@ Geo:
   tags:
     - energy
   type: energy
+  label: 'Geo Energy Plant'
 GeoThermalVent:
   produces: energy
   tags:
     - energy
     - glyph
   type: glyph
+  label: 'Geo Thermal Vent'
 GratchsGauntlet:
   tags:
     - glyph
   type: glyph
+  label: "Gratch's Gauntlet"
 GreatBallOfJunk:
   produces: happiness
   tags:
@@ -395,15 +452,18 @@ GreatBallOfJunk:
     - sculpture
     - waste
   type: happiness
+  label: 'Great Ball of Junk'
 Grove:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Grove of Trees'
 HallsOfVrbansk:
   tags:
     - glyph
   type: glyph
+  label: 'Halls of Vrbansk'
 HydroCarbon:
   produces: energy
   requires:
@@ -411,11 +471,13 @@ HydroCarbon:
   tags:
     - energy
   type: energy
+  label: 'Hydrocarbon Energy Plant'
 IBS:
   tags:
     - command
     - space_station_module
   type: command
+  label: 'Interstellar Broadcast System'
 Intelligence:
   requires:
     university: 2
@@ -424,11 +486,13 @@ Intelligence:
     - infrastructure
     - intelligence
   type: command
+  label: 'Intelligence Ministry'
 InterDimensionalRift:
   tags:
     - glyph
     - storage
   type: glyph
+  label: 'Interdimensional Rift'
 JunkHengeSculpture:
   produces: happiness
   tags:
@@ -437,62 +501,76 @@ JunkHengeSculpture:
     - sculpture
     - waste
   type: happiness
+  label: 'Junk Henge Sculpture'
 KalavianRuins:
   produces: happiness
   tags:
     - glyph
     - happiness
   type: glyph
+  label: 'Kalavian Ruins'
 KasternsKeep:
   tags:
     - glyph
   type: glyph
+  label: "Kastern's Keep"
 LCOTA:
   tags:
     - glyph
   type: glyph
+  label: 'Lost City of Tyleon (A)'
 LCOTB:
   tags:
     - glyph
   type: glyph
+  label: 'Lost City of Tyleon (B)'
 LCOTC:
   tags:
     - glyph
   type: glyph
+  label: 'Lost City of Tyleon (C)'
 LCOTD:
   tags:
     - glyph
   type: glyph
+  label: 'Lost City of Tyleon (D)'
 LCOTE:
   tags:
     - glyph
   type: glyph
+  label: 'Lost City of Tyleon (E)'
 LCOTF:
   tags:
     - glyph
   type: glyph
+  label: 'Lost City of Tyleon (F)'
 LCOTG:
   tags:
     - glyph
   type: glyph
+  label: 'Lost City of Tyleon (G)'
 LCOTH:
   tags:
     - glyph
   type: glyph
+  label: 'Lost City of Tyleon (H)'
 LCOTI:
   tags:
     - glyph
   type: glyph
+  label: 'Lost City of Tyleon (I)'
 Lagoon:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Lagoon'
 Lake:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Lake'
 Lapis:
   produces: food
   requires:
@@ -502,6 +580,7 @@ Lapis:
   tags:
     - food
   type: food
+  label: 'Lapis Orchard'
 LapisForest:
   produces: food
   requires:
@@ -511,17 +590,20 @@ LapisForest:
     - food
     - glyph
   type: glyph
+  label: 'Lapis Forest'
 LibraryOfJith:
   tags:
     - glyph
     - infrastructure
   type: glyph
+  label: 'Library of Jith'
 LuxuryHousing:
   produces: happiness
   tags:
     - happiness
     - infrastructure
   type: happiness
+  label: 'Luxury Housing'
 Malcud:
   produces: food
   requires:
@@ -536,6 +618,7 @@ Malcud:
   tags:
     - food
   type: food
+  label: 'Malcud Fungus Farm'
 MalcudField:
   produces: food
   requires:
@@ -551,10 +634,12 @@ MalcudField:
     - food
     - glyph
   type: glyph
+  label: 'Malcud Field'
 MassadsHenge:
   tags:
     - glyph
   type: glyph
+  label: "Massad's Henge"
 MercenariesGuild:
   tags:
     - command
@@ -562,6 +647,7 @@ MercenariesGuild:
     - ship
     - trade
   type: command
+  label: 'Mercenaries Guild'
 MetalJunkArches:
   produces: happiness
   tags:
@@ -570,6 +656,7 @@ MetalJunkArches:
     - sculpture
     - waste
   type: happiness
+  label: 'Metal Junk Arches'
 Mine:
   produces: ore
   requires:
@@ -577,29 +664,34 @@ Mine:
   tags:
     - ore
   type: ore
+  label: 'Mine'
 MiningMinistry:
   produces: ore
   tags:
     - ore
     - ship
   type: ore
+  label: 'Mining Ministry'
 MissionCommand:
   tags:
     - command
     - infrastructure
   type: command
+  label: 'Mission Command'
 MunitionsLab:
   tags:
     - command
     - infrastructure
     - ship
   type: command
+  label: 'Munitions Lab'
 NaturalSpring:
   produces: water
   tags:
     - glyph
     - water
   type: glyph
+  label: 'Natural Spring'
 Network19:
   produces: happiness
   tags:
@@ -607,26 +699,31 @@ Network19:
     - happiness
     - infrastructure
   type: command
+  label: 'Network 19 Affiliate'
 Observatory:
   tags:
     - command
     - infrastructure
   type: command
+  label: 'Observatory'
 OperaHouse:
   tags:
     - command
     - space_station_module
   type: command
+  label: 'Opera House'
 OracleOfAnid:
   tags:
     - glyph
     - infrastructure
   type: glyph
+  label: 'Oracle of Anid'
 OreRefinery:
   produces: ore
   tags:
     - ore
   type: ore
+  label: 'Ore Refinery'
 OreStorage:
   stores:
     - ore
@@ -634,11 +731,13 @@ OreStorage:
     - ore
     - storage
   type: storage
+  label: 'Ore Storage Tanks'
 Oversight:
   tags:
     - command
     - infrastructure
   type: command
+  label: 'Oversight Ministry'
 Pancake:
   produces: food
   requires:
@@ -649,11 +748,13 @@ Pancake:
   tags:
     - food
   type: food
+  label: 'Potato Pancake Factory'
 PantheonOfHagness:
   tags:
     - glyph
     - planet
   type: glyph
+  label: 'Pantheon of Hagness'
 Park:
   produces: happiness
   tags:
@@ -661,11 +762,13 @@ Park:
     - happiness
     - infrastructure
   type: command
+  label: 'Park'
 Parliament:
   tags:
     - command
     - space_station_module
   type: command
+  label: 'Parliament'
 Pie:
   produces: food
   requires:
@@ -675,12 +778,14 @@ Pie:
   tags:
     - food
   type: food
+  label: 'Lapis Pie Bakery'
 PilotTraining:
   tags:
     - command
     - infrastructure
     - ship
   type: command
+  label: 'Pilot Training Facility'
 PlanetaryCommand:
   stores:
     - ore
@@ -691,12 +796,14 @@ PlanetaryCommand:
     - command
     - infrastructure
   type: command
+  label: 'Planetary Command Center'
 PoliceStation:
   tags:
     - command
     - infrastructure
     - space_station_module
   type: command
+  label: 'Police Station'
 Potato:
   produces: food
   requires:
@@ -707,12 +814,14 @@ Potato:
   tags:
     - food
   type: food
+  label: 'Potato Pancake Factory'
 Propulsion:
   tags:
     - command
     - infrastructure
     - ship
   type: command
+  label: 'Propulsion System Factory'
 PyramidJunkSculpture:
   produces: happiness
   tags:
@@ -721,6 +830,7 @@ PyramidJunkSculpture:
     - sculpture
     - waste
   type: happiness
+  label: 'Pyramid Junk Sculpture'
 Ravine:
   stores:
     - waste
@@ -729,47 +839,56 @@ Ravine:
     - storage
     - waste
   type: glyph
+  label: 'Ravine'
 RockyOutcrop:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Rocky Outcropping'
 SAW:
   tags:
     - command
     - defense
     - infrastructure
   type: command
+  label: 'Shield Against Weapons'
 SSLA:
   tags:
     - command
     - infrastructure
   type: command
+  label: 'Space Station Lab (A)'
 SSLB:
   tags:
     - command
     - infrastructure
   type: command
+  label: 'Space Station Lab (B)'
 SSLC:
   tags:
     - command
     - infrastructure
   type: command
+  label: 'Space Station Lab (C)'
 SSLD:
   tags:
     - command
     - infrastructure
   type: command
+  label: 'Space Station Lab (D)'
 Sand:
   tags:
     - decoration
     - glyph
   type: glyph
+  label: 'Patch of Sand'
 Security:
   tags:
     - command
     - infrastructure
   type: command
+  label: 'Security Ministry'
 Shake:
   produces: food
   requires:
@@ -780,17 +899,20 @@ Shake:
   tags:
     - food
   type: food
+  label: 'Beeldeban Protein Shake Factory'
 Shipyard:
   tags:
     - command
     - infrastructure
     - ship
   type: command
+  label: 'Shipyard'
 Singularity:
   produces: energy
   tags:
     - energy
   type: energy
+  label: 'Singularity Energy Plant'
 Soup:
   produces: food
   requires:
@@ -800,6 +922,7 @@ Soup:
   tags:
     - food
   type: food
+  label: 'Amalgus Bean Soup Cannery'
 SpaceJunkPark:
   produces: happiness
   tags:
@@ -808,6 +931,7 @@ SpaceJunkPark:
     - sculpture
     - waste
   type: happiness
+  label: 'Space Junk Park'
 SpacePort:
   stores:
     - ships
@@ -815,6 +939,7 @@ SpacePort:
     - command
     - ship
   type: command
+  label: 'Space Port'
 StationCommand:
   stores:
     - plans
@@ -823,19 +948,23 @@ StationCommand:
     - infrastructure
     - space_station_module
   type: command
+  label: 'Station Command Center'
 Stockpile:
   tags:
     - command
     - storage
   type: command
+  label: 'Stockpile'
 SubspaceSupplyDepot:
   tags:
     - command
   type: command
+  label: 'Subspace Supply Depot'
 SupplyPod:
   tags:
     - storage
   type: storage
+  label: 'Supply Pod'
 Syrup:
   produces: food
   requires:
@@ -851,27 +980,32 @@ Syrup:
   tags:
     - food
   type: food
+  label: 'Algae Syrup Bottler'
 TempleOfTheDrajilites:
   tags:
     - command
     - glyph
   type: glyph
+  label: 'Temple of the Drajilites'
 TerraformingLab:
   tags:
     - colony
     - command
     - infrastructure
   type: command
+  label: 'Terraforming Lab'
 TerraformingPlatform:
   tags:
     - colony
     - command
     - infrastructure
   type: command
+  label: 'Terraforming Platform'
 TheDillonForge:
   tags:
     - glyph
   type: glyph
+  label: 'The Dillon Forge'
 ThemePark:
   produces: happiness
   tags:
@@ -879,6 +1013,7 @@ ThemePark:
     - happiness
     - infrastructure
   type: command
+  label: 'Theme Park'
 Trade:
   tags:
     - command
@@ -886,23 +1021,27 @@ Trade:
     - ship
     - trade
   type: command
+  label: 'Trade Ministry'
 Transporter:
   tags:
     - command
     - infrastructure
     - trade
   type: command
+  label: 'Subspace Transporter'
 University:
   tags:
     - command
     - infrastructure
   type: command
+  label: 'University'
 Volcano:
   produces: ore
   tags:
     - glyph
     - ore
   type: glyph
+  label: 'Volcano'
 Warehouse:
   stores:
     - food
@@ -914,55 +1053,66 @@ Warehouse:
     - space_station_module
     - storage
   type: command
+  label: 'Warehouse'
 WasteDigester:
   produces: ore
   tags:
     - ore
     - waste
   type: ore
+  label: 'Waste Digester'
 WasteEnergy:
   produces: energy
   tags:
     - energy
     - waste
   type: energy
+  label: 'Waste Energy Plant'
 WasteExchanger:
   tags:
     - waste
   type: waste
+  label: 'Waste Exchanger'
 WasteRecycling:
   tags:
     - waste
   type: waste
+  label: 'Waste Recycling Center'
 WasteSequestration:
   tags:
     - storage
     - waste
   type: storage
+  label: 'Waste Sequestration Well'
 WasteTreatment:
   tags:
     - waste
   type: waste
+  label: 'Waste Treatment Center'
 WaterProduction:
   produces: water
   tags:
     - water
   type: water
+  label: 'Water Production Plant'
 WaterPurification:
   produces: water
   tags:
     - water
   type: water
+  label: 'Water Purification Plant'
 WaterReclamation:
   produces: water
   tags:
     - water
   type: water
+  label: 'Water Reclamation Facility'
 WaterStorage:
   tags:
     - storage
     - water
   type: storage
+  label: 'Water Storage Tank'
 Wheat:
   produces: food
   requires:
@@ -974,3 +1124,4 @@ Wheat:
   tags:
     - food
   type: food
+  label: 'Wheat Farm'

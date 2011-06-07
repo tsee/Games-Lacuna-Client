@@ -29,12 +29,12 @@ use List::MoreUtils qw(any);
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types get_tags tag_list meta_building_list meta_type meta_type_list ship_tags_list ship_tags ship_type_human is_food_type is_ore_type );
+our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types get_tags tag_list meta_building_list meta_type meta_type_list building_label building_type_from_label ship_tags_list ship_tags ship_type_human is_food_type is_ore_type );
 our %EXPORT_TAGS = (
     list     => [qw( food_types ore_types ship_types ship_attribute_types )],
     resource => [qw( food_types ore_types )],
     tag      => [qw( get_tags tag_list )],
-    meta     => [qw( meta_building_list meta_type meta_type_list )],
+    meta     => [qw( meta_building_list meta_type meta_type_list building_label building_type_from_label )],
     ship     => [qw( ship_types ship_attribute_types ship_tags_list ship_tags ship_type_human )],
     is       => [qw( is_food_type is_ore_type )],
     all      => [@EXPORT],
@@ -432,6 +432,181 @@ our %EXPORT_TAGS = (
     }
 }
 {
+    my %label = (
+        Algae => "Algae Cropper",
+        AlgaePond => "Algae Pond",
+        AmalgusMeadow => "Amalgus Meadow",
+        Apple => "Apple Orchard",
+        Archaeology => "Archaeology Ministry",
+        ArtMuseum => "Art Museum",
+        AtmosphericEvaporator => "Atmospheric Evaporator",
+        Beach1 => "Beach [1]",
+        Beach10 => "Beach [10]",
+        Beach11 => "Beach [11]",
+        Beach12 => "Beach [12]",
+        Beach13 => "Beach [13]",
+        Beach2 => "Beach [2]",
+        Beach3 => "Beach [3]",
+        Beach4 => "Beach [4]",
+        Beach5 => "Beach [5]",
+        Beach6 => "Beach [6]",
+        Beach7 => "Beach [7]",
+        Beach8 => "Beach [8]",
+        Beach9 => "Beach [9]",
+        Bean => "Amalgus Bean Plantation",
+        Beeldeban => "Beeldeban Herder",
+        BeeldebanNest => "Beeldeban Nest",
+        BlackHoleGenerator => "Black Hole Generator",
+        Bread => "Bread Bakery",
+        Burger => "Malcud Burger Packer",
+        Capitol => "Capitol",
+        Cheese => "Cheese Maker",
+        Chip => "Denton Root Chip Frier",
+        Cider => "Apple Cider Bottler",
+        CitadelOfKnope => "Citadel of Knope",
+        CloakingLab => "Cloaking Lab",
+        Corn => "Corn Plantation",
+        CornMeal => "Corn Meal Grinder",
+        CrashedShipSite => "Crashed Ship Site",
+        Crater => "Crater",
+        CulinaryInstitute => "Culinary Institute",
+        Dairy => "Dairy Farm",
+        Denton => "Denton Root Patch",
+        DentonBrambles => "Denton Brambles",
+        DeployedBleeder => "Deployed Bleeder",
+        Development => "Development Ministry",
+        DistributionCenter => "Distribution Center",
+        Embassy => "Embassy",
+        EnergyReserve => "Energy Reserve",
+        Entertainment => "Entertainment District",
+        Espionage => "Espionage Ministry",
+        EssentiaVein => "Essentia Vein",
+        Fission => "Fission Reactor",
+        FoodReserve => "Food Reserve",
+        Fusion => "Fusion Reactor",
+        GasGiantLab => "Gas Giant Lab",
+        GasGiantPlatform => "Gas Giant Settlement Platform",
+        GeneticsLab => "Genetics Lab",
+        Geo => "Geo Energy Plant",
+        GeoThermalVent => "Geo Thermal Vent",
+        GratchsGauntlet => "Gratch's Gauntlet",
+        GreatBallOfJunk => "Great Ball of Junk",
+        Grove => "Grove of Trees",
+        HallsOfVrbansk => "Halls of Vrbansk",
+        HydroCarbon => "Hydrocarbon Energy Plant",
+        IBS => "Interstellar Broadcast System",
+        Intelligence => "Intelligence Ministry",
+        InterDimensionalRift => "Interdimensional Rift",
+        JunkHengeSculpture => "Junk Henge Sculpture",
+        KalavianRuins => "Kalavian Ruins",
+        KasternsKeep => "Kastern's Keep",
+        LCOTA => "Lost City of Tyleon (A)",
+        LCOTB => "Lost City of Tyleon (B)",
+        LCOTC => "Lost City of Tyleon (C)",
+        LCOTD => "Lost City of Tyleon (D)",
+        LCOTE => "Lost City of Tyleon (E)",
+        LCOTF => "Lost City of Tyleon (F)",
+        LCOTG => "Lost City of Tyleon (G)",
+        LCOTH => "Lost City of Tyleon (H)",
+        LCOTI => "Lost City of Tyleon (I)",
+        Lagoon => "Lagoon",
+        Lake => "Lake",
+        Lapis => "Lapis Orchard",
+        LapisForest => "Lapis Forest",
+        LibraryOfJith => "Library of Jith",
+        LuxuryHousing => "Luxury Housing",
+        Malcud => "Malcud Fungus Farm",
+        MalcudField => "Malcud Field",
+        MassadsHenge => "Massad's Henge",
+        MercenariesGuild => "Mercenaries Guild",
+        MetalJunkArches => "Metal Junk Arches",
+        Mine => "Mine",
+        MiningMinistry => "Mining Ministry",
+        MissionCommand => "Mission Command",
+        MunitionsLab => "Munitions Lab",
+        NaturalSpring => "Natural Spring",
+        Network19 => "Network 19 Affiliate",
+        Observatory => "Observatory",
+        OperaHouse => "Opera House",
+        OracleOfAnid => "Oracle of Anid",
+        OreRefinery => "Ore Refinery",
+        OreStorage => "Ore Storage Tanks",
+        Oversight => "Oversight Ministry",
+        Pancake => "Potato Pancake Factory",
+        PantheonOfHagness => "Pantheon of Hagness",
+        Park => "Park",
+        Parliament => "Parliament",
+        Pie => "Lapis Pie Bakery",
+        PilotTraining => "Pilot Training Facility",
+        PlanetaryCommand => "Planetary Command Center",
+        PoliceStation => "Police Station",
+        Potato => "Potato Pancake Factory",
+        Propulsion => "Propulsion System Factory",
+        PyramidJunkSculpture => "Pyramid Junk Sculpture",
+        Ravine => "Ravine",
+        RockyOutcrop => "Rocky Outcropping",
+        SAW => "Shield Against Weapons",
+        SSLA => "Space Station Lab (A)",
+        SSLB => "Space Station Lab (B)",
+        SSLC => "Space Station Lab (C)",
+        SSLD => "Space Station Lab (D)",
+        Sand => "Patch of Sand",
+        Security => "Security Ministry",
+        Shake => "Beeldeban Protein Shake Factory",
+        Shipyard => "Shipyard",
+        Singularity => "Singularity Energy Plant",
+        Soup => "Amalgus Bean Soup Cannery",
+        SpaceJunkPark => "Space Junk Park",
+        SpacePort => "Space Port",
+        StationCommand => "Station Command Center",
+        Stockpile => "Stockpile",
+        SubspaceSupplyDepot => "Subspace Supply Depot",
+        SupplyPod => "Supply Pod",
+        Syrup => "Algae Syrup Bottler",
+        TempleOfTheDrajilites => "Temple of the Drajilites",
+        TerraformingLab => "Terraforming Lab",
+        TerraformingPlatform => "Terraforming Platform",
+        TheDillonForge => "The Dillon Forge",
+        ThemePark => "Theme Park",
+        Trade => "Trade Ministry",
+        Transporter => "Subspace Transporter",
+        University => "University",
+        Volcano => "Volcano",
+        Warehouse => "Warehouse",
+        WasteDigester => "Waste Digester",
+        WasteEnergy => "Waste Energy Plant",
+        WasteExchanger => "Waste Exchanger",
+        WasteRecycling => "Waste Recycling Center",
+        WasteSequestration => "Waste Sequestration Well",
+        WasteTreatment => "Waste Treatment Center",
+        WaterProduction => "Water Production Plant",
+        WaterPurification => "Water Purification Plant",
+        WaterReclamation => "Water Reclamation Facility",
+        WaterStorage => "Water Storage Tank",
+        Wheat => "Wheat Farm",
+    );
+    
+    sub building_label{
+        my( $building ) = @_;
+        return $label{$building};
+    }
+    
+    my %type_from_label =
+        map {
+            my $name = lc $label{$_};
+            $name =~ s/[^\w]//g;
+            $name => $_
+        } keys %label;
+    
+    sub building_type_from_label {
+        my( $name ) = @_;
+        return unless defined $name;
+        $name = lc $name;
+        $name =~ s/[^\w]//g;
+        return $type_from_label{$name};
+    }
+}
+{
     my %ships = (
         barge => {
             type_human => 'Barge',
@@ -761,6 +936,10 @@ Games::Lacuna::Client::Types
 =item meta_type
 
 =item meta_type_list
+
+=item building_label
+
+=item building_type_from_label
 
 =item ship_types
 

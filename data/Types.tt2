@@ -36,7 +36,9 @@
     meta_functions = [
         'meta_building_list',
         'meta_type',
-        'meta_type_list'
+        'meta_type_list',
+        'building_label',
+        'building_type_from_label'
     ];
     list_functions = [];
     CALL list_functions.import(
@@ -147,6 +149,33 @@ our %EXPORT_TAGS = (
     sub get_tags{
         my( $building ) = @_;
         return @{ $tags{$building} };
+    }
+}
+{
+    my %label = (
+    [%- FOREACH building_data.labels %]
+        [% key %] => "[% value %]",
+    [%- END %]
+    );
+    
+    sub building_label{
+        my( $building ) = @_;
+        return $label{$building};
+    }
+    
+    my %type_from_label =
+        map {
+            my $name = lc $label{$_};
+            $name =~ s/[^\w]//g;
+            $name => $_
+        } keys %label;
+    
+    sub building_type_from_label {
+        my( $name ) = @_;
+        return unless defined $name;
+        $name = lc $name;
+        $name =~ s/[^\w]//g;
+        return $type_from_label{$name};
     }
 }
 {
