@@ -794,9 +794,8 @@ sub send_excavators {
                                     }
 
                                     if ($e->code eq '1016' and !$batch->{'inhabited-ok'}) {
-                                        # Don't mark as inhabited because we don't actually know if the destination was
-                                        # inhabited, or just protected
                                         output("$dest_name would have triggered defenses, trying again...\n");
+                                        mark_orbit_occupied($x, $y);
                                         $need_more++;
                                         next;
                                     }
