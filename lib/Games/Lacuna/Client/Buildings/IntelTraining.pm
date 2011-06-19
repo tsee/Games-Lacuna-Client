@@ -1,4 +1,4 @@
-package Games::Lacuna::Client::Buildings::GeneticsLab;
+package Games::Lacuna::Client::Buildings::IntelTraining;
 use 5.0080000;
 use strict;
 use warnings;
@@ -13,9 +13,9 @@ extends 'Games::Lacuna::Client::Buildings::Simple';
 
 sub api_methods {
   return {
-    prepare_experiment => { default_args => [qw(session_id building_id)] },
-    run_experiment     => { default_args => [qw(session_id building_id)] },
-    rename_species     => { default_args => [qw(session_id building_id)] },
+    view                  => { default_args => [qw(session_id building_id)] },
+    train_spy             => { default_args => [qw(session_id building_id)] },
+    view_spies            => { default_args => [qw(session_id building_id)] },
   };
 }
 
@@ -28,7 +28,7 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Buildings::GeneticsLab - The Genetics Lab
+Games::Lacuna::Client::Buildings::IntelTraining - The Intel Training Facility building
 
 =head1 SYNOPSIS
 
