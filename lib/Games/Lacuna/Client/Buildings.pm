@@ -25,7 +25,9 @@ our @BuildingTypes = (qw(
     HallsOfVrbansk
     IBS
     Intelligence
+    IntelTraining
     LibraryOfJith
+    MayhemTraining
     MercenariesGuild
     MiningMinistry
     MissionCommand
@@ -38,6 +40,7 @@ our @BuildingTypes = (qw(
     Parliament
     PlanetaryCommand
     PoliceStation
+    PoliticsTraining
     Security
     Shipyard
     SpacePort
@@ -45,6 +48,7 @@ our @BuildingTypes = (qw(
     StationCommand
     SubspaceSupplyDepot
     TempleOfTheDrajilites
+    TheftTraining
     ThemePark
     Trade
     Transporter

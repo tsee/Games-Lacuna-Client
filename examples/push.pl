@@ -41,7 +41,7 @@ my $empire  = $client->empire->get_status->{empire};
 my $planets = $empire->{planets};
 
 # reverse hash, to key by name instead of id
-my %planets_by_name = map { $planets->{$_}, $_ } keys %$planets;
+my %planets_by_name = reverse %$planets;
 
 my $to_id = $planets_by_name{$to}
     or die "to planet not found";
