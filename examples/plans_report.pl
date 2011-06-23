@@ -5,13 +5,14 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use List::Util            (qw(first max));
+use List::MoreUtils       qw( none );
 use Getopt::Long          (qw(GetOptions));
 use Games::Lacuna::Client ();
 
-my $planet_name;
+my @planets;
 
 GetOptions(
-    'planet=s' => \$planet_name,
+    'planet=s@' => \@planets,
 );
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
@@ -44,7 +45,7 @@ my %planets = reverse %{ $empire->{planets} };
 # Scan each planet
 foreach my $name ( sort keys %planets ) {
 
-    next if defined $planet_name && $planet_name ne $name;
+    next if @planets && none { lc $name eq lc $_ } @planets;
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );

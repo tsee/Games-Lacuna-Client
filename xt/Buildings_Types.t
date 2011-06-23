@@ -1,13 +1,14 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use List::MoreUtils qw'none uniq';
 use YAML qw'LoadFile';
 
 use FindBin;
 
-my @type = keys %{ LoadFile "${FindBin::Bin}/../data/building.yml" };
+my $data = LoadFile "${FindBin::Bin}/../data/building.yml";
+my @type = keys %$data;
 
 ok scalar @type, 'Make sure there is data in data/building.yml';
 
@@ -49,9 +50,33 @@ my @uniq = uniq @load, @simple;
     diag q[    These buildings don't have any type information:];
     diag '      ', $_ for sort @fail;
     diag '    Add these to data/building.yml';
-    diag '    Then run data/sort_types.pl and data/build_types.pl';
-    diag '    If you are satisfied with the result, run the following commands';
-    diag '      git add data/building.yml lib/Games/Lacuna/Client/Types.pm';
-    diag '      git commit';
+    build_diag();
+    commit_diag();
   }
+}
+
+{
+  my @fail;
+  for my $building( @uniq ){
+    unless( $data->{$building}{label} ){
+      push @fail, $building;
+    }
+  }
+  ok !@fail, q[Check for buildings that don't have a label];
+  if( @fail ){
+    diag q[    These buildings don't have a label:];
+    diag '      ', $_ for sort @fail;
+    diag '    Add a label for each in data/building.yml';
+    build_diag();
+    commit_diag();
+  }
+}
+
+sub build_diag{
+  diag '    Run data/sort_types.pl and data/build_types.pl';
+}
+sub commit_diag{
+  diag '    If you are satisfied with the result, run the following commands';
+  diag '      git add data/building.yml lib/Games/Lacuna/Client/Types.pm';
+  diag '      git commit';
 }

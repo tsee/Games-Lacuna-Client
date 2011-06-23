@@ -5,7 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use List::Util            qw(min max);
-use List::MoreUtils       qw( uniq );
+use List::MoreUtils       qw( none uniq );
 use Getopt::Long          qw(GetOptions);
 use Games::Lacuna::Client ();
 
@@ -15,7 +15,7 @@ my %opts;
 
 GetOptions(
     \%opts,
-    'planet=s',
+    'planet=s@',
     @specs,
     'travelling',
     'mining',
@@ -59,7 +59,7 @@ my @all_ships;
 # Scan each planet
 foreach my $name ( sort keys %planets ) {
 
-    next if defined $opts{planet} && lc $opts{planet} ne lc $name;
+    next if defined $opts{planet} && none { lc $name eq lc $_ } @{ $opts{planet} };
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );
@@ -154,7 +154,7 @@ foreach my $name ( sort keys %planets ) {
 }
 
 print_ships( "Total Ships", \@all_ships )
-    unless $opts{planet};
+    unless $opts{planet} && @{ $opts{planet} } == 1;
 
 exit;
 

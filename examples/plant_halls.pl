@@ -105,17 +105,12 @@ sub plan_count {
 sub build_time {
     my ( $buildings ) = @_;
     
-    my $id = first {
-        $buildings->{$_}{url} eq '/development'
-    } keys %$buildings;
-    
-    die "No DevMin found\n"
-        if !$id;
-    
-    die "DevMin is still building\n"
-        if $buildings->{$id}{level} == 0;
-    
-    return $buildings->{$id}{work}{seconds_remaining};
+    return
+        max
+        grep { defined }
+        map {
+            $_->{pending_build}{seconds_remaining}
+        } values %$buildings;
 }
 
 sub queue_length {
