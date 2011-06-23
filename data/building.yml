@@ -478,6 +478,13 @@ IBS:
     - space_station_module
   type: command
   label: 'Interstellar Broadcast System'
+IntelTraining:
+  tags:
+    - command
+    - infrastructure
+    - intelligence
+  type: command
+  label: 'Intel Training Facility'
 Intelligence:
   requires:
     university: 2
@@ -640,6 +647,13 @@ MassadsHenge:
     - glyph
   type: glyph
   label: "Massad's Henge"
+MayhemTraining:
+  tags:
+    - command
+    - infrastructure
+    - intelligence
+  type: command
+  label: 'Mayhem Training Facility'
 MercenariesGuild:
   tags:
     - command
@@ -804,6 +818,13 @@ PoliceStation:
     - space_station_module
   type: command
   label: 'Police Station'
+PoliticsTraining:
+  tags:
+    - command
+    - infrastructure
+    - intelligence
+  type: command
+  label: 'Politics Training Facility'
 Potato:
   produces: food
   requires:
@@ -1006,6 +1027,13 @@ TheDillonForge:
     - glyph
   type: glyph
   label: 'The Dillon Forge'
+TheftTraining:
+  tags:
+    - command
+    - infrastructure
+    - intelligence
+  type: command
+  label: 'Theft Training Facility'
 ThemePark:
   produces: happiness
   tags:
