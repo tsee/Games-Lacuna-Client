@@ -18,6 +18,9 @@
 \bblibdirs$
 ^MANIFEST\.SKIP$
 
+# skip old Makefile.PL
+^Makefile\.PL$
+
 # Avoid Module::Build generated and utility files.
 \bBuild$
 \bBuild.bat$
