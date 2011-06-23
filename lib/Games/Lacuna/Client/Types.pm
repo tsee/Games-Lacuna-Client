@@ -800,7 +800,7 @@ our %EXPORT_TAGS = (
                 'War',
             ],
         },
-        space_station_hull => {
+        space_station => {
             type_human => 'Space Station Hull',
             tags       => [
                 'Intelligence',
