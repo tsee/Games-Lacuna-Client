@@ -1,13 +1,14 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use List::MoreUtils qw'none uniq';
 use YAML qw'LoadFile';
 
 use FindBin;
 
-my @type = keys %{ LoadFile "${FindBin::Bin}/../data/building.yml" };
+my $data = LoadFile "${FindBin::Bin}/../data/building.yml";
+my @type = keys %$data;
 
 ok scalar @type, 'Make sure there is data in data/building.yml';
 
@@ -53,6 +54,24 @@ my @uniq = uniq @load, @simple;
     commit_diag();
   }
 }
+
+{
+  my @fail;
+  for my $building( @uniq ){
+    unless( $data->{$building}{label} ){
+      push @fail, $building;
+    }
+  }
+  ok !@fail, q[Check for buildings that don't have a label];
+  if( @fail ){
+    diag q[    These buildings don't have a label:];
+    diag '      ', $_ for sort @fail;
+    diag '    Add a label for each in data/building.yml';
+    build_diag();
+    commit_diag();
+  }
+}
+
 sub build_diag{
   diag '    Run data/sort_types.pl and data/build_types.pl';
 }
