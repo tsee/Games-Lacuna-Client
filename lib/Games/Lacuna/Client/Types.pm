@@ -88,6 +88,8 @@ our %EXPORT_TAGS = (
             GeneticsLab
             IBS
             Intelligence
+            IntelTraining
+            MayhemTraining
             MercenariesGuild
             MissionCommand
             MunitionsLab
@@ -100,6 +102,7 @@ our %EXPORT_TAGS = (
             PilotTraining
             PlanetaryCommand
             PoliceStation
+            PoliticsTraining
             Propulsion
             SAW
             Security
@@ -114,6 +117,7 @@ our %EXPORT_TAGS = (
             SubspaceSupplyDepot
             TerraformingLab
             TerraformingPlatform
+            TheftTraining
             ThemePark
             Trade
             Transporter
@@ -336,6 +340,7 @@ our %EXPORT_TAGS = (
         HallsOfVrbansk => [qw(glyph)],
         HydroCarbon => [qw(energy)],
         IBS => [qw(command space_station_module)],
+        IntelTraining => [qw(command infrastructure intelligence)],
         Intelligence => [qw(command infrastructure intelligence)],
         InterDimensionalRift => [qw(glyph storage)],
         JunkHengeSculpture => [qw(happiness infrastructure sculpture waste)],
@@ -359,6 +364,7 @@ our %EXPORT_TAGS = (
         Malcud => [qw(food)],
         MalcudField => [qw(food glyph)],
         MassadsHenge => [qw(glyph)],
+        MayhemTraining => [qw(command infrastructure intelligence)],
         MercenariesGuild => [qw(command infrastructure ship trade)],
         MetalJunkArches => [qw(happiness infrastructure sculpture waste)],
         Mine => [qw(ore)],
@@ -381,6 +387,7 @@ our %EXPORT_TAGS = (
         PilotTraining => [qw(command infrastructure ship)],
         PlanetaryCommand => [qw(command infrastructure)],
         PoliceStation => [qw(command infrastructure space_station_module)],
+        PoliticsTraining => [qw(command infrastructure intelligence)],
         Potato => [qw(food)],
         Propulsion => [qw(command infrastructure ship)],
         PyramidJunkSculpture => [qw(happiness infrastructure sculpture waste)],
@@ -408,6 +415,7 @@ our %EXPORT_TAGS = (
         TerraformingLab => [qw(colony command infrastructure)],
         TerraformingPlatform => [qw(colony command infrastructure)],
         TheDillonForge => [qw(glyph)],
+        TheftTraining => [qw(command infrastructure intelligence)],
         ThemePark => [qw(command happiness infrastructure)],
         Trade => [qw(command infrastructure ship trade)],
         Transporter => [qw(command infrastructure trade)],
@@ -495,6 +503,7 @@ our %EXPORT_TAGS = (
         HallsOfVrbansk => "Halls of Vrbansk",
         HydroCarbon => "Hydrocarbon Energy Plant",
         IBS => "Interstellar Broadcast System",
+        IntelTraining => "Intel Training Facility",
         Intelligence => "Intelligence Ministry",
         InterDimensionalRift => "Interdimensional Rift",
         JunkHengeSculpture => "Junk Henge Sculpture",
@@ -518,6 +527,7 @@ our %EXPORT_TAGS = (
         Malcud => "Malcud Fungus Farm",
         MalcudField => "Malcud Field",
         MassadsHenge => "Massad's Henge",
+        MayhemTraining => "Mayhem Training Facility",
         MercenariesGuild => "Mercenaries Guild",
         MetalJunkArches => "Metal Junk Arches",
         Mine => "Mine",
@@ -540,6 +550,7 @@ our %EXPORT_TAGS = (
         PilotTraining => "Pilot Training Facility",
         PlanetaryCommand => "Planetary Command Center",
         PoliceStation => "Police Station",
+        PoliticsTraining => "Politics Training Facility",
         Potato => "Potato Pancake Factory",
         Propulsion => "Propulsion System Factory",
         PyramidJunkSculpture => "Pyramid Junk Sculpture",
@@ -567,6 +578,7 @@ our %EXPORT_TAGS = (
         TerraformingLab => "Terraforming Lab",
         TerraformingPlatform => "Terraforming Platform",
         TheDillonForge => "The Dillon Forge",
+        TheftTraining => "Theft Training Facility",
         ThemePark => "Theme Park",
         Trade => "Trade Ministry",
         Transporter => "Subspace Transporter",
