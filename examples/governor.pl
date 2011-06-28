@@ -6,6 +6,8 @@ use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client::Governor;
 use Games::Lacuna::Client;
 use YAML::Any;
+use Games::Lacuna::Client::Governor::Archaeology;
+use Games::Lacuna::Client::Governor::Astronomer;
 
 $| = 1;
 
@@ -32,6 +34,7 @@ unless ( $governor_config and -e $governor_config ) {
 
 my $client = Games::Lacuna::Client->new(
     cfg_file => $cfg_file,
+    rpc_sleep => 1,
     #debug    => 1,
 );
 
