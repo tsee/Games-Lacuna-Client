@@ -967,6 +967,16 @@ sub attempt_upgrade {
         my $waste_overflow = 
             ($status->{waste_stored} + $self->building_details($pid,$bid)->{upgrade}->{cost}->{waste})
                 > $status->{waste_capacity};
+
+        if ($self->{config}->{verbosity}->{trace}) {
+            my $details = $self->building_details($pid,$bid);
+            if ($insuff_resources) {
+                trace(sprintf("Insufficient resources to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level}))
+            }
+            if ($waste_overflow) {
+                trace(sprintf("Too much waste produced to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level}))
+            }
+        }
         return (not $insuff_resources and not $waste_overflow)+0;
     } @all_options;
 
