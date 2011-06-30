@@ -230,6 +230,7 @@ our %EXPORT_TAGS = (
             EnergyReserve
             FoodReserve
             OreStorage
+            PlanetaryCommand
             SupplyPod
             WasteSequestration
             WaterStorage
@@ -385,7 +386,7 @@ our %EXPORT_TAGS = (
         Parliament => [qw(command space_station_module)],
         Pie => [qw(food)],
         PilotTraining => [qw(command infrastructure ship)],
-        PlanetaryCommand => [qw(command infrastructure)],
+        PlanetaryCommand => [qw(command infrastructure storage)],
         PoliceStation => [qw(command infrastructure space_station_module)],
         PoliticsTraining => [qw(command infrastructure intelligence)],
         Potato => [qw(food)],
