@@ -6,6 +6,9 @@ use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client::Governor;
 use Games::Lacuna::Client;
 use YAML::Any;
+use Games::Lacuna::Client::Governor::Archaeology;
+use Games::Lacuna::Client::Governor::Astronomer;
+use Games::Lacuna::Client::Governor::Excavator;
 
 $| = 1;
 
