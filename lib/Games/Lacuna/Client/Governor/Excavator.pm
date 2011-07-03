@@ -282,7 +282,7 @@ use Data::Dumper;
                 next PLANET if not $excavator_cnt{$pid};
                 next STAR if $traveling_excavators{$star} or $furthest_launch{$star};
                 $furthest_launch{$star} = $pid;
-                trace("adding star $star") if ($self->{config}->{excavator}->{trace});
+                trace("adding star $star") if ($gov->{config}->{excavator}->{trace});
                 push @{$excavator_from_planet{$pid}}, $star;
                 $excavator_cnt{$pid}--;
             }
@@ -301,7 +301,7 @@ use Data::Dumper;
 
                 my @planet_targets;
 
-                trace("targetting planets of $star") if ($self->{config}->{excavator}->{trace});
+                trace("targetting planets of $star") if ($gov->{config}->{excavator}->{trace});
                 my $star_data = $gov->{_observatory_plugin}{probed_stars}{$star};
 
                 foreach my $target_planet (@{$star_data->{bodies}})
@@ -312,7 +312,7 @@ use Data::Dumper;
                     next if $target_planet->{body}{alliance};
                     next if $target_planet->{body}{incoming_foreign_ships};
 
-                    trace($target_planet->{name} . " is viable") if ($self->{config}->{excavator}->{trace});
+                    trace($target_planet->{name} . " is viable") if ($gov->{config}->{excavator}->{trace});
 
                     push @planet_targets, $target_planet;
                 }
