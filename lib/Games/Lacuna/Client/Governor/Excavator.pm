@@ -130,7 +130,7 @@ use Data::Dumper;
                 }
             };
             eval {
-                trace("Astronomer is loading cached static star map...");
+                trace("Excavator is loading cached static star map...");
                 $gov->{_static_stars} = lock_retrieve( $cache_path );
             };
             warning(
@@ -161,7 +161,7 @@ use Data::Dumper;
             return;
         }
 
-        trace("Astronomer is downloading static star map...");
+        trace("Excavator is downloading static star map...");
         my $raw_csv = $response->decoded_content;
         require Text::CSV;
         my $csv = Text::CSV->new;
@@ -199,6 +199,7 @@ use Data::Dumper;
                 $probed_stars{$star->{name}} = $star;
             }
         }
+        $gov->{_observatory_plugin}{probed_stars} = \%probed_stars;
 
         ### Grab static star data...
         my %stars = %{ $class->stars($gov) || {} };
@@ -207,11 +208,8 @@ use Data::Dumper;
             return;
         }
 
-        ### Find all stars that are not probed.
-        my %valid_target_stars =
-            map  {; $_ => $stars{$_} }
-            grep { not exists $probed_stars{$_} }
-            keys %stars;
+        ### Find all stars that are probed.
+        my %valid_target_stars = %probed_stars;
 
         ### Determine star distances from Colonies.
         my (%planet_distances);
@@ -237,7 +235,7 @@ use Data::Dumper;
         my %distances_by_planet;
         for my $pid ( keys %pid_loc ){
             $distances_by_planet{$pid} = [
-                sort {
+                reverse sort {
                    $planet_distances{$pid}{$a} <=> $planet_distances{$pid}{$b}
                 } keys %{ $planet_distances{$pid} }
             ];
@@ -256,7 +254,7 @@ use Data::Dumper;
         my $distances_by_planet = shift;
         my $stars = $class->stars($gov);
 
-        ### Denote probes currently in transit.
+        ### Denote excavators currently in transit.
         my %traveling_excavators = map {
             my $travel = $gov->{_observatory_plugin}{ports}{$_}{travel};
             # If there are multiple probes to one dest. Don't care at this point.
@@ -274,16 +272,17 @@ use Data::Dumper;
         } keys %{$gov->{_observatory_plugin}{ports}};
 
         ### Select our targets. Naively.
-        my %closest_launch;
+        my %furthest_launch;
         my %excavator_from_planet;
         PLANET:
         for my $pid ( keys %docked_excavators ){
-            my $closest_stars = $distances_by_planet->{$pid};
+            my $furthest_stars = $distances_by_planet->{$pid};
             STAR:
-            for my $star ( @{$closest_stars} ){
+            for my $star ( @{$furthest_stars} ){
                 next PLANET if not $excavator_cnt{$pid};
-                next STAR if $traveling_excavators{$star} or $closest_launch{$star};
-                $closest_launch{$star} = $pid;
+                next STAR if $traveling_excavators{$star} or $furthest_launch{$star};
+                $furthest_launch{$star} = $pid;
+                trace("adding star $star") if ($self->{config}->{excavator}->{trace});
                 push @{$excavator_from_planet{$pid}}, $star;
                 $excavator_cnt{$pid}--;
             }
@@ -300,22 +299,44 @@ use Data::Dumper;
                 last STAR if not $excavator_id;
                 my $port  = delete $gov->{_observatory_plugin}{ports}{$pid}{excavator2port}{$excavator_id};
 
-                eval {
-                    if( not $dry_run ){
-                        $port->send_ship( $excavator_id, { star_name => $star } );
-                    }
-                };
-                if( my $e = Exception::Class->caught ){
-                    if( $e->isa('LacunaRPCException') and $e->code == 1009 ){
-                        warning("Unable to send excavator from $planet, Observatory is capped.");
-                        next PLANET;
+                my @planet_targets;
+
+                trace("targetting planets of $star") if ($self->{config}->{excavator}->{trace});
+                my $star_data = $gov->{_observatory_plugin}{probed_stars}{$star};
+
+                foreach my $target_planet (@{$star_data->{bodies}})
+                {
+                    # don't excavate on occupied planets, it annoys people and they'll probable destroy the excavator anyway
+                    next if $target_planet->{body}{empire};
+                    next if $target_planet->{body}{station};
+                    next if $target_planet->{body}{alliance};
+                    next if $target_planet->{body}{incoming_foreign_ships};
+
+                    trace($target_planet->{name} . " is viable") if ($self->{config}->{excavator}->{trace});
+
+                    push @planet_targets, $target_planet;
+                }
+
+
+                foreach my $planet (@planet_targets)
+                {
+                    eval {
+                        if( not $dry_run ){
+                            $port->send_ship( $excavator_id, { body_id => $planet->{body}{id} } );
+                        }
+                    };
+                    if( my $e = Exception::Class->caught ){
+                        if( $e->isa('LacunaRPCException') and $e->code == 1009 ){
+                            warning("Unable to send excavator from $planet.");
+                            next PLANET;
+                        }
+                        else {
+                            warning("Unable to send excavator[$excavator_id] from $planet to $star: $e");
+                        }
                     }
                     else {
-                        warning("Unable to send excavator[$excavator_id] from $planet to $star: $e");
+                        action("${dry_run} excavator[$excavator_id] sent from $planet to $star");
                     }
-                }
-                else {
-                    action("${dry_run}excavator[$excavator_id] sent from $planet to $star");
                 }
             }
         }
