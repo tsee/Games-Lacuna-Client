@@ -299,7 +299,7 @@ use Data::Dumper;
                 last STAR if not $excavator_id;
                 my $port  = delete $gov->{_observatory_plugin}{ports}{$pid}{excavator2port}{$excavator_id};
 
-                my @planet_targets;
+                my @target_planets;
 
                 trace("targetting planets of $star") if ($gov->{config}->{excavator}->{trace});
                 my $star_data = $gov->{_observatory_plugin}{probed_stars}{$star};
@@ -313,16 +313,16 @@ use Data::Dumper;
                     next if $target_planet->{body}{incoming_foreign_ships};
 
                     trace($target_planet->{name} . " is viable") if ($gov->{config}->{excavator}->{trace});
-
-                    push @planet_targets, $target_planet;
+                    push @target_planets, $target_planet;
                 }
 
 
-                foreach my $planet (@planet_targets)
+                foreach my $target_planet (@target_planets)
                 {
+                    my $target_name = $target_planet->{name};
                     eval {
                         if( not $dry_run ){
-                            $port->send_ship( $excavator_id, { body_id => $planet->{body}{id} } );
+                            $port->send_ship( $excavator_id, { body_id => $target_planet->{id} } );
                         }
                     };
                     if( my $e = Exception::Class->caught ){
@@ -331,11 +331,11 @@ use Data::Dumper;
                             next PLANET;
                         }
                         else {
-                            warning("Unable to send excavator[$excavator_id] from $planet to $star: $e");
+                            warning("Unable to send excavator[$excavator_id] from $planet to $target_name @ $star: $e");
                         }
                     }
                     else {
-                        action("${dry_run} excavator[$excavator_id] sent from $planet to $star");
+                        action("${dry_run} excavator[$excavator_id] sent from $planet to $target_name @ $star");
                     }
                 }
             }
