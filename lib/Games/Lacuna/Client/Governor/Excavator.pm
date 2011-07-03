@@ -1,12 +1,12 @@
 #
 #===============================================================================
 #
-#  DESCRIPTION:  Astronomer implements the logic to automatically explore the
-#                surrounding space for an empire.
+#  DESCRIPTION:  Excavator implements the logic to automatically send excavators
+#                to look for glyphs (and anything else it happens to find)
 #
 #===============================================================================
 
-package Games::Lacuna::Client::Governor::Astronomer;
+package Games::Lacuna::Client::Governor::Excavator;
 use strict;
 use warnings qw(FATAL all);
 use Carp;
@@ -47,32 +47,32 @@ use Data::Dumper;
 
         ### Now find Spaceports.
         my (@spaceports) = $gov->find_buildings('SpacePort');
-        my @all_probes;
+        my @all_excavators;
         my @ships;
         my @traveling;
-        my @probe_to_port;
+        my @excavator_to_port;
         for my $sp ( @spaceports ){
                 my $data = $sp->view_all_ships({ "no_paging" => 1 });
-                push @all_probes, grep { $_->{type} eq 'probe' } @{$data->{ships}};
-                push @ships, grep { $_->{task} eq 'Docked' and $_->{type} eq 'probe' } @{$data->{ships}};
-                push @probe_to_port, map {; $_->{id} => $sp } @ships;
-                push @traveling, grep { $_->{task} eq 'Travelling' and $_->{type} eq 'probe' } @{$data->{ships}};
+                push @all_excavators, grep { $_->{type} eq 'excavator' } @{$data->{ships}};
+                push @ships, grep { $_->{task} eq 'Docked' and $_->{type} eq 'excavator' } @{$data->{ships}};
+                push @excavator_to_port, map {; $_->{id} => $sp } @ships;
+                push @traveling, grep { $_->{task} eq 'Travelling' and $_->{type} eq 'excavator' } @{$data->{ships}};
         }
 
         # Build more probes if directed
         my (@shipyards) = $gov->find_buildings('Shipyard');
-        my $build_probes = $config->{build_probes} || 0;
-        my $probes_to_build = $build_probes - scalar @all_probes;
-        trace(sprintf("Found %d probes, configured to build if less than %d found.",scalar @all_probes,$build_probes));
-        while ($probes_to_build > 0) {
+        my $build_excavators = $config->{build_excavators} || 0;
+        my $excavators_to_build = $build_excavators - scalar @all_excavators;
+        trace(sprintf("Found %d excavators, configured to build if less than %d found.",scalar @all_excavators,$build_excavators));
+        while ($excavators_to_build > 0) {
             eval {
-                $shipyards[0]->build_ship('probe');
-                action("Building new probe");
-                $probes_to_build--;
+                $shipyards[0]->build_ship('excavator');
+                action("Building new excavator");
+                $excavators_to_build--;
             };
             if ($@) {
-                $probes_to_build = 0; # Stop trying...
-                warning("Unable to build probe: $@");
+                $excavators_to_build = 0; # Stop trying...
+                warning("Unable to build excavator: $@");
             }
         }
 
@@ -80,30 +80,14 @@ use Data::Dumper;
             ports => \@spaceports,
             docked => \@ships,
             travel => \@traveling,
-            probe2port => { @probe_to_port },
+            excavator2port => { @excavator_to_port },
         };
         $gov->{_observatory_plugin}{stars}{$pid} = {
             observ_id   => $observatory->{building_id},
             stars       => \@stars,
         };
 
-        if ( $class->allowed_to_upgrade_observatory($gov) && not $class->can_observe($gov, $pid)) {
-            ### Hey, maybe we should upgrade the Observatory on this planet...
-            my $observatory_bldg = $gov->{client}->building(
-                id      => $observatory->{building_id},
-                type    => 'Observatory',
-            );
-            $gov->attempt_upgrade($observatory_bldg);
-        }
-
         return;
-    }
-
-    sub allowed_to_upgrade_observatory {
-        my ($class, $gov) = @_;
-        return 1 if !defined $gov->{config}->{astronomer}->{can_upgrade_observatory};
-        return 1 if $gov->{config}->{astronomer}->{can_upgrade_observatory};
-        return 0;
     }
 
     sub stars {
@@ -216,11 +200,6 @@ use Data::Dumper;
             }
         }
 
-        if( not any { $class->can_observe($gov, $_); } @pids ){
-            trace("All observatories are capped, aborting.");
-            return;
-        }
-
         ### Grab static star data...
         my %stars = %{ $class->stars($gov) || {} };
         if( not scalar keys %stars ){
@@ -270,17 +249,6 @@ use Data::Dumper;
         return;
     }
 
-    sub can_observe {
-        my $class   = shift;
-        my $gov     = shift;
-        my $pid     = shift;
-        my $oid = $gov->{_observatory_plugin}{stars}{$pid}{observ_id};
-        my $o   = $gov->building_details($pid, $oid);
-        my $max_probes      = $o->{level} * $PROBES_PER_LVL;
-        my $active_probes   = scalar @{$gov->{_observatory_plugin}{stars}{$pid}{stars}};
-        return $max_probes - $active_probes > 0;
-    }
-
     sub search_and_scan {
         my $class = shift;
         my $gov   = shift;
@@ -289,7 +257,7 @@ use Data::Dumper;
         my $stars = $class->stars($gov);
 
         ### Denote probes currently in transit.
-        my %traveling_probes = map {
+        my %traveling_excavators = map {
             my $travel = $gov->{_observatory_plugin}{ports}{$_}{travel};
             # If there are multiple probes to one dest. Don't care at this point.
             # We already informed the user there are duplicates. Let the Humans figure
@@ -298,56 +266,56 @@ use Data::Dumper;
         } keys %{$gov->{_observatory_plugin}{ports}};
 
         ### How many probes are available for us to send?
-        my %probe_cnt;
-        my %docked_probes = map {
+        my %excavator_cnt;
+        my %docked_excavators = map {
             my $docked = $gov->{_observatory_plugin}{ports}{$_}{docked};
-            $probe_cnt{$_}+= scalar @$docked;
+            $excavator_cnt{$_}+= scalar @$docked;
             $_ => $docked;
         } keys %{$gov->{_observatory_plugin}{ports}};
 
         ### Select our targets. Naively.
         my %closest_launch;
-        my %probe_from_planet;
+        my %excavator_from_planet;
         PLANET:
-        for my $pid ( keys %docked_probes ){
+        for my $pid ( keys %docked_excavators ){
             my $closest_stars = $distances_by_planet->{$pid};
             STAR:
             for my $star ( @{$closest_stars} ){
-                next PLANET if not $probe_cnt{$pid};
-                next STAR if $traveling_probes{$star} or $closest_launch{$star};
+                next PLANET if not $excavator_cnt{$pid};
+                next STAR if $traveling_excavators{$star} or $closest_launch{$star};
                 $closest_launch{$star} = $pid;
-                push @{$probe_from_planet{$pid}}, $star;
-                $probe_cnt{$pid}--;
+                push @{$excavator_from_planet{$pid}}, $star;
+                $excavator_cnt{$pid}--;
             }
         }
 
         my $dry_run = $gov->{config}{dry_run} ? "[DRYRUN]: " : '';
         ### Launch.
         PLANET:
-        while( my ($pid, $star_targets) = each %probe_from_planet ){
+        while( my ($pid, $star_targets) = each %excavator_from_planet ){
             my $planet = $gov->{status}{$pid}{name};
             STAR:
             for my $star ( @$star_targets ){
-                my ($probe_id) = keys %{$gov->{_observatory_plugin}{ports}{$pid}{probe2port}};
-                last STAR if not $probe_id;
-                my $port  = delete $gov->{_observatory_plugin}{ports}{$pid}{probe2port}{$probe_id};
+                my ($excavator_id) = keys %{$gov->{_observatory_plugin}{ports}{$pid}{excavator2port}};
+                last STAR if not $excavator_id;
+                my $port  = delete $gov->{_observatory_plugin}{ports}{$pid}{excavator2port}{$excavator_id};
 
                 eval {
                     if( not $dry_run ){
-                        $port->send_ship( $probe_id, { star_name => $star } );
+                        $port->send_ship( $excavator_id, { star_name => $star } );
                     }
                 };
                 if( my $e = Exception::Class->caught ){
                     if( $e->isa('LacunaRPCException') and $e->code == 1009 ){
-                        warning("Unable to send probe from $planet, Observatory is capped.");
+                        warning("Unable to send excavator from $planet, Observatory is capped.");
                         next PLANET;
                     }
                     else {
-                        warning("Unable to send probe[$probe_id] from $planet to $star: $e");
+                        warning("Unable to send excavator[$excavator_id] from $planet to $star: $e");
                     }
                 }
                 else {
-                    action("${dry_run}Probe[$probe_id] sent from $planet to $star");
+                    action("${dry_run}excavator[$excavator_id] sent from $planet to $star");
                 }
             }
         }
@@ -363,21 +331,21 @@ __END__
 
 =head1 NAME
 
-Games::Lacuna::Client::Governor::Astronomer - A rudimentary plugin for Governor that will automate the targetting of probes.
+Games::Lacuna::Client::Governor::Excavator - A rudimentary plugin for Governor that will automate the targetting of excavator.
 
 =head1 SYNOPSIS
 
-    Add 'astronomer' to the Governor configuration priorities list.
+    Add 'excavator' to the Governor configuration priorities list.
 
 =head1 DESCRIPTION
 
-This module examines each colony and the probes currently available (as well as in transit)
-to determine what stars the available probes should be sent to. It is a fast-and-dirty first-fit
+This module examines each colony and the excavators currently available (as well as in transit)
+to determine what stars the available excavators should be sent to. It is a fast-and-dirty first-fit
 algorithm, intended merely do expand the observatory's scan in an every increasing radius.
 
-This module looks for the build_probes colony-level configuration key in the governor config.
-If it's a positive number, and there are fewer than that number of probes currently in any
-state at the SpacePort of the given body, then it will attempt to build probes to make up
+This module looks for the build_excavators colony-level configuration key in the governor config.
+If it's a positive number, and there are fewer than that number of excavators currently in any
+state at the SpacePort of the given body, then it will attempt to build excavators to make up
 the difference.
 
 NOTE: Having ships auto-build can cause ship loss if it happens when you don't expect it, and you
@@ -395,15 +363,17 @@ L<Games::Lacuna::Client>, by Steffen Mueller on which this module is dependent.
 
 L<Games::Lacuna::Client::Governor>, by Adam Bellaire of which this module is a plugin.
 
+L<Games::Lacuna::Client::Governor::Astronmer>, by Daniel Kimsey from which this module was derived
+
 Of course also, the Lacuna Expanse API docs themselves at L<http://us1.lacunaexpanse.com/api>.
 
 =head1 AUTHOR
 
-Daniel Kimsey, E<lt>dekimsey@ufl.eduE<gt>
+Malcolm Harwood, E<lt>mjh-lacuna@liminalflux.netE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010 by Steffen Mueller
+Copyright (C) 2011 by Malcolm Harwood
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,
