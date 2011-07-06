@@ -462,6 +462,8 @@ sub coordinate_push_mode {
                 my $dest = $mode ? $other : $pid;
 
                 my $avail = $mode ? min( $info->{$other}->{$res}->{space_left}, $reqd ) : min( $info->{$other}->{$res}->{available} , $reqd ); 
+                trace("avail: $avail $res from $self->{planet_names}->{$other}") if ($self->{config}->{verbosity}->{trace} && defined $avail);
+
                 my @ships;
                 if( $info->{$orig}->{trade} ){
                     @ships = defined $self->{trade_ships}->{$orig}
