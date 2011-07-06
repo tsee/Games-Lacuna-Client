@@ -234,11 +234,24 @@ use Data::Dumper;
         ### For each planet, sort the stars based on their distances from it.
         my %distances_by_planet;
         for my $pid ( keys %pid_loc ){
-            $distances_by_planet{$pid} = [
-                reverse sort {
+
+            my $planet = $gov->{status}->{$pid}->{name};
+            next unless $planet;
+            my $config = $gov->{config}->{colony}{$planet};
+            my $order = $config->{excavator}->{order} || 'nearest';
+
+            # nearest first, default order
+            my @distances = sort {
                    $planet_distances{$pid}{$a} <=> $planet_distances{$pid}{$b}
-                } keys %{ $planet_distances{$pid} }
-            ];
+                } keys %{ $planet_distances{$pid} };
+
+            if ($order eq 'furthest') {
+                @distances = reverse @distances;
+            } elsif ($order eq 'random') {
+                @distances = fisher_yates_shuffle(\@distances);
+            }
+
+            $distances_by_planet{$pid} = [ @distances ];
         }
 
         ### Launch ze Probes!
@@ -336,6 +349,7 @@ use Data::Dumper;
                     }
                     else {
                         action("${dry_run} excavator[$excavator_id] sent from $planet to $target_name @ $star");
+                        next PLANET;
                     }
                 }
             }
@@ -344,6 +358,20 @@ use Data::Dumper;
         return;
     }
 
+    # from http://www.perlmonks.org/?node=How%20do%20I%20shuffle%20an%20array%20randomly%3F to avoid
+    # adding a new dependency on Algorithm::Numerical::Shuffle
+
+    # fisher_yates_shuffle( \@array ) : 
+    # generate a random permutation of @array in place
+    sub fisher_yates_shuffle {
+        my $array = shift;
+        my $i;
+        for ($i = @$array; --$i; ) {
+            my $j = int rand ($i+1);
+            next if $i == $j;
+            @$array[$i,$j] = @$array[$j,$i];
+        }
+    }
 }
 
 1;
