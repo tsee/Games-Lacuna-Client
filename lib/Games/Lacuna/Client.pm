@@ -68,13 +68,16 @@ sub new {
        or not exists $opt{api_key};
   $opt{uri} =~ s/\/+$//;
   
+  my $debug = exists $ENV{GLC_DEBUG} ? $ENV{GLC_DEBUG}
+            :                          0;
+  
   my $self = bless {
     session_start      => 0,
     session_id         => 0,
     session_timeout    => 3600*1.8, # server says it's 2h, but let's play it safe.
     session_persistent => 0,
     cfg_file           => undef,
-    debug              => 0,
+    debug              => $DEBUG,
     %opt
   } => $class;
   
