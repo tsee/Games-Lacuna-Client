@@ -95,8 +95,8 @@ foreach my $name ( sort keys %planets ) {
     
     my @plans;
     for my $plan ( sort keys %plan_count ) {
-        for my $level ( sort keys %{ $plan_count{$plan} } ) {
-            for my $extra ( sort keys %{ $plan_count{$plan}{$level} } ) {
+        for my $level ( sort { $a <=> $b } keys %{ $plan_count{$plan} } ) {
+            for my $extra ( sort { $a <=> $b } keys %{ $plan_count{$plan}{$level} } ) {
                 my $type = building_type_from_label( $plan );
                 
                 push @plans, {
