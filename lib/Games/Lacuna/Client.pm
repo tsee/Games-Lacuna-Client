@@ -77,7 +77,7 @@ sub new {
     session_timeout    => 3600*1.8, # server says it's 2h, but let's play it safe.
     session_persistent => 0,
     cfg_file           => undef,
-    debug              => $DEBUG,
+    debug              => $debug,
     %opt
   } => $class;
   
