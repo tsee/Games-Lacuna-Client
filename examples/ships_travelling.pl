@@ -66,16 +66,14 @@ foreach my $name ( sort keys %planets ) {
 
 my @ships;
 foreach my $sp (@spaceports) {
-  my $ships = [];
-  my $page  = 1;
-  my $response;
-  
-  do {
-    $response = $sp->view_ships_travelling( $page++ );
-    
-    push @$ships, @{ $response->{ships_travelling} };
-    
-  } while ( @$ships < $response->{number_of_ships_travelling} );
+  my $ships = $sp->view_all_ships(
+    {
+      no_paging => 1,
+    },
+    {
+      task => 'Travelling',
+    }
+  )->{ships};
   
   foreach my $ship ( @$ships ) {
     ( my $date_arrives = $ship->{date_arrives} ) =~ s{^(\d+)\s+(\d+)\s+}{$2/$1/};
