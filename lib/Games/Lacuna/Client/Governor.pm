@@ -694,8 +694,6 @@ sub other_upgrades {
             my $details = $self->building_details($self->{current}->{planet_id},$building->{building_id});
             if ($details->{level} < $level_limit) {
                 push @buildings, $building;
-                trace("adding a $label ($type, $building->{building_id} @ $details->{level}) to upgrade queue")
-                    if ($self->{config}->{verbosity}->{trace});
             }
             else {
                 trace("$label ($type, $building->{building_id} @ $details->{level}) ($type) already reached $level_limit")
@@ -709,7 +707,32 @@ sub other_upgrades {
     my $sort_type = $config->{other_upgrades}->{upgrade_selection} || $config->{upgrade_selection};
     my @sorted_buildings = sort { $self->pertinence_sort(undef,$sort_type,undef,$a,$b) } @buildings;
 
-    $self->attempt_upgrade(\@sorted_buildings, 0);
+    $self->attempt_other_upgrades(\@buildings, $sort_type);
+}
+  
+sub attempt_other_upgrades {
+    my ($self, $buildings, $sort_type) = @_;
+ 
+     # using pertinence_sort, but sort categories dependent on resource capacity will error out
+     # - storage and production upgrades handle those cases anyway
+    my @sorted_buildings = sort { $self->pertinence_sort(undef,$sort_type,undef,$a,$b) } @$buildings;
+
+    if ($self->{config}->{verbosity}->{trace}) {
+        foreach my $building (@sorted_buildings)
+        {
+            my $details = $self->building_details(@{$self->{current}}{planet_id},$building->{building_id});
+            my $costs   = $self->{cache}->{building}->{ $building->{building_id} }->{upgrade}->{cost};
+            trace("$building->{building_id}: $details->{pretty_type} @ $details->{level} upgrade cost: " . sum_keys($costs)) if $self->{config}->{verbosity}->{trace};
+        }
+    }
+ 
+    my $upgrade_succeeded = $self->attempt_upgrade(\@sorted_buildings, 0);
+    if ($upgrade_succeeded) {
+        my $details = $self->building_details(@{$self->{current}}{planet_id},$upgrade_succeeded);
+        action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$details->{pretty_type},$details->{level}));
+    } else {
+        warning("Could not find any suitable buildings to upgrade") if $self->{config}->{verbosity}->{warning};
+    }
 }
 
 sub ship_report {
