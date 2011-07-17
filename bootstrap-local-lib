@@ -1,0 +1,22 @@
+wget http://search.cpan.org/CPAN/authors/id/A/AP/APEIRON/local-lib-1.008004.tar.gz
+tar zxf local-lib-1.008004.tar.gz 
+cd local-lib-1.008004/  \
+    && perl Makefile.PL --bootstrap=`pwd`/../local-lib/ \
+    && make && make test && make install  \
+    && cd .. \
+    && perl -I`pwd`/local-lib/lib/perl5 -Mlocal::lib=`pwd`/local-lib/ > setpaths \
+    && chmod +x setpaths \
+    && source ./setpaths \
+    && wget http://search.cpan.org/CPAN/authors/id/M/MI/MIYAGAWA/App-cpanminus-1.4008.tar.gz \
+    && tar zxf App-cpanminus-1.4008.tar.gz \
+    && cd App-cpanminus-1.4008/ \
+    && perl Makefile.PL  \
+    && make && make install \
+    && cd .. \
+    && rm -rf local-lib-1.008004.tar.gz local-lib-1.008004 App-cpanminus-1.4008.tar.gz App-cpanminus-1.4008 \
+    && cpanm -L local-lib JSON::RPC::LWP Text::CSV \
+    && mkdir cache
+
+echo
+echo "source ./setpaths" to set up the local::lib perl environment
+echo
