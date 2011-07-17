@@ -996,7 +996,10 @@ sub attempt_upgrade {
     # Abort if an upgrade is in progress.
     for my $opt (@all_options) {
         if (any {$opt->{building_id} == $_->{building_id}} @{$self->{current}->{build_queue}}) {
-            trace(sprintf("Upgrade already in progress for %s, aborting.",$opt->{building_id})) if ($self->{config}->{verbosity}->{trace});
+            if ($self->{config}->{verbosity}->{trace}) {
+                my $details = $self->building_details($pid,$opt->{building_id});
+                trace(sprintf("Upgrade already in progress for %s (%s @ %d), aborting.",$opt->{building_id},$details->{pretty_type},$details->{level})) 
+            }
             return;
         }
     }
