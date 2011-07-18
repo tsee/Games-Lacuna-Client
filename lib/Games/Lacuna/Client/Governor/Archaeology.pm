@@ -21,17 +21,18 @@ use Data::Dumper;
         my $class   = shift;
         my $gov     = shift;
         my ($pid, $status, $cfg) = @{$gov->{current}}{qw(planet_id status config)};
+        my $planet = $gov->{planet_names}->{$pid};
 
         my ($arch) = $gov->find_buildings('Archaeology');
 
         if (not defined $arch) {
-            warning("There is no Archaeology Ministry on ".$gov->{planet_names}->{$pid});
+            warning("There is no Archaeology Ministry on $planet");
             return;
         }
 
         if ( my $time = $gov->building_details($pid,$arch->{building_id})->{work}{seconds_remaining} ){
             $gov->set_next_action_if_sooner( $time );
-            warning("The Archaeology Ministry on ".$gov->{planet_names}->{$pid}." is busy.");
+            warning("The Archaeology Ministry on $planet is busy.");
             return;
         }
         my %ore_avail = %{$arch->get_ores_available_for_processing->{ore}};
@@ -58,11 +59,11 @@ use Data::Dumper;
             ($ore) = splice(@ores, rand(@ores), 1) 
         }
         else {
-            warning("Unknown archaeology selection command: $selection");
+            warning("$planet: Unknown archaeology selection command: $selection");
         }
 
         if( not $ore ){
-            warning('Unable to find a suitable ore for archaeology');
+            warning("$planet: Unable to find a suitable ore for archaeology");
             return;
         }
 
@@ -70,9 +71,9 @@ use Data::Dumper;
             $arch->search_for_glyph($ore);
         };
         if ($@) {
-            warning("Unable to search for $ore at archaeology ministry: $@");
+            warning("$planet: Unable to search for $ore at archaeology ministry: $@");
         } else {
-            action("Searching for $ore glyph at archaeology ministry");
+            action("$planet: Searching for $ore glyph at archaeology ministry");
         }
     }
 

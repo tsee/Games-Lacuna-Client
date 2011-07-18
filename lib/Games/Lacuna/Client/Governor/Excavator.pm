@@ -12,6 +12,7 @@ use warnings qw(FATAL all);
 use Carp;
 use English qw(-no_match_vars);
 use Data::Dumper;
+use Hash::Merge qw(merge);
 
 {
     use Storable qw(lock_nstore lock_retrieve);
@@ -26,11 +27,12 @@ use Data::Dumper;
         my $class   = shift;
         my $gov     = shift;
         my ($pid,$config) = @{$gov->{current}}{qw(planet_id config)};
+        my $planet = $gov->{planet_names}->{$gov->{current}->{planet_id}};
 
         # There's only one.
         my ($observatory) = $gov->find_buildings('Observatory');
         if( not $observatory ){
-            trace("No observatories found.");
+            warning("There is no Observatory on $planet");
             return;
         }
 
@@ -63,16 +65,16 @@ use Data::Dumper;
         my (@shipyards) = $gov->find_buildings('Shipyard');
         my $build_excavators = $config->{build_excavators} || 0;
         my $excavators_to_build = $build_excavators - scalar @all_excavators;
-        trace(sprintf("Found %d excavators, configured to build if less than %d found.",scalar @all_excavators,$build_excavators));
+        trace(sprintf("$planet: Found %d excavators, configured to build if less than %d found.",scalar @all_excavators,$build_excavators)) if ($gov->{config}->{verbosity}->{trace});
         while ($excavators_to_build > 0) {
             eval {
                 $shipyards[0]->build_ship('excavator');
-                action("Building new excavator");
+                action("$planet: Building new excavator");
                 $excavators_to_build--;
             };
             if ($@) {
                 $excavators_to_build = 0; # Stop trying...
-                warning("Unable to build excavator: $@");
+                warning("$planet: Unable to build excavator: $@");
             }
         }
 
@@ -181,10 +183,11 @@ use Data::Dumper;
     sub post_run {
         my $class = shift;
         my $gov   = shift;
+        my $planet = $gov->{planet_names}->{$gov->{current}->{planet_id}};
 
         my @pids = keys %{ $gov->{_observatory_plugin}{stars} };
         if( not @pids ){
-            trace("No observatories found, aborting.");
+            trace("$planet: No observatories found, aborting.");
             return;
         }
 
@@ -237,7 +240,7 @@ use Data::Dumper;
 
             my $planet = $gov->{status}->{$pid}->{name};
             next unless $planet;
-            my $config = $gov->{config}->{colony}{$planet};
+            my $config = merge($gov->{config}{colony}{$planet} || {}, $gov->{config}{colony}{_default_});
             my $order = $config->{excavator}->{order} || 'nearest';
 
             # nearest first, default order
@@ -251,10 +254,10 @@ use Data::Dumper;
                 @distances = fisher_yates_shuffle(\@distances);
             }
 
-            $distances_by_planet{$pid} = [ @distances ];
+            $distances_by_planet{$pid} = \@distances;
         }
 
-        ### Launch ze Probes!
+        ### Launch ze Excavators!
         $class->search_and_scan($gov, \%planet_distances, \%distances_by_planet);
 
         return;
@@ -270,13 +273,13 @@ use Data::Dumper;
         ### Denote excavators currently in transit.
         my %traveling_excavators = map {
             my $travel = $gov->{_observatory_plugin}{ports}{$_}{travel};
-            # If there are multiple probes to one dest. Don't care at this point.
+            # If there are multiple excavators to one dest. Don't care at this point.
             # We already informed the user there are duplicates. Let the Humans figure
             # out how best to resolve that.
             map {; $_->{to}{name} => $_; } @$travel;
         } keys %{$gov->{_observatory_plugin}{ports}};
 
-        ### How many probes are available for us to send?
+        ### How many excavators are available for us to send?
         my %excavator_cnt;
         my %docked_excavators = map {
             my $docked = $gov->{_observatory_plugin}{ports}{$_}{docked};
@@ -320,10 +323,10 @@ use Data::Dumper;
                 foreach my $target_planet (@{$star_data->{bodies}})
                 {
                     # don't excavate on occupied planets, it annoys people and they'll probable destroy the excavator anyway
-                    next if $target_planet->{body}{empire};
-                    next if $target_planet->{body}{station};
-                    next if $target_planet->{body}{alliance};
-                    next if $target_planet->{body}{incoming_foreign_ships};
+                    next if $target_planet->{empire};
+                    next if $target_planet->{station};
+                    next if $target_planet->{alliance};
+                    next if $target_planet->{incoming_foreign_ships};
 
                     trace($target_planet->{name} . " is viable") if ($gov->{config}->{excavator}->{trace});
                     push @target_planets, $target_planet;
@@ -371,6 +374,7 @@ use Data::Dumper;
             next if $i == $j;
             @$array[$i,$j] = @$array[$j,$i];
         }
+        return @$array;
     }
 }
 

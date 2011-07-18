@@ -26,11 +26,12 @@ use Data::Dumper;
         my $class   = shift;
         my $gov     = shift;
         my ($pid,$config) = @{$gov->{current}}{qw(planet_id config)};
+        my $planet = $gov->{planet_names}->{$pid};
 
         # There's only one.
         my ($observatory) = $gov->find_buildings('Observatory');
         if( not $observatory ){
-            trace("No observatories found.");
+            warning("There is no Observatory on $planet");
             return;
         }
 
@@ -63,16 +64,16 @@ use Data::Dumper;
         my (@shipyards) = $gov->find_buildings('Shipyard');
         my $build_probes = $config->{build_probes} || 0;
         my $probes_to_build = $build_probes - scalar @all_probes;
-        trace(sprintf("Found %d probes, configured to build if less than %d found.",scalar @all_probes,$build_probes));
+        trace(sprintf("$planet: Found %d probes, configured to build if less than %d found.",scalar @all_probes,$build_probes)) if ($gov->{config}->{verbosity}->{trace});
         while ($probes_to_build > 0) {
             eval {
                 $shipyards[0]->build_ship('probe');
-                action("Building new probe");
+                action("$planet: Building new probe");
                 $probes_to_build--;
             };
             if ($@) {
                 $probes_to_build = 0; # Stop trying...
-                warning("Unable to build probe: $@");
+                warning("$planet: Unable to build probe: $@");
             }
         }
 
@@ -146,7 +147,7 @@ use Data::Dumper;
                 }
             };
             eval {
-                trace("Astronomer is loading cached static star map...");
+                trace("Astronomer is loading cached static star map...") if ($gov->{config}->{verbosity}->{trace});
                 $gov->{_static_stars} = lock_retrieve( $cache_path );
             };
             warning(
@@ -177,7 +178,7 @@ use Data::Dumper;
             return;
         }
 
-        trace("Astronomer is downloading static star map...");
+        trace("Astronomer is downloading static star map...") if ($gov->{config}->{verbosity}->{trace});
         my $raw_csv = $response->decoded_content;
         require Text::CSV;
         my $csv = Text::CSV->new;
@@ -200,7 +201,7 @@ use Data::Dumper;
 
         my @pids = keys %{ $gov->{_observatory_plugin}{stars} };
         if( not @pids ){
-            trace("No observatories found, aborting.");
+            warning("No observatories found, aborting.");
             return;
         }
 

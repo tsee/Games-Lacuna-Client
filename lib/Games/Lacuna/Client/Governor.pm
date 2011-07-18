@@ -276,7 +276,7 @@ sub coordinate_pushes {
 
     delete $self->{trade_ships};
     $self->{sent_ships} = [];
-    trace("Coordinating pushes...");
+    trace("Coordinating pushes...") if ($self->{config}->{verbosity}->{trace});
     my @candidates;
     push @candidates, $self->coordinate_push_mode($info,1);  # Overload pushes
     push @candidates, $self->coordinate_push_mode($info,0);    # Request pushes
@@ -534,12 +534,14 @@ sub resource_crisis {
         return;
     }
 
+    my $planet = $self->{planet_names}->{$self->{current}->{planet_id}};
+
     my $key = $type eq 'production' ? 'empty' : 'full';
 
     for my $res (sort { $status->{$key}->{$a} <=> $status->{$key}->{$b} } keys %{$status->{$key}}) {
         my $time_left = $status->{$key}->{$res};
         if ( $time_left < $cfg->{crisis_threshhold_hours} && $time_left >= 0) {
-            warning(sprintf("%s crisis detected for %s: Only %s remain until $key, less than %s threshhold.",
+            warning(sprintf("$planet: %s crisis detected for %s: Only %s remain until $key, less than %s threshhold.",
                 ucfirst($type), uc($res), phours($time_left), phours($cfg->{crisis_threshhold_hours}))) if $self->{config}->{verbosity}->{warning};
 
             # Attempt to increase production/storage
@@ -547,9 +549,9 @@ sub resource_crisis {
 
             if ($upgrade_succeeded) {
                 my $bldg_data = $self->{cache}->{body}->{$status->{id}}->{$upgrade_succeeded};
-                action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
+                action(sprintf("$planet: Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
             } else {
-                warning("Could not find any suitable buildings to upgrade") if $self->{config}->{verbosity}->{warning};
+                warning("$planet: Could not find any suitable buildings to upgrade") if $self->{config}->{verbosity}->{warning};
 
             }
             # If we could not increase production, attempt to reduce consumption (!!)
@@ -594,11 +596,12 @@ sub _resource_upgrader {
     my ($self, $type) =  @_;
     my ($status, $cfg) = @{$self->{current}}{qw(status config)};
     my @reslist = qw(food ore water energy waste happiness);
+    my $planet = $self->{planet_names}->{$self->{current}->{planet_id}};
 
     # Stop without processing if the build queue is full.
     if((defined $self->{current}->{build_queue_remaining}) &&
         ($self->{current}->{build_queue_remaining} <= $cfg->{reserve_build_queue})) {
-        warning(sprintf("Aborting, %s slots in build queue <= %s reserve slots specified",
+        warning(sprintf("$planet: Aborting, %s slots in build queue <= %s reserve slots specified",
             $self->{current}->{build_queue_remaining},
             $cfg->{reserve_build_queue})) if $self->{config}->{verbosity}->{warning};
         return;
@@ -611,10 +614,10 @@ sub _resource_upgrader {
 
         if ($upgrade_succeeded) {
             my $bldg_data = $self->{cache}->{body}->{$status->{id}}->{$upgrade_succeeded};
-            action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
+            action(sprintf("$planet: Upgraded %s, %s (Level %s)",$upgrade_succeeded,$bldg_data->{pretty_type},$bldg_data->{level}));
             last;
         } else {
-            warning("Could not find any suitable buildings for $selected to upgrade") if $self->{config}->{verbosity}->{warning};
+            warning("$planet: Could not find any suitable buildings for $selected to upgrade") if $self->{config}->{verbosity}->{warning};
 
         }
     }
@@ -668,11 +671,12 @@ sub select_resource {
 sub other_upgrades {
     my ($self, $type) =  @_;
     my ($status, $config) = @{$self->{current}}{qw(status config)};
+    my $planet = $self->{planet_names}->{$self->{current}->{planet_id}};
 
     # Stop without processing if the build queue is full.
     if((defined $self->{current}->{build_queue_remaining}) &&
         ($self->{current}->{build_queue_remaining} <= $config->{reserve_build_queue})) {
-        warning(sprintf("Aborting, %s slots in build queue <= %s reserve slots specified",
+        warning(sprintf("$planet: Aborting, %s slots in build queue <= %s reserve slots specified",
             $self->{current}->{build_queue_remaining},
             $config->{reserve_build_queue})) if $self->{config}->{verbosity}->{warning};
         return;
@@ -684,7 +688,7 @@ sub other_upgrades {
     foreach my $type (@types) {
         my $label = building_label($type);
         unless ($label) {
-            warning("unrecognised building type $type") if $self->{config}->{verbosity}->{warning};
+            warning("$planet: unrecognised building type $type") if $self->{config}->{verbosity}->{warning};
             next;
         }
 
@@ -696,7 +700,7 @@ sub other_upgrades {
                 push @buildings, $building;
             }
             else {
-                trace("$label ($type, $building->{building_id} @ $details->{level}) ($type) already reached $level_limit")
+                trace("$planet: $label ($type, $building->{building_id} @ $details->{level}) ($type) already reached $level_limit")
                     if ($self->{config}->{verbosity}->{trace});
             }
         }
@@ -712,6 +716,7 @@ sub other_upgrades {
   
 sub attempt_other_upgrades {
     my ($self, $buildings, $sort_type) = @_;
+    my $planet = $self->{planet_names}->{$self->{current}->{planet_id}};
  
      # using pertinence_sort, but sort categories dependent on resource capacity will error out
      # - storage and production upgrades handle those cases anyway
@@ -722,16 +727,16 @@ sub attempt_other_upgrades {
         {
             my $details = $self->building_details(@{$self->{current}}{planet_id},$building->{building_id});
             my $costs   = $self->{cache}->{building}->{ $building->{building_id} }->{upgrade}->{cost};
-            trace("$building->{building_id}: $details->{pretty_type} @ $details->{level} upgrade cost: " . sum_keys($costs)) if $self->{config}->{verbosity}->{trace};
+            trace("$planet: $building->{building_id}: $details->{pretty_type} @ $details->{level} upgrade cost: " . sum_keys($costs)) if $self->{config}->{verbosity}->{trace};
         }
     }
  
     my $upgrade_succeeded = $self->attempt_upgrade(\@sorted_buildings, 0);
     if ($upgrade_succeeded) {
         my $details = $self->building_details(@{$self->{current}}{planet_id},$upgrade_succeeded);
-        action(sprintf("Upgraded %s, %s (Level %s)",$upgrade_succeeded,$details->{pretty_type},$details->{level}));
+        action(sprintf("$planet: Upgraded %s, %s (Level %s)",$upgrade_succeeded,$details->{pretty_type},$details->{level}));
     } else {
-        warning("Could not find any suitable buildings to upgrade") if $self->{config}->{verbosity}->{warning};
+        warning("$planet: Could not find any suitable buildings to upgrade") if $self->{config}->{verbosity}->{warning};
     }
 }
 
