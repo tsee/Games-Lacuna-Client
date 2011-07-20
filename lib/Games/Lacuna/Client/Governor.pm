@@ -1090,7 +1090,8 @@ sub attempt_upgrade {
             trace("This buildings already has an upgrade in progress!");
         }
         elsif( $e = Exception::Class->caught ){
-            warning("Upgrade failed: $e");
+            my $planet = $self->{planet_names}->{$self->{current}->{planet_id}};
+            warning("$planet: $details->{pretty_type} @ $details->{level} Upgrade failed: $e");
         }
         else {
             $upgrade_succeeded = $upgrade->{building_id};
