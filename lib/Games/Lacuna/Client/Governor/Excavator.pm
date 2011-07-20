@@ -27,25 +27,37 @@ use Hash::Merge qw(merge);
         my $class   = shift;
         my $gov     = shift;
         my ($pid,$config) = @{$gov->{current}}{qw(planet_id config)};
-        my $planet = $gov->{planet_names}->{$gov->{current}->{planet_id}};
+        my $planet = $gov->{planet_names}->{$pid};
 
-        # There's only one.
-        my ($observatory) = $gov->find_buildings('Observatory');
-        if( not $observatory ){
-            warning("There is no Observatory on $planet");
+        my ($archaeology) = $gov->find_buildings('Archaeology');
+        unless ($archaeology) {
+            trace("No Archaeology Ministry on $planet, can't build excavators") if ($gov->{config}->{verbosity}->{trace});
+
+            return;
+        }
+        my $details = $gov->building_details($pid, $archaeology->{building_id});
+        unless ($details->{level} >= 15)
+        {
+            trace("$planet: Archaeology Ministry @ $details->{level}, needs to be at least 15 to build excavators") if ($gov->{config}->{verbosity}->{trace});
             return;
         }
 
-        my @stars;
-        do {
-            my $page = 0;
-            while( $page <= 4 ){
-                $page++;
-                my $data = $observatory->get_probed_stars($page);
-                push @stars, @{$data->{stars}};
-                last if $page * $PROBES_PER_PAGE >= $data->{star_count};
-            }
-        };
+        my ($observatory) = $gov->find_buildings('Observatory');
+        if( $observatory ){
+            my @stars;
+            do {
+                my $page = 0;
+                while( $page <= 4 ){
+                    $page++;
+                    my $data = $observatory->get_probed_stars($page);
+                    push @stars, @{$data->{stars}};
+                    last if $page * $PROBES_PER_PAGE >= $data->{star_count};
+                }
+            };
+            $gov->{_observatory_plugin}{stars}{$pid} = {
+                stars       => \@stars,
+            };
+        }
 
         ### Now find Spaceports.
         my (@spaceports) = $gov->find_buildings('SpacePort');
@@ -61,7 +73,7 @@ use Hash::Merge qw(merge);
                 push @traveling, grep { $_->{task} eq 'Travelling' and $_->{type} eq 'excavator' } @{$data->{ships}};
         }
 
-        # Build more probes if directed
+        # Build more excavators if directed
         my (@shipyards) = $gov->find_buildings('Shipyard');
         my $build_excavators = $config->{build_excavators} || 0;
         my $excavators_to_build = $build_excavators - scalar @all_excavators;
@@ -83,10 +95,6 @@ use Hash::Merge qw(merge);
             docked => \@ships,
             travel => \@traveling,
             excavator2port => { @excavator_to_port },
-        };
-        $gov->{_observatory_plugin}{stars}{$pid} = {
-            observ_id   => $observatory->{building_id},
-            stars       => \@stars,
         };
 
         return;

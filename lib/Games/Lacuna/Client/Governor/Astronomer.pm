@@ -276,6 +276,7 @@ use Data::Dumper;
         my $gov     = shift;
         my $pid     = shift;
         my $oid = $gov->{_observatory_plugin}{stars}{$pid}{observ_id};
+        return 0 unless $oid;
         my $o   = $gov->building_details($pid, $oid);
         my $max_probes      = $o->{level} * $PROBES_PER_LVL;
         my $active_probes   = scalar @{$gov->{_observatory_plugin}{stars}{$pid}{stars}};
