@@ -39,7 +39,8 @@ unless ( $cfg_file and -e $cfg_file ) {
 }
 
 my $client = Games::Lacuna::Client->new(
-	cfg_file => $cfg_file,
+	cfg_file  => $cfg_file,
+    rpc_sleep => 2,
 	# debug    => 1,
 );
 
@@ -62,15 +63,7 @@ foreach my $name ( sort keys %planets ) {
     
     my $buildings = $result->{buildings};
 
-    # Find the Archaeology Ministry
-    my $arch_id = first {
-            $buildings->{$_}->{name} eq 'Archaeology Ministry'
-    } keys %$buildings;
-
-    next if not $arch_id;
-    
-    my $arch   = $client->building( id => $arch_id, type => 'Archaeology' );
-    my $glyphs = $arch->get_glyphs->{glyphs};
+    my $glyphs = get_glyphs( $client, $buildings );
     
     next if !@$glyphs;
     
@@ -99,6 +92,42 @@ foreach my $name ( sort keys %planets ) {
 }
 
 creation_summary(%all_glyphs);
+
+exit;
+
+
+sub get_glyphs {
+    my ( $client, $buildings ) = @_;
+    
+    my $id;
+    my $type;
+    
+    # Find the Archaeology Ministry
+    my $arch_id = first {
+            $buildings->{$_}->{url} eq '/archaeology'
+    } keys %$buildings;
+
+    if ( $arch_id ) {
+        $id   = $arch_id;
+        $type = 'Archaeology';
+    }
+    else {
+        my $trade_id = first {
+                $buildings->{$_}->{url} eq '/trade'
+        } keys %$buildings;
+        
+        if ( $trade_id ) {
+            $id   = $trade_id;
+            $type = 'Trade';
+        }
+    }
+    
+    return [] if !$id;
+    
+    my $building = $client->building( id => $id, type => $type );
+    
+    return $building->get_glyphs->{glyphs};
+}
 
 # Print out a pretty table of what we can make.
 sub creation_summary {
