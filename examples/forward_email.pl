@@ -24,6 +24,10 @@
 #
 # This only forwards the short 'body_preview' from the inbox listing
 # this ensures all mail is left flagged as unread.
+#
+# If max_pages is set, the last-seen-id will not be cached, otherwise if there
+# are many messaged not being archived/trashed, we could end up with pages
+# never being processed.
 # 
 # example forward_email.yml
 
@@ -36,6 +40,8 @@
 #mime_lite:
 #    - smtp
 #    - 'smtp.example.com'
+#
+#max_pages: 2
 #
 #archive:
 #    - '^Probe Detected!$'
@@ -55,20 +61,25 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client ();
 
+# All servers so far have used this same value
+my $messages_per_page = 25;
+
+my $DEBUG = 0;
+
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
-  $cfg_file = eval{
-    require File::HomeDir;
-    require File::Spec;
-    my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
-    File::Spec->catfile(
-      $dist,
-      'login.yml'
-    ) if $dist;
-  };
-  unless ( $cfg_file and -e $cfg_file ) {
-    die "Did not provide a config file";
-  }
+    $cfg_file = eval{
+        require File::HomeDir;
+        require File::Spec;
+        my $dist = File::HomeDir->my_dist_config('Games-Lacuna-Client');
+        File::Spec->catfile(
+            $dist,
+            'login.yml'
+        ) if $dist;
+    };
+    unless ( $cfg_file and -e $cfg_file ) {
+        die "Did not provide a config file";
+    }
 }
 
 my $email_file = shift(@ARGV) || 'forward_email.yml';
@@ -78,9 +89,11 @@ unless ( $email_file and -e $email_file ) {
 
 my $email_conf = LoadFile($email_file);
 
+debug( { conf => $email_conf } );
+
 my $client = Games::Lacuna::Client->new(
     cfg_file  => $cfg_file,
-    rpc_sleep => 2,
+    rpc_sleep => 3,
     # debug    => 1,
 );
 
@@ -102,13 +115,9 @@ my $mime_lite_conf = $email_conf->{mime_lite} || [];
 die "mime_lite key in forward_email config file must be a list"
     if ref($mime_lite_conf) ne 'ARRAY';
 
-my $archive_match = $email_conf->{archive} || [];
-my $trash_match   = $email_conf->{trash}   || [];
-
-# Load Inbox
-my $inbox = $client->inbox->view_inbox;
-
-exit if !$inbox->{message_count};
+my $max_pages     = $email_conf->{max_pages} || 0;
+my $archive_match = $email_conf->{archive}   || [];
+my $trash_match   = $email_conf->{trash}     || [];
 
 # Last seen message
 my $cache_file_path = File::Spec->catfile(
@@ -116,21 +125,70 @@ my $cache_file_path = File::Spec->catfile(
     'forward_email.yml'
 );
 
+debug( $cache_file_path );
+
 my $cache = -e $cache_file_path ? LoadFile($cache_file_path)
           :                       {};
 
+debug( { cache => $cache } );
+
 my $last_seen_id = $cache->{last_seen_id} || 0;
+
+# Keep fetching pages until we see a message we've already processed
+my $page = 1;
+my @messages;
+my $server_announcement;
+
+PAGE:
+while (1) {
+    debug( "Fetching Inbox page $page" );
+  
+    my $response = $client->inbox->view_inbox( { page_number => $page } );
+    
+    $server_announcement ||= $response->{status}{server}{announcement};
+    
+    for my $message ( @{ $response->{messages} } ) {
+        if ( $message->{id} <= $last_seen_id ) {
+            debug( "Already seen this message - don't fetch any more" );
+            last PAGE;
+        }
+        
+        push @messages, $message;
+    }
+    
+    if ( $max_pages && $page >= $max_pages ) {
+        debug("Fetched max-pages '$max_pages' - don't fetch any more");
+        last PAGE;
+    }
+    if ( $response->{message_count}  > ( $messages_per_page * $page ) ) {
+        $page++;
+    }
+    else {
+        last PAGE;
+    }
+}
+
+debug( sprintf "Fetched %d messages", scalar @messages );
+
+# Check messages
 my @archive_id;
 my @trash_id;
 
-# Check messages
 MESSAGE:
-for my $message ( reverse @{ $inbox->{messages} } ) {
+for my $message ( reverse @messages ) {
     
-    next if $message->{id} <= $last_seen_id;
+    if ( !$max_pages && $message->{id} > $last_seen_id ) {
+        $last_seen_id = $message->{id};
+    }
     
     for my $regex ( @$archive_match ) {
         if ( $message->{subject}  =~ m/$regex/i ) {
+            debug(
+                sprintf "Message '%s' matched archive regex '%s'",
+                    $message->{subject},
+                    $regex,
+            );
+            
             push @archive_id, $message->{id};
             next MESSAGE;
         }
@@ -138,12 +196,21 @@ for my $message ( reverse @{ $inbox->{messages} } ) {
     
     for my $regex ( @$trash_match ) {
         if ( $message->{subject} =~ m/$regex/i ) {
+            debug(
+                sprintf "Message '%s' matched trash regex '%s'",
+                    $message->{subject},
+                    $regex,
+            );
+            
             push @trash_id, $message->{id};
             next MESSAGE;
         }
     }
     
-    next if $message->{has_read};
+    if ( $message->{has_read} ) {
+        debug( sprintf "Skipping read message: '%s'", $message->{subject} );
+        next;
+    }
     
     my $body = <<BODY;
 $message->{date}
@@ -162,8 +229,11 @@ BODY
     
     $email->send( @$mime_lite_conf );
     
-    $last_seen_id = $message->{id};
+    debug( sprintf "Forwarded message: '%s'", $message->{subject} );
 }
+
+debug( "last-seen-id is now: '$last_seen_id'" );
+
 
 # Update cache
 $cache->{last_seen_id} = $last_seen_id;
@@ -175,6 +245,8 @@ if ( @archive_id ) {
     $client->inbox->archive_messages(
         \@archive_id,
     );
+    
+    debug( sprintf "Archived %d messages", scalar @archive_id );
 }
 
 # delete messages
@@ -182,12 +254,15 @@ if ( @trash_id ) {
     $client->inbox->trash_messages(
         \@trash_id,
     );
+    
+    debug( sprintf "Trashed %d messages", scalar @trash_id );
 }
 
 # announcements
-if (   $email_conf->{forward_announcements}
-    && $inbox->{status}{server}{announcement} )
-{
+if ( $email_conf->{forward_announcements} && $server_announcement ) {
+    
+    debug( "Forwarding server announcement" );
+    
     my $url = URI->new( $client->uri );
     $url->path('announcement');
     $url->query_form( session_id => $client->session_id );
@@ -207,3 +282,17 @@ if (   $email_conf->{forward_announcements}
     $email->send( @$mime_lite_conf );
 }
 
+
+sub debug {
+    return if !$DEBUG;
+    
+    for (@_) {
+        if ( ref $_ ) {
+            require Data::Dumper;
+            print Data::Dumper::Dumper( $_ );
+        }
+        else {
+            print "$_\n";
+        }
+    }
+}
