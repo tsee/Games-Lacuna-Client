@@ -14,15 +14,17 @@ use Games::Lacuna::Client ();
 my @old_planet;
 my @station;
 my @ignore;
+my @ignore_regex;
 my @pass;
 my $help;
 
 GetOptions(
-    'planet=s@'  => \@old_planet,
-    'station=s@' => \@station,
-    'ignore=s@'  => \@ignore,
-    'pass=s@'    => \@pass,
-    'help|h'     => \$help,
+    'planet=s@'       => \@old_planet,
+    'station=s@'      => \@station,
+    'ignore=s@'       => \@ignore,
+	'ignore-regex=s@' => \@ignore_regex,
+    'pass=s@'         => \@pass,
+    'help|h'          => \$help,
 );
 
 usage() if $help;
@@ -64,6 +66,8 @@ for my $name ( sort keys %planets ) {
     next if @station && !grep { lc $name eq lc $_ } @station;
     
     next if @ignore && first { lc $name eq lc $_ } @ignore;
+	
+	next if @ignore_regex && first { $name =~ m/$_/i } @ignore_regex;
     
     my $planet = $client->body( id => $planets{$name} );
     
@@ -164,6 +168,10 @@ If no --station opts are provided, will search for all allied space-stations.
     --ignore PLANET/STATION NAME
 Save RPCs by specifying your planet names, so we don't have to get its status
 from the server to find that out.
+
+    --ignore-regex REGEX
+Similar to --ignore above, but used as a case-insensitive regular expression,
+rather than an exact match.
 
     --pass REGEX
 Multiple --pass opts may be provided - these are run as regexes against each
