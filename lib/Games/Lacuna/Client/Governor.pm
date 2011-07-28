@@ -827,6 +827,10 @@ sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes 
     for my $res (@reslist) {
         my $profile = merge($cfg->{profile}->{$res} || {},$cfg->{profile}->{_default_});
         $self->{push_info}->{$pid}->{$res}->{space_left} = ($status->{"$res\_capacity"} * $profile->{requested_level}) - $status->{"$res\_stored"};
+
+        # if we have no capacity, nothing we can do...
+        next unless $status->{"$res\_capacity"};
+
         if (($status->{"$res\_stored"}/$status->{"$res\_capacity"}) < $profile->{request_below}) {
             my $amt = int($status->{"$res\_capacity"} * $profile->{requested_level}) - $status->{"$res\_stored"};
             $self->{push_info}->{$pid}->{$res}->{requested} = $amt;

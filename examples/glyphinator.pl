@@ -160,8 +160,7 @@ while (!$finished) {
         # case you get the "Session expired" error.
         $glc = Games::Lacuna::Client->new(
             cfg_file       => $opts{config} || "$FindBin::Bin/../lacuna.yml",
-            rpc_sleep      => 1,
-            prompt_captcha => 1,
+            rpc_sleep      => 1.333, # 45 per minute, new default is 50 rpc/min
         );
 
         output("Starting up at " . localtime() . "\n");
@@ -187,14 +186,16 @@ while (!$finished) {
             $e->rethrow;
         } else {
             my $e = Exception::Class->caught();
+            if ($e =~ /malformed JSON string/) {
+                diag("Caught malformed JSON error, restarting\n");
+                $status = {};
+                redo;
+            }
             ref $e ? $e->rethrow : die $e;
         }
     }
 
     if (defined $opts{continuous}) {
-        diag("WARNING!!!!! Captcha prompt will cause script hang if you are not here to answer!\n")
-            if $opts{'send-excavators'};
-
         my $sleep = $opts{continuous} || 360;
 
         if ($opts{'do-digs'} and $status->{digs}) {
@@ -205,7 +206,8 @@ while (!$finished) {
                 @{$status->{digs}};
 
             if (defined $last_dig) {
-                $sleep = min($sleep, $last_dig);
+                # Sleep until the digs end, but at least 10 minutes, unless asked to not wait that long
+                $sleep = min($sleep, max($last_dig, 10));
             }
         }
 
@@ -230,10 +232,11 @@ sub get_status {
     my $empire = $glc->empire->get_status->{empire};
 
     # reverse hash, to key by name instead of id
-    my %planets = reverse %{ $empire->{planets} };
+    my %planets = map { $empire->{planets}{$_}, $_ } keys %{$empire->{planets}};
     $status->{planets} = \%planets;
 
     # Scan each planet
+    my $now = time();
     for my $planet_name (keys %planets) {
         if (keys %do_planets) {
             next unless $do_planets{normalize_planet($planet_name)};
@@ -258,7 +261,7 @@ sub get_status {
             if ($seconds_remaining) {
                 push @{$status->{digs}}, {
                     planet   => $planet_name,
-                    finished => time() + $seconds_remaining,
+                    finished => $now + $seconds_remaining,
                 };
             } else {
                 $status->{idle}{$planet_name} = 1;
@@ -287,7 +290,7 @@ sub get_status {
             push @{$status->{flying}},
                 map {
                     $_->{distance} = int(($_->{arrives} - $_->{departed}) * $_->{speed} / 360000);
-                    $_->{remaining} = int(($_->{arrives} - time()) * $_->{speed} / 360000);
+                    $_->{remaining} = int(($_->{arrives} - $now) * $_->{speed} / 360000);
                     $_
                 }
                 map {
@@ -352,7 +355,7 @@ sub get_status {
                     grep { $_->{type} eq 'excavator' }
                     @ships_building;
 
-                my $last = 0;
+                my $last = $now;
                 if (@excavators_building) {
                     verbose(pluralize(scalar @excavators_building, "excavator") . " building at this yard\n");
                     push @{$status->{building}{$planet_name}}, @excavators_building;
@@ -363,6 +366,7 @@ sub get_status {
                 push @{$status->{shipyards}{$planet_name}}, {
                     yard          => $yard,
                     last_finishes => $last,
+                    build_time    => 0, # placeholder in case this doesn't get populated
                 };
             }
         } else {
@@ -696,15 +700,6 @@ sub determine_ore {
 
 ## Excavators ##
 
-my %attack_ships;
-BEGIN {
-    %attack_ships = map { $_ => 1 } qw/
-        bleeder observatory_seeker spaceport_seeker
-        placebo placebo2 placebo3 placebo4 placebo5 placebo6
-        scow security_ministry_seeker
-        snark snark2 snark3 spy_pod spy_shuttle thud
-    /;
-}
 sub send_excavators {
     PLANET:
 
@@ -713,7 +708,7 @@ sub send_excavators {
 
         my $launch_count;
         my $built_count = 0;
-        if ($status->{ready}{$planet}) {
+        if ($status->{ready}{$planet} and @{$status->{ready}{$planet}}) {
             verbose("Prepping excavators on $planet\n");
             my $port = $status->{spaceports}{$planet};
             my $originally_docked = @{$status->{ready}{$planet}};
@@ -757,62 +752,16 @@ sub send_excavators {
                     for (@dests) {
                         my ($dest_name, $x, $y, $distance, $zone, $checked_epoch) = @$_;
 
-                        my $recently_checked = time() - $checked_epoch < $RECENT_CHECK;
+                        # Get the next available excavator
                         my $ex = $status->{ready}{$planet}[0];
 
-                        # Check even harder to see if inhabited, if we want to avoid those
-                        if (!$recently_checked and !$batch->{'inhabited-ok'}) {
-                            my $ships;
-                            my $ok = eval {
-                                $ships = $port->get_ships_for($status->{planets}{$planet}, {x => $x, y => $y});
-                                return 1;
-                            };
-                            unless ($ok) {
-                                if (my $e = Exception::Class->caught('LacunaRPCException')) {
-                                    if ($e->code eq '1002') {
-                                        # Empty orbit, update db and try again
-                                        output("$dest_name is an empty orbit, trying again...\n");
-                                        mark_orbit_empty($x, $y);
-
-                                        $need_more++;
-                                        next;
-                                    }
-
-                                    diag("Unknown error sending excavator from $planet to $dest_name: $e\n");
-                                }
-                                else {
-                                    my $e = Exception::Class->caught();
-                                    diag("Unknown error sending excavator from $planet to $dest_name: $e\n");
-                                }
-                            }
-
-                            my @avail_attack_ships   = grep { $attack_ships{$_->{type}} }
-                                @{$ships->{available}};
-                            my @unavail_attack_ships = grep { $attack_ships{$_->{ship}{type}} }
-                                @{$ships->{unavailable}};
-
-                            if (@avail_attack_ships) {
-                                output("$dest_name is an occupied planet, trying again...\n");
-                                mark_orbit_occupied($x, $y);
-                                $need_more++;
-                                next;
-                            } elsif(@unavail_attack_ships) {
-                                # 1013 - Can only be sent to inhabited planets (uninhabited planet)
-                                # 1009 - Can only be sent to planets and stars (asteroid)
-                                if (!grep { $_->{reason}[0] eq '1013' or $_->{reason}[0] eq '1009'}
-                                        @unavail_attack_ships) {
-                                    output("$dest_name is an occupied planet, trying again...\n");
-                                    mark_orbit_occupied($x, $y);
-                                    $need_more++;
-                                    next;
-                                }
-                            } else {
-                                unless ($warned_cant_verify++) {
-                                    diag("$planet has no spy pods, scows, or attack ships, cannot verify if this planet is inhabited!\n");
-                                }
-                            }
+                        unless (defined $ex) {
+                            diag("No excavators left when we still had destinations, possible bug?\n");
+                            $all_done = 1;
+                            last;
                         }
 
+                        # Only try each destination once
                         $skip{$dest_name}++;
 
                         if ($opts{'dry-run'}) {
@@ -842,6 +791,13 @@ sub send_excavators {
                                         output("$dest_name was unavailable due to recent search, trying again...\n");
                                         update_last_sent($x, $y);
 
+                                        $need_more++;
+                                        next;
+                                    }
+
+                                    if ($e->code eq '1016' and !$batch->{'inhabited-ok'}) {
+                                        output("$dest_name would have triggered defenses, trying again...\n");
+                                        mark_orbit_occupied($x, $y);
                                         $need_more++;
                                         next;
                                     }
@@ -909,6 +865,7 @@ sub send_excavators {
 
                 my $need = 0;
                 my $minutes = $opts{fill} || $opts{continuous} || 360;
+                my ($ore_cost, $energy_cost, $water_cost, $food_cost);
                 for my $yard (@{$status->{shipyards}{$planet} || []}) {
 
                     # Get the length of a build here
@@ -917,6 +874,7 @@ sub send_excavators {
                         grep { $_ eq 'excavator' }
                         keys %{$buildable->{buildable}};
                     verbose("An excavator will take $build_time seconds in this yard\n");
+                    $yard->{build_time} = $build_time;
 
                     # Figure out how much time we'd need to fill in for
                     my $finishes = $yard->{last_finishes} || time();
@@ -930,25 +888,28 @@ sub send_excavators {
                         verbose("Need " . pluralize($new, "additional excavator") . " based on build time\n");
                     }
 
-                    # Get the cost of a build
-                    my ($ore_cost, $energy_cost, $water_cost, $food_cost) =
-                        map { @{$buildable->{buildable}{$_}{cost}}{qw/ore energy water food/} }
-                        grep { $_ eq 'excavator' }
-                        keys %{$buildable->{buildable}};
-                    verbose("An excavator costs $ore_cost ore, $energy_cost energy, $water_cost water, and $food_cost food in this yard\n");
-                    my $by_ore    = $status->{planet_resources}{$planet}{ore_hour} / $ore_cost;
-                    my $by_water  = $status->{planet_resources}{$planet}{water_hour} / $water_cost;
-                    my $by_food   = $status->{planet_resources}{$planet}{food_hour} / $food_cost;
-                    my $by_energy = $status->{planet_resources}{$planet}{energy_hour} / $energy_cost;
-                    my $by_resource = min($by_ore, $by_water, $by_food, $by_energy);
-                    my $new_by_resource = int($by_resource * ($minutes / 60));
-                    verbose("$planet can sustain $by_resource excavators per hour based on current production, for $new_by_resource in $minutes minutes\n");
-                    $new = min($new, $new_by_resource);
-
                     $need += $new;
+
+                    # Get the cost of a build
+                    unless ($ore_cost) {
+                        ($ore_cost, $energy_cost, $water_cost, $food_cost) =
+                            map { @{$buildable->{buildable}{$_}{cost}}{qw/ore energy water food/} }
+                            grep { $_ eq 'excavator' }
+                            keys %{$buildable->{buildable}};
+                    }
                 }
 
                 verbose("Would need " . pluralize($need, "ship") . " to fill up to $minutes minutes on $planet\n");
+
+                verbose("An excavator costs $ore_cost ore, $energy_cost energy, $water_cost water, and $food_cost food in this yard\n");
+                my $by_ore    = $status->{planet_resources}{$planet}{ore_hour}    / $ore_cost;
+                my $by_water  = $status->{planet_resources}{$planet}{water_hour}  / $water_cost;
+                my $by_food   = $status->{planet_resources}{$planet}{food_hour}   / $food_cost;
+                my $by_energy = $status->{planet_resources}{$planet}{energy_hour} / $energy_cost;
+                my $by_resource = min($by_ore, $by_water, $by_food, $by_energy);
+                my $need_by_resource = int($by_resource * ($minutes / 60));
+                verbose("$planet can sustain $by_resource excavators per hour based on current production, for $need_by_resource in $minutes minutes\n");
+                $need = min($need, $need_by_resource);
 
                 # make whichever is higher, the number calculated here, or from --rebuild
                 $build = max($build, $need);
@@ -960,14 +921,15 @@ sub send_excavators {
             verbose("Saving $opts{'save-spots'} spaceport spots\n") if $opts{'save-spots'};
 
             # reduce $build to at most the number of open spaceport slots, holding some open if requested
+            verbose("Reducing to lesser of $build (need) and @{[$status->{open_docks}{$planet} - ($opts{'save-spots'} || 0)]} (spots)\n");
             $build = min($build, $status->{open_docks}{$planet} - ($opts{'save-spots'} || 0));
 
             if ($build) {
                 for (1..$build) {
                     # Add an excavator to a shipyard if we can, to wherever the
                     # shortest build queue is
-
-                    my $yard = reduce { $a->{last_finishes} < $b->{last_finishes} ? $a : $b }
+                    my $yard = reduce { $a->{last_finishes} + $a->{build_time}
+                        < $b->{last_finishes} + $b->{build_time} ? $a : $b }
                         @{$status->{shipyards}{$planet} || []};
 
                     # Catch if this dies, we didnt actually confirm that we could build
@@ -1107,7 +1069,7 @@ SQL
 
         $find_dest->execute(@vals);
         while (my $row = $find_dest->fetchrow_hashref) {
-            my $dest_name = $row->{name} || "$row->{star_name} $row->{orbit}";
+            my $dest_name = "$row->{star_name} $row->{orbit}";
             my $dist = int(sqrt($row->{dist}));
             verbose("Selected destination $dest_name, which is " . pluralize($dist, "unit") . " away\n");
 

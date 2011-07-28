@@ -52,16 +52,11 @@ use Data::Dumper;
         my @traveling;
         my @probe_to_port;
         for my $sp ( @spaceports ){
-            my $page = 0;
-            while( $page <= 4 ){
-                $page++;
-                my $data = $sp->view_all_ships($page);
+                my $data = $sp->view_all_ships({ "no_paging" => 1 });
                 push @all_probes, grep { $_->{type} eq 'probe' } @{$data->{ships}};
                 push @ships, grep { $_->{task} eq 'Docked' and $_->{type} eq 'probe' } @{$data->{ships}};
                 push @probe_to_port, map {; $_->{id} => $sp } @ships;
                 push @traveling, grep { $_->{task} eq 'Travelling' and $_->{type} eq 'probe' } @{$data->{ships}};
-                last if $page * $SHIPS_PER_PAGE >= $data->{number_of_ships};
-            }
         }
 
         # Build more probes if directed
