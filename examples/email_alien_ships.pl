@@ -5,6 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use List::Util            ();
+use List::MoreUtils       qw( none );
 use MIME::Lite            ();
 use YAML::Any             (qw(DumpFile LoadFile));
 use Games::Lacuna::Client ();
@@ -76,6 +77,8 @@ my @incoming;
 
 # Scan each planet
 foreach my $name ( sort keys %planets ) {
+
+    next if $email_conf->{planets} && none { lc $name eq lc $_ } @{ $email_conf->{planets} };
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );
