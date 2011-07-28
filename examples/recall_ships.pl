@@ -62,46 +62,61 @@ my $space_port_id = first {
 
 my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
 
-# get all defending ships
-my $ships = $space_port->get_ships_for(
-        $planets{ $opts{planet} },
-        {
-            body_name => $opts{orbiting},
-        },
-    )->{orbiting};
-
-if ( exists $opts{type} ) {
-    @$ships =
-        grep {
-            $_->{type} eq $opts{type}
-        } @$ships;
-}
-
-die "Matched no ships\n"
-    if !@$ships;
-
-if ( $opts{max} && @$ships > $opts{max} ) {
-    $#$ships = $opts{max}-1;
-}
-
-if ( $opts{dryrun} ) {
-    print "DRYRUN\n";
-    print "======\n";
-}
-
-# recall
-for my $ship (@$ships) {
-    $space_port->recall_ship( $ship->{id} )
-        unless $opts{dryrun};
-    
-    printf "%s recalled\n",
-        $ship->{name};
-}
+my $ships = recall_select();
 
 exit if $opts{dryrun};
 
+exit if !$opts{rename};
+
+rename_ships( $ships );
+
+exit;
+
+
+sub recall_select {
+    # get all defending ships
+    my $ships = $space_port->get_ships_for(
+            $planets{ $opts{planet} },
+            {
+                body_name => $opts{orbiting},
+            },
+        )->{orbiting};
+    
+    if ( exists $opts{type} ) {
+        @$ships =
+            grep {
+                $_->{type} eq $opts{type}
+            } @$ships;
+    }
+    
+    die "Matched no ships\n"
+        if !@$ships;
+    
+    if ( $opts{max} && @$ships > $opts{max} ) {
+        $#$ships = $opts{max}-1;
+    }
+    
+    if ( $opts{dryrun} ) {
+        print "DRYRUN\n";
+        print "======\n";
+    }
+    
+    # recall
+    for my $ship (@$ships) {
+        $space_port->recall_ship( $ship->{id} )
+            unless $opts{dryrun};
+        
+        printf "%s recalled\n",
+            $ship->{name};
+    }
+    
+    return $ships;
+}
+
 # rename ships
-if ( $opts{rename} ) {
+sub rename_ships {
+    my ( $ships ) = @_;
+    
     print "\n";
     
     for my $ship (@$ships) {
