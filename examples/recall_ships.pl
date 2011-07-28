@@ -18,6 +18,7 @@ GetOptions(
     'type=s',
     'max=i',
     'rename',
+    'all',
     'dryrun|dry-run',
 );
 
@@ -62,7 +63,8 @@ my $space_port_id = first {
 
 my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
 
-my $ships = recall_select();
+my $ships = $opts{all} ? recall_all()
+          :              recall_select();
 
 exit if $opts{dryrun};
 
@@ -72,6 +74,15 @@ rename_ships( $ships );
 
 exit;
 
+
+sub recall_all {
+    if ( $opts{dryrun} ) {
+        warn "Would have called recall_all()\n";
+        return [];
+    }
+    
+    return $space_port->recall_all->{ships};
+}
 
 sub recall_select {
     # get all defending ships
@@ -143,6 +154,7 @@ Usage: $0 lacuna.yml
        --orbiting NAME  # Name of body the ship is orbiting
        --type     TYPE  # Type of ship
        --max      MAX   # Max number of ships to recall
+       --all
        --rename
        --dryrun
 
@@ -153,6 +165,10 @@ Ships which may currently be used for defense are 'fighter' and 'spy_shuttle'.
 If --rename is provided, each ship sent will be renamed using the ship-type.
 
 If --dryrun is provided, just report which ships would be recalled.
+
+If --all is provided, then --orbiting, --type and --max are ignored.
+The "recall_all" API method will be used to recall all this planet's remotely
+defending and orbiting ships with a single API call.
 
 END_USAGE
 
