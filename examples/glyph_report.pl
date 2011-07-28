@@ -5,6 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use List::Util            (qw( first sum ));
+use List::MoreUtils       qw( none );
 use Games::Lacuna::Client ();
 use Getopt::Long          (qw(GetOptions));
 
@@ -12,12 +13,12 @@ if ( $^O !~ /MSWin32/) {
     $Games::Lacuna::Client::PrettyPrint::ansi_color = 1;
 }
 
-my $planet_name;
+my @planets;
 my $opt_glyph_type = {};
 GetOptions(
-    'planet=s' => \$planet_name,
-    'c|color!' => \$Games::Lacuna::Client::PrettyPrint::ansi_color,
-    't|type=s' => sub { $opt_glyph_type->{$_[1]} = 1; },
+    'planet=s@' => \@planets,
+    'c|color!'  => \$Games::Lacuna::Client::PrettyPrint::ansi_color,
+    't|type=s'  => sub { $opt_glyph_type->{$_[1]} = 1; },
     'f|functional!' => sub { $opt_glyph_type->{'Functional Recipes'} = 1; },
     'd|decorative!' => sub { $opt_glyph_type->{'Decorative Recipes'} = 1; },
 );
@@ -54,7 +55,7 @@ my %planets = reverse %{ $empire->{planets} };
 my %all_glyphs;
 foreach my $name ( sort keys %planets ) {
 
-    next if defined $planet_name && lc $planet_name ne lc $name;
+    next if @planets && none { lc $name eq lc $_ } @planets;
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );
