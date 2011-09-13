@@ -164,11 +164,10 @@ BeeldebanNest:
   type: glyph
 BlackHoleGenerator:
   label: Black Hole Generator
-  produces: energy
   tags:
+    - glyph
     - command
-    - energy
-  type: command
+  type: glyph
 Bread:
   label: Bread Bakery
   produces: food
