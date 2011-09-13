@@ -168,7 +168,6 @@ BlackHoleGenerator:
   tags:
     - command
     - energy
-    - space_station_module
   type: command
 Bread:
   label: Bread Bakery
