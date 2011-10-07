@@ -85,6 +85,9 @@ if (-f $db_file) {
 $star_db->{AutoCommit} = 0;
 
 if ($opts{'merge-db'}) {
+    unless (-f $opts{'merge-db'}) {
+        die "Can't locate database to merge: $opts{'merge-db'}\n";
+    }
     $star_db->{AutoCommit} = 1;
     $star_db->do('attach database ? as d2', {}, $opts{'merge-db'});
     $star_db->{AutoCommit} = 0;
@@ -96,7 +99,7 @@ if ($opts{'merge-db'}) {
 select s2.*, strftime('%s', s2.last_checked) checked_epoch
 from d2.stars s2
 join stars s1 on s1.id = s2.id
-    and s2.last_checked > coalesce(s1.last_checked,0)
+    and coalesce(s2.last_checked, 0) >= coalesce(s1.last_checked,0)
 SQL
         $get_stars->execute;
         return 1;
@@ -114,7 +117,7 @@ SQL
     }
     while (my $star = $get_stars->fetchrow_hashref) {
         if (my $row = star_exists($star->{x}, $star->{y})) {
-            if (($star->{checked_epoch}||0) > ($row->{checked_epoch}||0)) {
+            if (($star->{checked_epoch}||0) >= ($row->{checked_epoch}||0)) {
                 update_star($star)
             }
         } else {
@@ -130,7 +133,7 @@ select o2.*, strftime('%s', o2.last_checked) checked_epoch
 from d2.orbitals o2
 join orbitals o1 on o1.star_id = o2.star_id
     and o1.orbit = o2.orbit
-    and o2.last_checked > coalesce(o1.last_checked,0)
+    and coalesce(o2.last_checked, 0) >= coalesce(o1.last_checked,0)
 SQL
         $get_orbitals->execute;
         return 1;
@@ -149,7 +152,7 @@ SQL
     while (my $orbital = $get_orbitals->fetchrow_hashref) {
         # Check if it exists in the star db, and if so what its type is
         if (my $row = orbital_exists($orbital->{x}, $orbital->{y})) {
-            if (($orbital->{checked_epoch}||0) > ($row->{checked_epoch}||0)) {
+            if (($orbital->{checked_epoch}||0) >= ($row->{checked_epoch}||0)) {
                 update_orbital( {
                     empire => { id => $orbital->{empire_id} },
                     (map { $_ => $orbital->{$_} } qw/x y type name water size/),
@@ -194,7 +197,7 @@ unless ($opts{'no-fetch'}) {
     my $empire = $glc->empire->get_status->{empire};
 
     # reverse hash, to key by name instead of id
-    my %planets = reverse %{ $empire->{planets} };
+    my %planets = map { $empire->{planets}{$_}, $_ } keys %{$empire->{planets}};
 
     # Scan each planet
     for my $planet_name (keys %planets) {
