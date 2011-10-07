@@ -18,8 +18,8 @@ GetOptions(
 
 usage() if !$planet_name;
 
-usage( "Must combine at least 2 glyphs" )
-    if @glyphs < 2;
+usage( "Must combine at least 1 glyph" )
+    if !@glyphs;
 
 usage ( "Cannot combine more than 4 glyphs" )
     if @glyphs > 4;

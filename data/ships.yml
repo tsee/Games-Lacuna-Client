@@ -131,7 +131,7 @@ snark3:
   type_human: Snark III
   tags:
     - War
-space_station_hull:
+space_station:
   type_human: Space Station Hull
   tags:
     - Intelligence

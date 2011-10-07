@@ -12,7 +12,6 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client ();
 
-my $ships_per_fleet = 20;
 my $login_attempts  = 5;
 my $reattempt_wait  = 0.1;
 
@@ -149,14 +148,17 @@ my $space_port_id = first {
 
 my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
 
-my $ships = request(
+my $get_ships_for = request(
     object => $space_port,
     method => 'get_ships_for',
     params => [
         $planets{$from},
         $target,
     ],
-)->{available};
+);
+
+my $ships           = $get_ships_for->{available};
+my $ships_per_fleet = $get_ships_for->{fleet_send_limit};
 
 my @ships;
 

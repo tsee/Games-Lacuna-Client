@@ -64,4 +64,14 @@ sub tag_list{
   return @tags if wantarray;
   return \@tags;
 }
+
+sub labels{
+  my($self) = @_;
+  my %type;
+  my $yaml = $self->{yaml};
+  for my $building ( sort keys %$yaml ){
+    $type{$building} = $yaml->{$building}{label};
+  }
+  return \%type;
+}
 1;

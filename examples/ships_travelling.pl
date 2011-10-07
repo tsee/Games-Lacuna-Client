@@ -8,13 +8,14 @@ use Games::Lacuna::Client;
 use Date::Parse;
 use Date::Format;
 use List::Util (qw(first));
+use List::MoreUtils       qw( none );
 use Getopt::Long          (qw(GetOptions));
 
-my $planet_name;
+my @planets;
 my $ships_per_page = 25;
 
 GetOptions(
-    'planet=s' => \$planet_name,
+    'planet=s' => \@planets,
 );
 
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
@@ -47,7 +48,8 @@ my %planets = reverse %{ $empire->{planets} };
 my @spaceports;
 
 foreach my $name ( sort keys %planets ) {
-  next if defined $planet_name && $planet_name ne $name;
+  
+  next if @planets && none { lc $name eq lc $_ } @planets;
   
   # Load planet data
   my $planet    = $client->body( id => $planets{$name} );
@@ -64,16 +66,14 @@ foreach my $name ( sort keys %planets ) {
 
 my @ships;
 foreach my $sp (@spaceports) {
-  my $ships = [];
-  my $page  = 1;
-  my $response;
-  
-  do {
-    $response = $sp->view_ships_travelling( $page++ );
-    
-    push @$ships, @{ $response->{ships_travelling} };
-    
-  } while ( @$ships < $response->{number_of_ships_travelling} );
+  my $ships = $sp->view_all_ships(
+    {
+      no_paging => 1,
+    },
+    {
+      task => 'Travelling',
+    }
+  )->{ships};
   
   foreach my $ship ( @$ships ) {
     ( my $date_arrives = $ship->{date_arrives} ) =~ s{^(\d+)\s+(\d+)\s+}{$2/$1/};
