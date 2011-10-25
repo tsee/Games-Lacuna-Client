@@ -84,9 +84,12 @@ GetOptions(
     next if (defined($sys{$star_id}));
     next unless (defined($stars->{$bod->{star_id}}));
 
+    my $dist = sprintf("%.2f", sqrt(($home_x - $stars->{$bod->{star_id}}->{x})**2 +
+                                    ($home_y - $stars->{$bod->{star_id}}->{y})**2));
+    next if ($dist > $max_dist);
+
     my $sys_data = {
-      dist => sprintf("%.2f", sqrt(($home_x - $stars->{$bod->{star_id}}->{x})**2 +
-                                   ($home_y - $stars->{$bod->{star_id}}->{y})**2)),
+      dist => $dist,
       probed => 1,
     };
     $sys{$star_id} = $sys_data;
@@ -130,7 +133,7 @@ sub get_stars {
   while(<$fh>) {
     chomp;
     my ($id, $name, $x, $y, $color, $zone) = split(/,/, $_, 6);
-    next if (@{$sectors} and not (grep { $_ eq $zone } @$sectors));
+    next if ($sectors and not (grep { $_ eq $zone } @$sectors));
     $star_hash{$id} = {
       id    => $id,
       name  => $name,

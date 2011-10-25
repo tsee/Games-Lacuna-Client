@@ -11,10 +11,9 @@ use Games::Lacuna::Client;
 use Getopt::Long qw(GetOptions);
 use Date::Parse;
 use Date::Format;
-use YAML::XS;
 use utf8;
 
-my $probe_file = "data/probe_data_raw.yml";
+my $probe_file = "data/probe_data_raw.js";
 my $cfg_file = "lacuna.yml";
 my $help    = 0;
 
@@ -31,34 +30,53 @@ GetOptions(
 
   usage() if $help;
 
+  my $json = JSON->new->utf8(1);
+  $json = $json->pretty([1]);
+  $json = $json->canonical([1]);
   my $fh;
   open($fh, ">", "$probe_file") || die "Could not open $probe_file";
 
+# Wrappper
   my $data = $glc->empire->view_species_stats();
 
 # Get planets
-  my $planets = $data->{status}->{empire}->{planets};
   my $ename   = $data->{status}->{empire}->{name};
   my $ststr   = $data->{status}->{server}->{time};
   my $stime   = str2time( map { s!^(\d+)\s+(\d+)\s+!$2/$1/!; $_ } $ststr);
   my $ttime   = ctime($stime);
   print "$ttime\n";
+  my $empire = $data->{status}->{empire};
+
+  my %planets = map { $empire->{planets}{$_}, $_ } keys %{$empire->{planets}};
 
 # Get obervatories;
   my @observatories;
-  for my $pid (keys %$planets) {
-    my $buildings = $glc->body(id => $pid)->get_buildings()->{buildings};
+  for my $pname (sort keys %planets) {
+    next if $pname =~ /Station/;
+# Wrappper Needed
+    my $ok;
+    my $buildings;
+    while (1) {
+      $ok = eval {
+        $buildings = $glc->body(id => $planets{$pname})->get_buildings()->{buildings};
+      };
+      last if $ok;
+      sleep 60;
+    }
     push @observatories, grep { $buildings->{$_}->{url} eq '/observatory' } keys %$buildings;
+    sleep 2;
   }
 
 # Find stars
   my @stars;
   my @star_bit;
   for my $obs_id (@observatories) {
+# Wrappper
     my $obs_view  = $glc->building( id => $obs_id, type => 'Observatory' )->view();
     my $pages = 1;
     my $num_probed = 0;
     do {
+# Wrappper
       my $obs_probe = $glc->building( id => $obs_id, type => 'Observatory' )->get_probed_stars($pages++);
       $num_probed = $obs_probe->{star_count};
       @star_bit = @{$obs_probe->{stars}};
@@ -111,7 +129,7 @@ GetOptions(
     push @bodies, @tbod if (@tbod);
   }
 
-  YAML::Any::DumpFile($fh, \@bodies);
+  print $fh $json->pretty->canonical->encode(\@bodies);
   close($fh);
 
   print "$glc->{total_calls} api calls made.\n";
@@ -122,10 +140,9 @@ sub usage {
     diag(<<END);
 Usage: $0 [options]
 
-This program takes all your data on observatories and places it in a YAML file for use by other programs.
+This program takes all your data on observatories and places it in a JSON file for use by other programs.
 Data contained is all the body data, plus which observatory "owns" the probe for this bit of data.
 Stars may be repeated if multiple observatories probe the same star, but we will report that.  Note that abandoning either probe currently, abandons all probes at the star.
-
 
 Options:
   --help                 - Prints this out
