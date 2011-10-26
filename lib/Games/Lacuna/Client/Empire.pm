@@ -27,6 +27,7 @@ sub api_methods {
           get_species_templates
       )
     ),
+    create                => { default_args => [qw(empire_id)] },
     found                 => { default_args => [qw(empire_id)] },
     update_species        => { default_args => [qw(empire_id)] },
     invite_friend         => { default_args => [qw(session_id)] },

@@ -9,11 +9,11 @@
 use strict;
 use warnings;
 use Getopt::Long qw(GetOptions);
-use YAML::XS;
+use JSON;
 use utf8;
 
-my $import_file = "data/probe_data_raw.yml";
-my $merge_file  = "data/probe_data_cmb.yml";
+my $import_file = "data/probe_data_raw.js";
+my $merge_file  = "data/probe_data_cmb.js";
 my $star_file   = "data/stars.csv";
 my $help = 0;
 
@@ -26,9 +26,20 @@ GetOptions(
 
   usage() if $help;
 
-  
-  my $import = YAML::XS::LoadFile($import_file);
-  my $merged = YAML::XS::LoadFile($merge_file);
+  my $json = JSON->new->utf8(1);
+  $json = $json->pretty([1]);
+  $json = $json->canonical([1]);
+
+  my $imp_f; my $mrg_f; my $new_f; my $lines;
+  open($imp_f, "$import_file") || die "Could not open $import_file\n";
+  $lines = join("", <$imp_f>);
+  my $import = $json->decode($lines);
+  close($imp_f);
+
+  open($mrg_f, "$merge_file") || die "Could not open $merge_file\n";
+  $lines = join("", <$mrg_f>);
+  my $merged = $json->decode($lines);
+  close($mrg_f);
 
   my $stars;
   if (-e "$star_file") {
@@ -87,11 +98,9 @@ GetOptions(
   }
   my @merged = map { $mhash{$_} } sort keys %mhash;
 
-  my $fh;
-  open($fh, ">", "$merge_file") || die "Could not open $merge_file";
-
-  YAML::XS::DumpFile($fh, \@merged);
-  close($fh);
+  open($new_f, ">", "$merge_file") || die "Could not open $merge_file\n";
+  print $new_f $json->pretty->canonical->encode(\@merged);
+  close($new_f);
 exit;
 
 sub merge_probe {
@@ -125,6 +134,7 @@ sub merge_probe {
     $orig->{observatory}->{stime} = $data->{observatory}->{stime};
     $orig->{observatory}->{ststr} = $data->{observatory}->{ststr};
     if ($data_e ne '') {
+      print "Empire Info update for $orig->{name}\n" unless ($orig_e eq '' or cmp_emp($orig, $data));
       $orig->{empire}->{alignment}       = $data->{empire}->{alignment};
       $orig->{empire}->{id}              = $data->{empire}->{id};
       $orig->{empire}->{is_isolationist} = $data->{empire}->{is_isolationist};
@@ -160,14 +170,46 @@ sub merge_probe {
       delete $orig->{water_stored};
     }
   }
+  if ($orig->{star_name} ne $data->{star_name}) {
+    printf "Starname changed from %s to %s.\n",
+             $orig->{star_name}, $data->{star_name};
+    $orig->{star_name} = $data->{star_name};
+  }
+  if (defined($data->{station})) {
+    if (!defined($orig->{station})) {
+      printf "Star %s has been claimed by Station: %s!\n",
+              $data->{star_name}, $data->{station}->{name};
+      %{$orig->{station}} = %{$data->{station}};
+    }
+    elsif ($data->{station}->{name} ne $orig->{station}->{name}) {
+      printf "Star %s has been claimed by Station: %s from Station: %s!\n",
+              $data->{star_name}, $data->{station}->{name},
+              $orig->{station}->{name};
+      %{$orig->{station}} = %{$data->{station}};
+    }
+  }
   if ($orig->{type} ne $data->{type}) {
-# We probably have a new space station to account for
+# We probably have a new space station or asteroid to account for
     printf "Changing type of %s from %s:%s to %s:%s\n",
              $data->{name}, $orig->{image}, $orig->{type},
              $data->{image}, $data->{type};
     $orig = copy_body($orig, $data);
   }
   return $orig;
+}
+
+sub cmp_emp {
+  my ($orig, $data) = @_;
+
+  my $str1 = join(":", $orig->{empire}->{alignment}, $orig->{empire}->{id},
+                       $orig->{empire}->{is_isolationist}, $orig->{empire}->{name});
+  my $str2 = join(":", $data->{empire}->{alignment}, $data->{empire}->{id},
+                       $data->{empire}->{is_isolationist}, $data->{empire}->{name});
+
+  if ($str1 eq $str2) {
+    return 1;
+  }
+  return 0;
 }
 
 sub copy_body {
@@ -212,9 +254,10 @@ sub check_sname {
   unless (defined($elem->{star_name})) {
     $elem->{star_name} = $stars->{$elem->{star_id}}->{name};
   }
-  if ($elem->{star_name} ne $stars->{$elem->{star_id}}->{name}) {
-    $elem->{star_name} = $stars->{$elem->{star_id}}->{name};
-  }
+  $elem->{star_name} =~ y/"'//d;
+#  if ($elem->{star_name} ne $stars->{$elem->{star_id}}->{name}) {
+#    $elem->{star_name} = $stars->{$elem->{star_id}}->{name};
+#  }
 }
 
 sub get_stars {
@@ -249,8 +292,8 @@ This program takes all data from two probe files and merges them.
 Options:
 
   --help                 - Prints this out
-  --import <file>        - File to import, default: data/probe_data_raw.yml
-  --merge  <file>        - Main file to merge into, default: data/probe_data_cmb.yml
+  --import <file>        - File to import, default: data/probe_data_raw.js
+  --merge  <file>        - Main file to merge into, default: data/probe_data_cmb.js
 
 END
  exit 1;
