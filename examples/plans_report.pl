@@ -5,9 +5,12 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use List::Util            (qw(first max));
-use List::MoreUtils       qw( none );
+use List::MoreUtils       qw( any none );
 use Getopt::Long          (qw(GetOptions));
 use Games::Lacuna::Client ();
+use Games::Lacuna::Client::Types qw( get_tags building_type_from_label meta_type );
+use Scalar::Util          qw( refaddr );
+use Try::Tiny;
 
 my @planets;
 
@@ -32,7 +35,8 @@ unless ( $cfg_file and -e $cfg_file ) {
 }
 
 my $client = Games::Lacuna::Client->new(
-	cfg_file => $cfg_file,
+	cfg_file  => $cfg_file,
+    rpc_sleep => 2,
 	# debug    => 1,
 );
 
@@ -40,7 +44,7 @@ my $client = Games::Lacuna::Client->new(
 my $empire  = $client->empire->get_status->{empire};
 
 # reverse hash, to key by name instead of id
-my %planets = reverse %{ $empire->{planets} };
+my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
 
 # Scan each planet
 foreach my $name ( sort keys %planets ) {
@@ -74,33 +78,107 @@ foreach my $name ( sort keys %planets ) {
     
     printf "%s\n", $name;
     print "=" x length $name;
-    print "\n";
+    print "\n\n";
     
     my $max_length = max map { length $_->{name} } @$plans;
     
-    my %plan;
+    my %plan_count;
     
     for my $plan ( sort { $a->{name} cmp $b->{name} } @$plans ) {
-        $plan{ $plan->{name} }{ $plan->{level} }{ $plan->{extra_build_level} } ++;
+        $plan_count{ $plan->{name} }{ $plan->{level} }{ $plan->{extra_build_level} } ++;
     }
     
-    for my $plan ( sort keys %plan ) {
-        for my $level ( sort keys %{ $plan{$plan} } ) {
-            for my $extra ( sort keys %{ $plan{$plan}{$level} } ) {
-                printf "%s %d+%d",
-                    $plan,
-                    $level,
-                    $extra;
+    my %tags;
+    for my $plan ( keys %plan_count ) {
+        next if exists $tags{$plan};
+        $tags{$plan} = [ get_tags( building_type_from_label($plan) ) ];
+    }
+    
+    my @plans;
+    for my $plan ( sort keys %plan_count ) {
+        for my $level ( sort { $a <=> $b } keys %{ $plan_count{$plan} } ) {
+            for my $extra ( sort { $a <=> $b } keys %{ $plan_count{$plan}{$level} } ) {
+                my $type = building_type_from_label( $plan );
                 
-                my $count = $plan{$plan}{$level}{$extra};
-                
-                printf " (x%d)", $count
-                    if $count > 1;
-                
-                print "\n";
+                push @plans, {
+                    name  => $plan,
+                    level => $level,
+                    extra => $extra,
+                    count => $plan_count{$plan}{$level}{$extra},
+                    tags  => $tags{$plan},
+                    type  => meta_type( $type ),
+                };
             }
         }
     }
     
+    report_plans_tag( \@plans, { tags => ['space_station_module'] } );
+    report_plans_tag( \@plans, { type => 'glyph', tags => ['food', 'ore', 'water', 'energy', 'storage'], exclude => ['decoration'] } );
+    report_plans_tag( \@plans, { type => 'glyph', exclude => ['decoration'] } );
+    report_plans_tag( \@plans, { type => 'glyph' } );
+    report_plans_tag( \@plans, { tags => ['food', 'ore', 'water', 'energy', 'storage'] } );
+    report_plans_tag( \@plans );
+    
     print "\n";
+}
+
+sub report_plans_tag {
+    my ( $plans, $spec ) = @_;
+    
+    $spec ||= {};
+    my @delete;
+    
+PLAN:
+    for my $plan ( @$plans ) {
+        
+        if ( exists $spec->{type} ) {
+            next PLAN
+                if $spec->{type} ne $plan->{type};
+        }
+        
+        if ( exists $spec->{tags} ) {
+            my $match;
+            
+            for my $tag ( @{ $spec->{tags} } ) {
+                if ( any { $tag eq $_ } @{ $plan->{tags} } ) {
+                    $match = 1;
+                    last;
+                }
+            }
+            
+            next PLAN
+                if !$match;
+        }
+        
+        if ( exists $spec->{exclude} ) {
+            for my $tag ( @{ $spec->{exclude} } ) {
+                next PLAN
+                    if any { $tag eq $_ } @{ $plan->{tags} };
+            }
+        }
+        
+        printf "%s %d+%d",
+            $plan->{name},
+            $plan->{level},
+            $plan->{extra};
+        
+        printf " (x%d)", $plan->{count}
+            if $plan->{count} > 1;
+        
+        print "\n";
+        
+        push @delete, $plan;
+    }
+    
+    print "\n" if @delete;
+    
+    # delete the ones we printed, so they don't get printed twice
+    @$plans =
+        grep {
+            my $plan = $_;
+            my $printed = any { refaddr($plan) == refaddr($_) } @delete;
+            $printed ? () : $plan;
+        } @$plans;
+    
+    return;
 }

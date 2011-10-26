@@ -5,6 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use List::Util            (qw( first sum ));
+use List::MoreUtils       qw( none );
 use Games::Lacuna::Client ();
 use Getopt::Long          (qw(GetOptions));
 
@@ -12,12 +13,12 @@ if ( $^O !~ /MSWin32/) {
     $Games::Lacuna::Client::PrettyPrint::ansi_color = 1;
 }
 
-my $planet_name;
+my @planets;
 my $opt_glyph_type = {};
 GetOptions(
-    'planet=s' => \$planet_name,
-    'c|color!' => \$Games::Lacuna::Client::PrettyPrint::ansi_color,
-    't|type=s' => sub { $opt_glyph_type->{$_[1]} = 1; },
+    'planet=s@' => \@planets,
+    'c|color!'  => \$Games::Lacuna::Client::PrettyPrint::ansi_color,
+    't|type=s'  => sub { $opt_glyph_type->{$_[1]} = 1; },
     'f|functional!' => sub { $opt_glyph_type->{'Functional Recipes'} = 1; },
     'd|decorative!' => sub { $opt_glyph_type->{'Decorative Recipes'} = 1; },
 );
@@ -39,7 +40,8 @@ unless ( $cfg_file and -e $cfg_file ) {
 }
 
 my $client = Games::Lacuna::Client->new(
-	cfg_file => $cfg_file,
+	cfg_file  => $cfg_file,
+    rpc_sleep => 2,
 	# debug    => 1,
 );
 
@@ -53,7 +55,7 @@ my %planets = reverse %{ $empire->{planets} };
 my %all_glyphs;
 foreach my $name ( sort keys %planets ) {
 
-    next if defined $planet_name && lc $planet_name ne lc $name;
+    next if @planets && none { lc $name eq lc $_ } @planets;
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );
@@ -62,15 +64,7 @@ foreach my $name ( sort keys %planets ) {
     
     my $buildings = $result->{buildings};
 
-    # Find the Archaeology Ministry
-    my $arch_id = first {
-            $buildings->{$_}->{name} eq 'Archaeology Ministry'
-    } keys %$buildings;
-
-    next if not $arch_id;
-    
-    my $arch   = $client->building( id => $arch_id, type => 'Archaeology' );
-    my $glyphs = $arch->get_glyphs->{glyphs};
+    my $glyphs = get_glyphs( $client, $buildings );
     
     next if !@$glyphs;
     
@@ -99,6 +93,42 @@ foreach my $name ( sort keys %planets ) {
 }
 
 creation_summary(%all_glyphs);
+
+exit;
+
+
+sub get_glyphs {
+    my ( $client, $buildings ) = @_;
+    
+    my $id;
+    my $type;
+    
+    # Find the Archaeology Ministry
+    my $arch_id = first {
+            $buildings->{$_}->{url} eq '/archaeology'
+    } keys %$buildings;
+
+    if ( $arch_id ) {
+        $id   = $arch_id;
+        $type = 'Archaeology';
+    }
+    else {
+        my $trade_id = first {
+                $buildings->{$_}->{url} eq '/trade'
+        } keys %$buildings;
+        
+        if ( $trade_id ) {
+            $id   = $trade_id;
+            $type = 'Trade';
+        }
+    }
+    
+    return [] if !$id;
+    
+    my $building = $client->building( id => $id, type => $type );
+    
+    return $building->get_glyphs->{glyphs};
+}
 
 # Print out a pretty table of what we can make.
 sub creation_summary {

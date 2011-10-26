@@ -12,6 +12,7 @@ require Games::Lacuna::Client::Buildings::Simple;
 our @BuildingTypes = (qw(
     Archaeology
     ArtMuseum
+    BlackHoleGenerator
     Capitol
     CulinaryInstitute
     Development

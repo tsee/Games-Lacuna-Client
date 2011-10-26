@@ -18,6 +18,7 @@ GetOptions(
     'type=s',
     'max=i',
     'rename',
+    'all',
     'dryrun|dry-run',
 );
 
@@ -62,46 +63,71 @@ my $space_port_id = first {
 
 my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
 
-# get all defending ships
-my $ships = $space_port->get_ships_for(
-        $planets{ $opts{planet} },
-        {
-            body_name => $opts{orbiting},
-        },
-    )->{orbiting};
-
-if ( exists $opts{type} ) {
-    @$ships =
-        grep {
-            $_->{type} eq $opts{type}
-        } @$ships;
-}
-
-die "Matched no ships\n"
-    if !@$ships;
-
-if ( $opts{max} && @$ships > $opts{max} ) {
-    $#$ships = $opts{max}-1;
-}
-
-if ( $opts{dryrun} ) {
-    print "DRYRUN\n";
-    print "======\n";
-}
-
-# recall
-for my $ship (@$ships) {
-    $space_port->recall_ship( $ship->{id} )
-        unless $opts{dryrun};
-    
-    printf "%s recalled\n",
-        $ship->{name};
-}
+my $ships = $opts{all} ? recall_all()
+          :              recall_select();
 
 exit if $opts{dryrun};
 
+exit if !$opts{rename};
+
+rename_ships( $ships );
+
+exit;
+
+
+sub recall_all {
+    if ( $opts{dryrun} ) {
+        warn "Would have called recall_all()\n";
+        return [];
+    }
+    
+    return $space_port->recall_all->{ships};
+}
+
+sub recall_select {
+    # get all defending ships
+    my $ships = $space_port->get_ships_for(
+            $planets{ $opts{planet} },
+            {
+                body_name => $opts{orbiting},
+            },
+        )->{orbiting};
+    
+    if ( exists $opts{type} ) {
+        @$ships =
+            grep {
+                $_->{type} eq $opts{type}
+            } @$ships;
+    }
+    
+    die "Matched no ships\n"
+        if !@$ships;
+    
+    if ( $opts{max} && @$ships > $opts{max} ) {
+        $#$ships = $opts{max}-1;
+    }
+    
+    if ( $opts{dryrun} ) {
+        print "DRYRUN\n";
+        print "======\n";
+    }
+    
+    # recall
+    for my $ship (@$ships) {
+        $space_port->recall_ship( $ship->{id} )
+            unless $opts{dryrun};
+        
+        printf "%s recalled\n",
+            $ship->{name};
+    }
+    
+    return $ships;
+}
+
 # rename ships
-if ( $opts{rename} ) {
+sub rename_ships {
+    my ( $ships ) = @_;
+    
     print "\n";
     
     for my $ship (@$ships) {
@@ -128,6 +154,7 @@ Usage: $0 lacuna.yml
        --orbiting NAME  # Name of body the ship is orbiting
        --type     TYPE  # Type of ship
        --max      MAX   # Max number of ships to recall
+       --all
        --rename
        --dryrun
 
@@ -138,6 +165,10 @@ Ships which may currently be used for defense are 'fighter' and 'spy_shuttle'.
 If --rename is provided, each ship sent will be renamed using the ship-type.
 
 If --dryrun is provided, just report which ships would be recalled.
+
+If --all is provided, then --orbiting, --type and --max are ignored.
+The "recall_all" API method will be used to recall all this planet's remotely
+defending and orbiting ships with a single API call.
 
 END_USAGE
 

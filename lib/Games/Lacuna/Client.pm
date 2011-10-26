@@ -41,7 +41,9 @@ has rpc => (
 
 has debug => (
   is => 'rw',
-  default => 0,
+  default => sub{
+    exists $ENV{GLC_DEBUG} ? $ENV{GLC_DEBUG} : 0;
+  },
 );
 has session_id => (
   is => 'rw',
