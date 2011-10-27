@@ -33,6 +33,7 @@ use utf8;
     'make_planet',
     'increase_size',
     'change_type=i',
+    'view',
   );
 
   unless ( $opts{config} and -e $opts{config} ) {
@@ -50,57 +51,59 @@ use utf8;
     }
   }
   usage() if ($opts{h});
-  if (!$opts{planet} or !$opts{target}) {
+  if (!$opts{planet}) {
     print "Need both BHG planet and target body!\n";
     usage();
   }
-  my $params = {};
-  if ($opts{change_type}) {
-    if ($opts{change_type} < 1 or $opts{change_type} > 21) {
-      print "New Type must be 1-21\n";
-      usage();
-    }
-    else {
-      $params->{newtype} = $opts{change_type};
-      print "Changing to type $params->{newtype}\n";
-    }
-  }
-  
-  my $glc = Games::Lacuna::Client->new(
-    cfg_file => $opts{config},
-    # debug    => 1,
-  );
-
   my $json = JSON->new->utf8(1);
 
-  my $bod;
-  my $bodies;
-  if (-e $opts{probefile}) {
-    my $pf;
-    open($pf, "$opts{probefile}") || die "Could not open $opts{probefile}\n";
-    my $lines = join("", <$pf>);
-    $bodies = $json->decode($lines);
-    close($pf);
-  }
-  else {
-    print STDERR "$opts{probefile} not found!\n";
-    die;
+  my $target_id;
+  my $params = {};
+  unless ($opts{view}) {
+    if ($opts{change_type}) {
+      if ($opts{change_type} < 1 or $opts{change_type} > 21) {
+        print "New Type must be 1-21\n";
+        usage();
+      }
+      else {
+        $params->{newtype} = $opts{change_type};
+        print "Changing to type $params->{newtype}\n";
+      }
+    }
+
+    my $bod;
+    my $bodies;
+    if (-e $opts{probefile}) {
+      my $pf;
+      open($pf, "$opts{probefile}") || die "Could not open $opts{probefile}\n";
+      my $lines = join("", <$pf>);
+      $bodies = $json->decode($lines);
+      close($pf);
+    }
+    else {
+      print STDERR "$opts{probefile} not found!\n";
+      die;
+    }
+
+    for my $bod (@$bodies) {
+      if ($bod->{name} eq $opts{target}) {
+        $target_id = $bod->{id};
+        last;
+      }
+    }
+
+    unless ($target_id) {
+      die "$opts{target} not found in probe file\n";
+    }
   }
 
   my $ofh;
   open($ofh, ">", $opts{datafile}) || die "Could not open $opts{datafile}";
 
-  my $target_id;
-  for my $bod (@$bodies) {
-    if ($bod->{name} eq $opts{target}) {
-      $target_id = $bod->{id};
-      last;
-    }
-  }
-
-  unless ($target_id) {
-    die "$opts{target} not found in probe file\n";
-  }
+  my $glc = Games::Lacuna::Client->new(
+    cfg_file => $opts{config},
+    # debug    => 1,
+  );
 
   my $data  = $glc->empire->view_species_stats();
   my $ename = $data->{status}->{empire}->{name};
@@ -129,24 +132,32 @@ use utf8;
   my $bhg =  $glc->building( id => $bhg_id, type => 'BlackHoleGenerator' );
 
   if ($bhg) {
-    print "Targetting $target_id with $bhg_id\n";
+    if ($opts{view}) {
+      print "Viewing BHG: $bhg_id\n";
+    }
+    else {
+      print "Targetting $target_id with $bhg_id\n";
+    }
   }
   else {
     print "No BHG!\n";
   }
 
   my $bhg_out;
-  if ($opts{make_planet}) {
-    $bhg_out = $bhg->run_bhg($target_id, "Make Planet");
+  if ($opts{view}) {
+    $bhg_out = $bhg->view();
+  }
+  elsif ($opts{make_planet}) {
+    $bhg_out = $bhg->generate_singularity($target_id, "Make Planet");
   }
   elsif ($opts{make_asteroid}) {
-    $bhg_out = $bhg->run_bhg($target_id, "Make Asteroid");
+    $bhg_out = $bhg->generate_singularity($target_id, "Make Asteroid");
   }
   elsif ($opts{increase_size}) {
-    $bhg_out = $bhg->run_bhg($target_id, "Increase Size");
+    $bhg_out = $bhg->generate_singularity($target_id, "Increase Size");
   }
   elsif ($opts{change_type}) {
-    $bhg_out = $bhg->run_bhg($target_id, "Change Type", $params);
+    $bhg_out = $bhg->generate_singularity($target_id, "Change Type", $params);
   }
   else {
     die "Nothing to do!\n";
@@ -155,7 +166,12 @@ use utf8;
   print $ofh $json->pretty->canonical->encode($bhg_out);
   close($ofh);
 
-  print $json->pretty->canonical->encode($bhg_out->{effect});
+  if ($opts{view}) {
+    print $json->pretty->canonical->encode($bhg_out->{tasks});
+  }
+  else {
+    print $json->pretty->canonical->encode($bhg_out->{effect});
+  }
 
 #  print "$glc->{total_calls} api calls made.\n";
 #  print "You have made $glc->{rpc_count} calls today\n";

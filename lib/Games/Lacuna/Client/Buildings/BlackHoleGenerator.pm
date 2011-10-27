@@ -11,7 +11,7 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    run_bhg  => { default_args => [qw(session_id building_id)] },
+    generate_singularity  => { default_args => [qw(session_id building_id)] },
   };
 }
 
