@@ -9,7 +9,6 @@ use Getopt::Long qw(GetOptions);
 use List::Util   qw( first );
 use Date::Parse;
 use Date::Format;
-use YAML::XS;
 use utf8;
 
   my %opts = (
@@ -28,10 +27,12 @@ use utf8;
     'target=s',
     'help|h',
     'datafile=s',
+    'config=s',
     'make_asteroid',
     'make_planet',
     'increase_size',
     'change_type=i',
+    'swap_places',
     'view',
   );
 
@@ -109,20 +110,22 @@ use utf8;
 
   my $target; my $target_name;
   my $bhg =  $glc->building( id => $bhg_id, type => 'BlackHoleGenerator' );
-  if ( defined $opts{x} && defined $opts{y} ) {
-    $target      = { x => $opts{x}, y => $opts{y} };
-    $target_name = "$opts{x},$opts{y}";
-  }
-  elsif ( defined $opts{target} ) {
-    $target      = { body_name => $opts{target} };
-    $target_name = $opts{target};
-  }
-  elsif ( defined $opts{id} ) {
-    $target      = { body_id => $opts{id} };
-    $target_name = $opts{id};
-  }
-  else {
-    die "target arguments missing\n";
+  unless ($opts{view}) {
+    if ( defined $opts{x} && defined $opts{y} ) {
+      $target      = { x => $opts{x}, y => $opts{y} };
+      $target_name = "$opts{x},$opts{y}";
+    }
+    elsif ( defined $opts{target} ) {
+      $target      = { body_name => $opts{target} };
+      $target_name = $opts{target};
+    }
+    elsif ( defined $opts{id} ) {
+      $target      = { body_id => $opts{id} };
+      $target_name = $opts{id};
+    }
+    else {
+      die "target arguments missing\n";
+    }
   }
 
   if ($bhg) {
@@ -152,6 +155,9 @@ use utf8;
   }
   elsif ($opts{change_type}) {
     $bhg_out = $bhg->generate_singularity($target, "Change Type", $params);
+  }
+  elsif ($opts{swap_places}) {
+    $bhg_out = $bhg->generate_singularity($target, "Swap Places");
   }
   else {
     die "Nothing to do!\n";
