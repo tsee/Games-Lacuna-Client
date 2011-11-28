@@ -477,6 +477,9 @@ END
 
     output("\n");
     output("Summary: " . pluralize($flying_count, "excavator") . " in flight, " . pluralize($yard_count, "shipyard") . " building " . pluralize($building_count, "excavator") . ", " . pluralize($digging_count, "dig") . " ongoing\n\n");
+    for my $planet (keys %{$status->{build_limits}}) {
+        output("$planet needs more $status->{build_limits}{$planet}{type}\n");
+    }
 }
 
 sub normalize_planet {
@@ -900,6 +903,8 @@ sub send_excavators {
                 }
 
                 verbose("Would need " . pluralize($need, "ship") . " to fill up to $minutes minutes on $planet\n");
+                $status->{build_limits}{$planet}{type} = 'Shipyard capacity';
+                $status->{build_limits}{$planet}{num}  = $need;
 
                 verbose("An excavator costs $ore_cost ore, $energy_cost energy, $water_cost water, and $food_cost food in this yard\n");
                 my $by_ore    = $status->{planet_resources}{$planet}{ore_hour}    / $ore_cost;
@@ -910,6 +915,11 @@ sub send_excavators {
                 my $need_by_resource = int($by_resource * ($minutes / 60));
                 verbose("$planet can sustain $by_resource excavators per hour based on current production, for $need_by_resource in $minutes minutes\n");
                 $need = min($need, $need_by_resource);
+                if ($need < $status->{build_limits}{$planet}{num}) {
+                    $status->{build_limits}{$planet}{num}  = $need;
+                    my $type = $by_resource == $by_ore ? 'ore' : $by_resource == $by_water ? 'water' : $by_resource == $by_food ? 'food' : 'energy';
+                    $status->{build_limits}{$planet}{type} = "$type production";
+                }
 
                 # make whichever is higher, the number calculated here, or from --rebuild
                 $build = max($build, $need);
@@ -923,6 +933,10 @@ sub send_excavators {
             # reduce $build to at most the number of open spaceport slots, holding some open if requested
             verbose("Reducing to lesser of $build (need) and @{[$status->{open_docks}{$planet} - ($opts{'save-spots'} || 0)]} (spots)\n");
             $build = min($build, $status->{open_docks}{$planet} - ($opts{'save-spots'} || 0));
+            if ($build < $status->{build_limits}{$planet}{num}) {
+                $status->{build_limits}{$planet}{type} = 'Spaceport slots';
+                $status->{build_limits}{$planet}{num}  = $build;
+            }
 
             if ($build) {
                 for (1..$build) {
