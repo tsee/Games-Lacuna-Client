@@ -36,6 +36,7 @@ my %WriteMakefileArgs = (
     'JSON::RPC::Common' => '0',
     'JSON::RPC::LWP' => '0.006',
     'LWP::UserAgent' => '0',
+    'Math::Round' => '0',
     'MIME::Lite' => '0',
     'Moose' => '0',
     'Number::Format' => '0',
