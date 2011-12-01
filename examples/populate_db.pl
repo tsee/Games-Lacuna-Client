@@ -98,3 +98,13 @@ exit 1;
 
 }
 
+sub output {
+    return if $opts{q};
+    print @_;
+}
+
+sub diag {
+    my ($msg) = @_;
+    print STDERR $msg;
+}
+
