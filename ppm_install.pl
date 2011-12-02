@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+# A kludge for Windows people using Active State Perl
+# to install all modules.
 use strict;
 use warnings;
 
