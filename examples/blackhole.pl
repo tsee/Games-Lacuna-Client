@@ -9,7 +9,6 @@ use Getopt::Long qw(GetOptions);
 use List::Util   qw( first );
 use Date::Parse;
 use Date::Format;
-use YAML::XS;
 use utf8;
 
   my %opts = (
@@ -17,22 +16,24 @@ use utf8;
     v          => 0,
     config     => "lacuna.yml",
     datafile   => "data/data_blackhole.js",
-    probefile => "data/probe_data_cmb.js",
-    starfile   => "data/stars.csv",
     maxdist    => 450,
   );
 
   my $ok = GetOptions(\%opts,
     'planet=s',
+    'x=i',
+    'y=i',
+    'id=i',
     'target=s',
     'help|h',
     'datafile=s',
-    'probefile=s',
-    'starfile=s',
+    'config=s',
     'make_asteroid',
     'make_planet',
     'increase_size',
     'change_type=i',
+    'swap_places',
+    'view',
   );
 
   unless ( $opts{config} and -e $opts{config} ) {
@@ -50,57 +51,38 @@ use utf8;
     }
   }
   usage() if ($opts{h});
-  if (!$opts{planet} or !$opts{target}) {
-    print "Need both BHG planet and target body!\n";
+  if (!$opts{planet}) {
+    print "Need BHG planet set with --planet!\n";
     usage();
   }
-  my $params = {};
-  if ($opts{change_type}) {
-    if ($opts{change_type} < 1 or $opts{change_type} > 21) {
-      print "New Type must be 1-21\n";
-      usage();
-    }
-    else {
-      $params->{newtype} = $opts{change_type};
-      print "Changing to type $params->{newtype}\n";
-    }
-  }
-  
-  my $glc = Games::Lacuna::Client->new(
-    cfg_file => $opts{config},
-    # debug    => 1,
-  );
-
   my $json = JSON->new->utf8(1);
 
-  my $bod;
-  my $bodies;
-  if (-e $opts{probefile}) {
-    my $pf;
-    open($pf, "$opts{probefile}") || die "Could not open $opts{probefile}\n";
-    my $lines = join("", <$pf>);
-    $bodies = $json->decode($lines);
-    close($pf);
-  }
-  else {
-    print STDERR "$opts{probefile} not found!\n";
-    die;
+  my $target_id;
+  my $params = {};
+  unless ($opts{view}) {
+    if ($opts{change_type}) {
+      if ($opts{change_type} < 1 or $opts{change_type} > 21) {
+        print "New Type must be 1-21\n";
+        usage();
+      }
+      else {
+        $params->{newtype} = $opts{change_type};
+        print "Changing to type $params->{newtype}\n";
+      }
+    }
+    usage() if !$opts{target} && !defined $opts{x} && !defined $opts{y} && !defined $opts{id};
+
+    usage() if defined $opts{x} && !defined $opts{y};
+    usage() if defined $opts{y} && !defined $opts{x};
   }
 
   my $ofh;
   open($ofh, ">", $opts{datafile}) || die "Could not open $opts{datafile}";
 
-  my $target_id;
-  for my $bod (@$bodies) {
-    if ($bod->{name} eq $opts{target}) {
-      $target_id = $bod->{id};
-      last;
-    }
-  }
-
-  unless ($target_id) {
-    die "$opts{target} not found in probe file\n";
-  }
+  my $glc = Games::Lacuna::Client->new(
+    cfg_file => $opts{config},
+    # debug    => 1,
+  );
 
   my $data  = $glc->empire->view_species_stats();
   my $ename = $data->{status}->{empire}->{name};
@@ -126,27 +108,56 @@ use utf8;
   die "No BHG on this planet\n"
 	  if !$bhg_id;
 
+  my $target; my $target_name;
   my $bhg =  $glc->building( id => $bhg_id, type => 'BlackHoleGenerator' );
+  unless ($opts{view}) {
+    if ( defined $opts{x} && defined $opts{y} ) {
+      $target      = { x => $opts{x}, y => $opts{y} };
+      $target_name = "$opts{x},$opts{y}";
+    }
+    elsif ( defined $opts{target} ) {
+      $target      = { body_name => $opts{target} };
+      $target_name = $opts{target};
+    }
+    elsif ( defined $opts{id} ) {
+      $target      = { body_id => $opts{id} };
+      $target_name = $opts{id};
+    }
+    else {
+      die "target arguments missing\n";
+    }
+  }
 
   if ($bhg) {
-    print "Targetting $target_id with $bhg_id\n";
+    if ($opts{view}) {
+      print "Viewing BHG: $bhg_id\n";
+    }
+    else {
+      print "Targetting $target_name with $bhg_id\n";
+    }
   }
   else {
     print "No BHG!\n";
   }
 
   my $bhg_out;
-  if ($opts{make_planet}) {
-    $bhg_out = $bhg->run_bhg($target_id, "Make Planet");
+  if ($opts{view}) {
+    $bhg_out = $bhg->view();
+  }
+  elsif ($opts{make_planet}) {
+    $bhg_out = $bhg->generate_singularity($target, "Make Planet");
   }
   elsif ($opts{make_asteroid}) {
-    $bhg_out = $bhg->run_bhg($target_id, "Make Asteroid");
+    $bhg_out = $bhg->generate_singularity($target, "Make Asteroid");
   }
   elsif ($opts{increase_size}) {
-    $bhg_out = $bhg->run_bhg($target_id, "Increase Size");
+    $bhg_out = $bhg->generate_singularity($target, "Increase Size");
   }
   elsif ($opts{change_type}) {
-    $bhg_out = $bhg->run_bhg($target_id, "Change Type", $params);
+    $bhg_out = $bhg->generate_singularity($target, "Change Type", $params);
+  }
+  elsif ($opts{swap_places}) {
+    $bhg_out = $bhg->generate_singularity($target, "Swap Places");
   }
   else {
     die "Nothing to do!\n";
@@ -155,7 +166,12 @@ use utf8;
   print $ofh $json->pretty->canonical->encode($bhg_out);
   close($ofh);
 
-  print $json->pretty->canonical->encode($bhg_out->{effect});
+  if ($opts{view}) {
+    print $json->pretty->canonical->encode($bhg_out->{tasks});
+  }
+  else {
+    print $json->pretty->canonical->encode($bhg_out->{effect});
+  }
 
 #  print "$glc->{total_calls} api calls made.\n";
 #  print "You have made $glc->{rpc_count} calls today\n";
