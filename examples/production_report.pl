@@ -52,15 +52,15 @@ foreach my $planet_id ( sort keys %$planets ) {
     my $planet    = $client->body( id => $planet_id );
     my $result    = $planet->get_buildings;
     my $body      = $result->{status}{body};
-    
+
     print "$name\n";
     print "=" x length $name;
     print "\n";
-    
+
     my $max_hour     = max map { length format_number $body->{$_."_hour"} }     @types;
     my $max_stored   = max map { length format_number $body->{$_."_stored"} }   @types;
     my $max_capacity = max map { length format_number $body->{$_."_capacity"} } @types;
-    
+
     for my $type (@types) {
         printf "%6s: %${max_hour}s/hr - %${max_stored}s / %${max_capacity}s\n",
             ucfirst($type),
@@ -68,6 +68,6 @@ foreach my $planet_id ( sort keys %$planets ) {
             format_number( $body->{$type."_stored"} ),
             format_number( $body->{$type."_capacity"} );
     }
-    
+
     print "\n";
 }

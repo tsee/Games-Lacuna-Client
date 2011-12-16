@@ -55,7 +55,7 @@ use Data::Dumper;
             ($ore) = sort { $ore_avail{$a} <=> $ore_avail{$b} } @ores;
         }
         elsif ($selection eq 'random') {
-            ($ore) = splice(@ores, rand(@ores), 1) 
+            ($ore) = splice(@ores, rand(@ores), 1)
         }
         else {
             warning("Unknown archaeology selection command: $selection");

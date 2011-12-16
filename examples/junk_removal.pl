@@ -153,7 +153,7 @@ CONFIG_FILE	 defaults to 'lacuna.yml'
 
 You must at least have access to the Junk Henge to use this script.
 
-This scripts purges as much trash as possible from the planet, using the highest available junk building that is not currently built. 
+This scripts purges as much trash as possible from the planet, using the highest available junk building that is not currently built.
 
 END_USAGE
 

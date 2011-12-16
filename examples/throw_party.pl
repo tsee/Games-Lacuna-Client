@@ -49,16 +49,16 @@ for my $name (@planets) {
     my $body      = $client->body( id => $planets{$name} );
     my $result    = $body->get_buildings;
     my $buildings = $result->{buildings};
-    
+
     my @park_id = grep {
             $buildings->{$_}->{name} eq 'Park'
     } keys %$buildings;
-    
+
     for my $park_id (@park_id) {
         my $park = $client->building( id => $park_id, type => 'Park' );
-        
+
         next unless $park->view->{party}{can_throw};
-        
+
         $park->throw_a_party;
     }
 }

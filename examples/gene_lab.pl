@@ -94,36 +94,36 @@ if ( $spy_id || $spy_name ) {
 			lc( $_->{spy}{name} ) eq lc( $spy_name )
 		} @grafts;
 	}
-	
+
 	die "Spy graft not found\n"
 		if !@grafts;
-	
+
 	die "More than 1 spy graft matched - suggest using --id instead\n"
 		if @grafts > 1;
-	
+
 	$affinity = lc $affinity;
-	
+
 	my @affinity = grep {
 		lc($_) =~ /^$affinity/
 	} @{ $grafts[0]->{graftable_affinities} };
-	
+
 	die "Graftable affinity not found\n"
 		if !@affinity;
-	
+
 	if ( @affinity > 1 ) {
 		print "Matched more than 1 graftable affinity\n";
 		print map { "$_\n" } @affinity;
 		exit;
 	}
-	
+
 	my $result;
 	eval {
 		$result = $genlab->run_experiment( $grafts[0]->{spy}{id}, $affinity[0] );
 	};
-	
+
 	die "Fatal error: $@\n"
 		if $@;
-	
+
 	printf "%s\n\n", $result->{experiment}{message};
 }
 else {
@@ -132,20 +132,20 @@ else {
 	for my $graft ( @grafts ) {
 		printf "ID: %d\n", $graft->{spy}{id};
 		printf "Name: %s\n", $graft->{spy}{name};
-		
+
 		print "Species:\n";
 		map {
 			printf "\t%s : %s\n", $_, $graft->{species}{$_}
 		} sort keys %{ $graft->{species} };
-		
+
 		print "Graftable Affinities:\n";
 		map {
 			printf "\t%s\n", $_;
 		} sort @{ $graft->{graftable_affinities} };
-		
+
 		print "\n";
 	}
-	
+
 	printf "Graft odds: %d\n",    $return->{graft_odds};
 	printf "Survival odds: %d\n", $return->{survival_odds};
 	printf "Essentia cost: %d\n", $return->{essentia_cost};

@@ -5,7 +5,7 @@
 #
 # ARG1 defaults to 'lacuna.yml' in the current directory
 # ARG2 defaults to 'forward_email.yml' in the current directory
-# 
+#
 # forward_email.yml must describe a YAML mapping
 #
 # The 'cache_dir' key/value is required
@@ -28,7 +28,7 @@
 # If max_pages is set, the last-seen-id will not be cached, otherwise if there
 # are many messaged not being archived/trashed, we could end up with pages
 # never being processed.
-# 
+#
 # example forward_email.yml
 
 #cache_dir: '/path/to/cache/dir/which/must/be/writeable'
@@ -142,20 +142,20 @@ my $server_announcement;
 PAGE:
 while (1) {
     debug( "Fetching Inbox page $page" );
-  
+
     my $response = $client->inbox->view_inbox( { page_number => $page } );
-    
+
     $server_announcement ||= $response->{status}{server}{announcement};
-    
+
     for my $message ( @{ $response->{messages} } ) {
         if ( $message->{id} <= $last_seen_id ) {
             debug( "Already seen this message - don't fetch any more" );
             last PAGE;
         }
-        
+
         push @messages, $message;
     }
-    
+
     if ( $max_pages && $page >= $max_pages ) {
         debug("Fetched max-pages '$max_pages' - don't fetch any more");
         last PAGE;
@@ -176,11 +176,11 @@ my @trash_id;
 
 MESSAGE:
 for my $message ( reverse @messages ) {
-    
+
     if ( !$max_pages && $message->{id} > $last_seen_id ) {
         $last_seen_id = $message->{id};
     }
-    
+
     for my $regex ( @$archive_match ) {
         if ( $message->{subject}  =~ m/$regex/i ) {
             debug(
@@ -188,12 +188,12 @@ for my $message ( reverse @messages ) {
                     $message->{subject},
                     $regex,
             );
-            
+
             push @archive_id, $message->{id};
             next MESSAGE;
         }
     }
-    
+
     for my $regex ( @$trash_match ) {
         if ( $message->{subject} =~ m/$regex/i ) {
             debug(
@@ -201,24 +201,24 @@ for my $message ( reverse @messages ) {
                     $message->{subject},
                     $regex,
             );
-            
+
             push @trash_id, $message->{id};
             next MESSAGE;
         }
     }
-    
+
     if ( $message->{has_read} ) {
         debug( sprintf "Skipping read message: '%s'", $message->{subject} );
         next;
     }
-    
+
     my $body = <<BODY;
 $message->{date}
 From: $message->{from}
 $message->{body_preview}
 
 BODY
-    
+
     my $email = MIME::Lite->new(
         From    => $email_conf->{email}{from},
         To      => $email_conf->{email}{to},
@@ -226,9 +226,9 @@ BODY
         Type    => 'TEXT',
         Data    => $body,
     );
-    
+
     $email->send( @$mime_lite_conf );
-    
+
     debug( sprintf "Forwarded message: '%s'", $message->{subject} );
 }
 
@@ -245,7 +245,7 @@ if ( @archive_id ) {
     $client->inbox->archive_messages(
         \@archive_id,
     );
-    
+
     debug( sprintf "Archived %d messages", scalar @archive_id );
 }
 
@@ -254,23 +254,23 @@ if ( @trash_id ) {
     $client->inbox->trash_messages(
         \@trash_id,
     );
-    
+
     debug( sprintf "Trashed %d messages", scalar @trash_id );
 }
 
 # announcements
 if ( $email_conf->{forward_announcements} && $server_announcement ) {
-    
+
     debug( "Forwarding server announcement" );
-    
+
     my $url = URI->new( $client->uri );
     $url->path('announcement');
     $url->query_form( session_id => $client->session_id );
-    
+
     my $ua = LWP::UserAgent->new;
-    
+
     my $response = $ua->get($url);
-    
+
     my $email = MIME::Lite->new(
         From    => $email_conf->{email}{from},
         To      => $email_conf->{email}{to},
@@ -278,14 +278,14 @@ if ( $email_conf->{forward_announcements} && $server_announcement ) {
         Type    => "text/html",
         Data    => $response->content,
     );
-    
+
     $email->send( @$mime_lite_conf );
 }
 
 
 sub debug {
     return if !$DEBUG;
-    
+
     for (@_) {
         if ( ref $_ ) {
             require Data::Dumper;

@@ -597,19 +597,19 @@ our %EXPORT_TAGS = (
         WaterStorage => "Water Storage Tank",
         Wheat => "Wheat Farm",
     );
-    
+
     sub building_label{
         my( $building ) = @_;
         return $label{$building};
     }
-    
+
     my %type_from_label =
         map {
             my $name = lc $label{$_};
             $name =~ s/[^\w]//g;
             $name => $_
         } keys %label;
-    
+
     sub building_type_from_label {
         my( $name ) = @_;
         return unless defined $name;

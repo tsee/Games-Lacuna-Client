@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Usage: probes.pl -h
-#  
+#
 
 use strict;
 use warnings;
@@ -22,7 +22,7 @@ GetOptions(
   'config=s' => \$cfg_file,
   'help' => \$help,
 );
-  
+
   my $glc = Games::Lacuna::Client->new(
     cfg_file => $cfg_file,
 #    debug    => 1,

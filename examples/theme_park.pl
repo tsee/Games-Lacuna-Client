@@ -72,12 +72,12 @@ my $themepark = $client->building( id => $themepark_id, type => 'ThemePark' );
 if ( $operate ) {
     for ( 1 .. $count ) {
         my $return = $themepark->operate->{themepark};
-        
+
         print "Success\n";
-        
+
         if ( $return->{can_operate} ) {
             my $food_count = $return->{food_type_count};
-            
+
             print "Can operate the Theme Park again\n";
             printf "We have the %d foods required\n", $food_count;
         }
@@ -89,10 +89,10 @@ if ( $operate ) {
 }
 else {
     my $return = $themepark->view->{themepark};
-    
+
     if ( $return->{can_operate} ) {
         my $food_count = $return->{food_type_count} || 0;
-        
+
         print "Can operate the Theme Park\n";
         printf "We have the %d foods required\n", $food_count;
     }

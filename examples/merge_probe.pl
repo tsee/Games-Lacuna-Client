@@ -3,7 +3,7 @@
 # Script to parse thru the probe data
 #
 # Usage: perl parse_probe.pl probe_file
-#  
+#
 # Write this to put out system stats
 #
 use strict;

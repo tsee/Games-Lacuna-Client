@@ -76,7 +76,7 @@ sub updater
             star_id     => $res->{star_id},
             orbit       => $res->{orbit},
             type        => $res->{type},
-            size        => $res->{size},    
+            size        => $res->{size},
             empire_id   => $res->{empire_id},
         )->insert;
     }
@@ -102,7 +102,7 @@ sub updater
             }
         }
     }
-    else 
+    else
     {
         warn "Found multiple bodies for the given new colony";
         return;

@@ -85,7 +85,7 @@ sub new {
   $class = ref($class)||$class; # no cloning
   my %opt = @_;
   my $btype = delete $opt{type};
-  
+
   # redispatch in factory mode
   if (defined $btype) {
     if ($class ne 'Games::Lacuna::Client::Buildings') {
@@ -102,7 +102,7 @@ sub new {
   # or require building construction via $body->building(...)
   # Let's keep it simple for now.
   #$self->{body_id} = $opt{body_id};
-  
+
   bless $self => $class;
   return $self;
 }

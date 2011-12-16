@@ -19,7 +19,7 @@ sub _load{
 sub Load{
   my($self,$config) = @_;
   my $class = blessed $self || $self;
-  
+
   $self = bless {},$class unless ref $self;
   $self->{yaml} = _load($config);
   for my $data ( values %{$self->{yaml}} ){
