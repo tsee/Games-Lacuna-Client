@@ -65,50 +65,50 @@ print "Planet: $planet_name\n";
 for (my $i = 0; $i <= $#queue; $i++) {
     my $item = $queue[$i];
     my $return;
-    
+
     # wait if there's something already in / been added to the build queue
     while ( my $pending = build_remaining() ) {
         printf "Already something building: waiting for %d seconds\n", $pending;
         sleep $pending+$build_gap;
     }
-    
+
     if ( $item->{build} ) {
         printf "Building %s at %d,%d\n",
             $item->{build}{type},
             $item->{build}{x},
             $item->{build}{y};
-        
+
         my $building = $client->building( type => $item->{build}{type} );
         $return = $building->build( $planet->{body_id}, $item->{build}{x}, $item->{build}{y} );
     }
     else {
         my $url = lc $item->{upgrade}{type};
         $url = "/$url";
-        
+
         my ($match) =
             grep { $buildings->{$_}{url} eq $url }
             grep { defined $item->{upgrade}{x} ? ( $item->{upgrade}{x} eq $buildings->{$_}{x} ) : 1 }
             grep { defined $item->{upgrade}{y} ? ( $item->{upgrade}{y} eq $buildings->{$_}{y} ) : 1 }
             keys %$buildings;
-        
+
         die "building not found: '$url'"
             if !$match;
-        
+
         my $building = $client->building( id => $match, type => $item->{upgrade}{type} );
-        
+
         printf  "Upgrading %s at %d,%d\n",
             $item->{upgrade}{type},
             $buildings->{$match}{x},
             $buildings->{$match}{y};
-        
+
         $return = $building->upgrade;
     }
-    
+
     if ( my $levels = $item->{levels} ) {
         my $copy = clone( $item );
-        
+
         delete $copy->{levels};
-        
+
         if ( $item->{build} ) {
             $copy->{upgrade} = delete $copy->{build};
         }
@@ -118,44 +118,44 @@ for (my $i = 0; $i <= $#queue; $i++) {
                 id   => $return->{building}{id},
                 type => $item->{upgrade}{type},
             );
-            
+
             my $return = $building->view;
-            
+
             $copy->{upgrade}{x} = $return->{building}{x};
             $copy->{upgrade}{y} = $return->{building}{y};
         }
-        
+
         # already handled 1
         $levels--;
-        
+
         for my $level ( 1 .. $levels ) {
             splice @queue, $i+$level, 0, clone( $copy );
         }
     }
-    
+
     if ( $item->{subsidize} ) {
         my $dev_min = get_dev_min();
-        
+
         if ( $dev_min ) {
             print "Subsidizing build\n";
-            
+
             $dev_min->subsidize_build_queue;
             sleep 1;
             next;
         }
     }
-    
+
     # quit if we're at the end of the queue
     last if !$queue[$i+1];
-    
+
     my $wait = $return->{building}{pending_build}{seconds_remaining};
-    
+
     sleep( $wait+$build_gap );
 }
 
 sub build_remaining {
     $buildings = $planet->get_buildings->{buildings};
-    
+
     return
         max
         grep { defined }
@@ -165,24 +165,24 @@ sub build_remaining {
 
 sub get_dev_min {
     return $dev_min if $dev_min;
-    
+
     my $id = first {
         $buildings->{$_}{url} eq "/development"
     } keys %$buildings;
-    
+
     if ( !$id ) {
         warn "Cannot subsidize without a Development Ministry\n";
         return;
     }
-    
+
     return $client->building( id => $id, type => "Development" );
 }
 
 sub usage {
     my ($message) = @_;
-    
+
     $message = $message ? "$message\n\n" : '';
-    
+
     die <<"END_USAGE";
 ${message}Usage: $0 CONFIG_FILE BUILD_CONFIG_FILE
 

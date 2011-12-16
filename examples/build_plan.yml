@@ -7,15 +7,14 @@ queue:
       x: 1
       y: 2
     levels: 2
-  
+
   - build:
       type: Singularity
       x: 1
       y: 3
-  
+
   - upgrade:
       type: Singularity
       x: 1
       y: 3
     subsidize: 1
-  

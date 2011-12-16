@@ -76,7 +76,7 @@ my $sslab = $client->building( id => $ssl_id, type => 'SSLA' );
 if ( $opts{type} || $opts{subsidize} ) {
     make_plan()
         if $opts{type};
-    
+
     subsidize_plan()
         if $opts{subsidize};
 }
@@ -93,11 +93,11 @@ exit;
 sub print_plans {
     my $status = $sslab->view->{make_plan};
     my $types  = $status->{types};
-    
+
     foreach my $plan ( @$types ) {
         print "$plan->{name}\n";
     }
-    
+
     if ( my $making = $status->{making} ) {
         print <<MAKING;
 
@@ -111,15 +111,15 @@ sub print_costs {
     my $status = $sslab->view->{make_plan};
     my $costs  = $status->{level_costs};
     my $level  = 1;
-    
+
     for my $type ( @$costs ) {
-        
+
         map {
             $type->{$_} = format_number( $type->{$_} )
         } qw( food ore water energy waste );
-        
+
         $type->{time} = ptime( $type->{time} );
-        
+
         print <<COSTS;
 Level: $level
 food:   $type->{food}
@@ -130,16 +130,16 @@ waste:  $type->{waste}
 time:   $type->{time}
 
 COSTS
-        
+
         $level++;
     }
-    
+
     print "subsidy: $status->{subsidy_cost}E\n";
 }
 
 sub make_plan {
     my $status = $sslab->make_plan( $opts{type}, $opts{level} );
-    
+
     print <<MAKING;
 Making:
 $status->{make_plan}{making}
@@ -148,7 +148,7 @@ MAKING
 
 sub subsidize_plan {
     my $status = $sslab->subsidize_plan;
-    
+
     print "Subsidized\n";
 }
 

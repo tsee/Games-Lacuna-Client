@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 use strict;
 use warnings;
 use FindBin;
@@ -202,7 +202,7 @@ while (1) {
     }
     next;
   }
- 
+
   output("Waiting for next iteration");
   sleep $TimePerIteration;
 }
@@ -225,7 +225,7 @@ sub build_topo_sort {
         push @independent, $name;
       }
     }
- 
+
     my %ba;
     while ( my ( $before, $afters_aref ) = each %deps ) {
         for my $after ( @{ $afters_aref } ) {
@@ -240,7 +240,7 @@ sub build_topo_sort {
         delete @ba{@afters};
         delete @{$_}{@afters} for values %ba;
     }
- 
+
     if (keys %ba) {
       die "Cycle found: " . join(' ', sort keys %ba);
     }
@@ -349,7 +349,7 @@ sub building_type_from_coords {
 # This is for building ships, not upgrading/building shipyards.
 sub find_shipyard {
   my ($buildings, $x, $y) = @_;
-  my @shipyards = grep { $_->{name} eq 'Shipyard' } 
+  my @shipyards = grep { $_->{name} eq 'Shipyard' }
                   values %{ $buildings->{buildings} };
   return() if not @shipyards;
   return($shipyards[0]{x}, $shipyards[0]{y}) if @shipyards == 1;

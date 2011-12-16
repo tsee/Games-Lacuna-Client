@@ -15,7 +15,7 @@ sub api_methods {
       map {
         ($_ => { default_args => [qw(session_id)] })
       }
-      qw( 
+      qw(
         alliance_rank
         find_alliance_rank
         empire_rank

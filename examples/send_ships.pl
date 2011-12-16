@@ -120,12 +120,12 @@ elsif ( defined $planet ) {
 }
 elsif ( $own_star ) {
     my $body = $client->body( id => $planets{$from} );
-    
+
     $body = request(
         object => $body,
         method => 'get_status',
     )->{body};
-    
+
     $target      = { star_id => $body->{star_id} };
     $target_name = "own star";
 }
@@ -165,7 +165,7 @@ my @ships;
 for my $ship ( @$ships ) {
     next if @ship_names && !grep { $ship->{name} eq $_ } @ship_names;
     next if @ship_types && !grep { $ship->{type} eq $_ } @ship_types;
-    
+
     push @ships, $ship;
     last if defined $count && scalar @ships == $count;
 }
@@ -176,7 +176,7 @@ for my $ship ( @$ships ) {
 if ( $speed ) {
     my @wrong_speed;
     my @right_speed;
-    
+
     for my $ship ( @ships ) {
         if ( $ship->{speed} == $speed ) {
             push @right_speed, $ship;
@@ -185,21 +185,21 @@ if ( $speed ) {
             push @wrong_speed, $ship;
         }
     }
-    
+
     if ( @wrong_speed >= $leave ) {
         # we can use all the correct speed ships
         @ships = @right_speed;
     }
     else {
         my $diff = $leave - @wrong_speed;
-        
+
         die "No ships available to send\n"
             if $diff > @right_speed;
-        
+
         my $can_use = @right_speed - $diff;
-        
+
         splice @right_speed, $can_use;
-        
+
         @ships = @right_speed;
     }
 }
@@ -230,7 +230,7 @@ if ( $fleet && $fleet_speed ) {
 
 if ($seconds) {
     my $now_seconds = DateTime->now->second;
-    
+
     if ( $now_seconds > $seconds ) {
         sleep $seconds - $now_seconds;
     }
@@ -243,13 +243,13 @@ elsif ($sleep) {
 if ( $dryrun ) {
     print "DRYRUN\n";
     print "======\n";
-    
+
     print "Sent to: $target_name\n";
-    
+
     for my $ship (@ships) {
         printf "%s\n", $ship->{name};
     }
-    
+
     exit;
 }
 
@@ -263,7 +263,7 @@ my @fleet;
 for my $ship (@ships) {
     if ( $fleet ) {
         push @fleet, $ship;
-        
+
         if ( @fleet == $ships_per_fleet ) {
             send_fleet( \@fleet );
             undef @fleet;
@@ -280,17 +280,17 @@ if ( @fleet ) {
 
 if ( $rename ) {
     print "\n";
-    
+
     # renaming isn't time-sensitive, so try to avoid hitting the max
     # requests per minute
     $client->rpc_sleep(1);
-    
+
     for my $ship (@ships) {
-        
+
         my $name = sprintf "%s (%s)",
             $ship->{type_human},
             $target_name;
-        
+
         request(
             object => $space_port,
             method => 'name_ship',
@@ -299,7 +299,7 @@ if ( $rename ) {
                 $name,
             ],
         );
-        
+
         printf qq{Renamed "%s" to "%s"\n},
             $ship->{name},
             $name;
@@ -310,7 +310,7 @@ exit;
 
 sub send_ship {
     my ( $ship ) = @_;
-    
+
     my $return = request(
         object => $space_port,
         method => 'send_ship',
@@ -319,9 +319,9 @@ sub send_ship {
             $target,
         ],
     );
-    
+
     print "Sent ship to: $target_name\n";
-    
+
     printf qq{\t%s "%s" arriving %s\n},
         $return->{ship}{type_human},
         $return->{ship}{name},
@@ -330,7 +330,7 @@ sub send_ship {
 
 sub send_fleet {
     my ( $ships ) = @_;
-    
+
     my $return = request(
         object => $space_port,
         method => 'send_fleet',
@@ -340,9 +340,9 @@ sub send_fleet {
             $fleet_speed,
         ],
     );
-    
+
     print "Sent fleet to: $target_name\n";
-    
+
     for my $ship ( @{ $return->{fleet} } ) {
         printf qq{\t%s "%s" arriving %s\n},
             $ship->{ship}{type_human},
@@ -353,32 +353,32 @@ sub send_fleet {
 
 sub request {
     my ( %params )= @_;
-    
+
     my $method = delete $params{method};
     my $object = delete $params{object};
     my $params = delete $params{params} || [];
-    
+
     my $request;
     my $error;
-    
+
 RPC_ATTEMPT:
     for ( 1 .. $login_attempts ) {
-        
+
         try {
             $request = $object->$method(@$params);
         }
         catch {
             $error = $_;
-            
+
             # if session expired, try again without a session
             my $client = $object->client;
-            
+
             if ( $client->{session_id} && $error =~ /Session expired/i ) {
-                
+
                 warn "GLC session expired, trying again without session\n";
-                
+
                 delete $client->{session_id};
-                
+
                 sleep $reattempt_wait;
             }
             else {
@@ -388,16 +388,16 @@ RPC_ATTEMPT:
                 last RPC_ATTEMPT;
             }
         };
-        
+
         last RPC_ATTEMPT
             if $request;
     }
-    
+
     if (!$request) {
         warn "RPC request failed $login_attempts times, giving up\n";
         die $error;
     }
-    
+
     return $request;
 }
 

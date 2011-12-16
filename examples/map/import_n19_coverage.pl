@@ -105,12 +105,12 @@ sub import_feed {
   );
 
   LacunaMap::DB->begin;
-  foreach my $item ( $feed->query('//item') ) { 
+  foreach my $item ( $feed->query('//item') ) {
     my $node = $item->query('title');
     my $title = $node->text_content;
     my $date = $item->query('pubDate');
     #print '  '.$node->text_content;
-    #print "\n"; 
+    #print "\n";
     my $datestr = $date->text_content;
     my $ts = $date_parser->parse_datetime($datestr)->strftime('%s');
     my $known = LacunaMap::DB::News->count(

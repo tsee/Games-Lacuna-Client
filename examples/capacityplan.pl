@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 use strict;
 use warnings;
 use FindBin;
@@ -77,7 +77,7 @@ foreach my $name ( sort keys %planets ) {
     # space-stations don't generate/store waste
     my @types = $body->{type} eq 'space station' ? qw( food ore water energy )
               :                                    qw( food ore water energy waste );
-    
+
 	# Analysis
 	foreach my $type ( @types ) {
 		my $capacity = $body->{"${type}_capacity"} || 0;
@@ -144,7 +144,7 @@ foreach my $name ( sort keys %planets ) {
 	}
 }
 
-# Print build options in order 
+# Print build options in order
 @options = sort {
 	$a->{time} > $b->{time}
 	or

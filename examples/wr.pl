@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 use strict;
 use warnings;
 use 5.010000;
@@ -139,11 +139,11 @@ sub update_wr {
     output("Still busy for $busy_seconds, waiting");
     return $busy_seconds+3;
   }
-  
+
   output("Checking resource stats");
   my $pstatus = $wr_stat->{status}{body} or die "Could not get planet status via \$struct->{status}{body}: " . Dumper($wr_stat);
   my $waste = $pstatus->{waste_stored};
-  
+
   if (not $waste or $waste < 100) {
     output("(virtually) no waste has accumulated, waiting");
     return 5*MINUTE;
@@ -210,7 +210,7 @@ sub update_wr {
     $wr->recycle(int($water), int($ore), int($energy), 0);
   };
   output("Recycling failed: $@"), return(1*MINUTE) if $@;
- 
+
   output("Waiting for recycling job to finish");
   return int($rec_waste*$sec_per_waste)+3;
 }
