@@ -168,7 +168,7 @@ sub _run_one_scan {
           $_->delete;
         }
         LacunaMap::DB->commit_begin if @existing;
-        
+
         eval {
           my $dbbody = LacunaMap::DB::Bodies->create(
             ($body->{empire} ? (empire_id => $body->{empire}{id}) : ()),

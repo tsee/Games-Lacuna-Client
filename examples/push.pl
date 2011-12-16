@@ -61,13 +61,13 @@ my @options;
 
 if ($ship_name) {
     my $trade_ships = $trade_min->get_trade_ships($to_id)->{ships};
-    
+
     my $ship = first
         {
             $_->{name} =~ m/$ship_name/i;
         }
         @$trade_ships;
-    
+
     if ($ship) {
         push @options, { ship_id => $ship->{id} };
     }

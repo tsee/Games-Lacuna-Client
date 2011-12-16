@@ -90,10 +90,10 @@ Games::Lacuna::Client::Empire - The empire module
 
   use Games::Lacuna::Client;
   use Games::Lacuna::Client::Empire;
-  
+
   my $client = Games::Lacuna::Client->new(...);
   my $empire = $client->empire;
-  
+
   my $status = $empire->get_status;
 
 =head1 DESCRIPTION

@@ -4,7 +4,7 @@
 # find stars that have been missed in probe net
 #
 # Usage: perl close_stars.pl
-#  
+#
 use strict;
 use warnings;
 use Getopt::Long qw(GetOptions);
@@ -33,7 +33,7 @@ GetOptions(
   'help'         => \$help,
   'zone=s@'       => \$sectors,
 );
-  
+
   usage() if ($help);
 
   my $bod;
@@ -160,7 +160,7 @@ sub get_coord {
     return $planets->{"$pname"}->{x}, $planets->{"$pname"}->{y};
   }
   return $px, $py
-  
+
 }
 
 sub usage {

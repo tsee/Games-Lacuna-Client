@@ -48,19 +48,19 @@ my %planets = reverse %{ $empire->{planets} };
 my @spaceports;
 
 foreach my $name ( sort keys %planets ) {
-  
+
   next if @planets && none { lc $name eq lc $_ } @planets;
-  
+
   # Load planet data
   my $planet    = $client->body( id => $planets{$name} );
   my $buildings = $planet->get_buildings->{buildings};
-  
+
   my $id = first {
     $buildings->{$_}{name} eq 'Space Port'
   } keys %$buildings;
-  
+
   next if !$id;
-  
+
   push @spaceports, $client->building( id => $id, type => 'SpacePort' );
 }
 
@@ -74,7 +74,7 @@ foreach my $sp (@spaceports) {
       task => 'Travelling',
     }
   )->{ships};
-  
+
   foreach my $ship ( @$ships ) {
     ( my $date_arrives = $ship->{date_arrives} ) =~ s{^(\d+)\s+(\d+)\s+}{$2/$1/};
     $ship->{date_arrives} = str2time($date_arrives);

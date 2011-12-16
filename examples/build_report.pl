@@ -39,25 +39,25 @@ foreach my $name ( sort keys %$planets ) {
     my $planet    = $client->body( id => $planet_id );
     my $result    = $planet->get_buildings;
     my $buildings = $result->{buildings};
-    
+
     my @build;
-    
+
     for my $building_id ( sort keys %$buildings ) {
         push @build, $buildings->{$building_id}
             if $buildings->{$building_id}{pending_build};
     }
-    
+
     next if !@build;
-    
+
     print "$name\n";
     print "=" x length $name;
     print "\n";
-    
+
     for my $building (sort { $a->{pending_build}{seconds_remaining} <=> $b->{pending_build}{seconds_remaining} } @build) {
         printf "%s: %s\n",
             $building->{name},
             $use_seconds_left ? Time::Duration::duration($building->{pending_build}{seconds_remaining}) : $building->{pending_build}{end};
     }
-    
+
     print "\n";
 }

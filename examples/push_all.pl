@@ -130,7 +130,7 @@ my $ship_count = 1;
 my $last_hold_size;
 
 for my $ship (@ships) {
-    
+
     if ( $last_hold_size && $last_hold_size <= $ship->{hold_size} ) {
         next;
     }
@@ -138,15 +138,15 @@ for my $ship (@ships) {
         # smaller hold-size, so we'll give it a try
         undef $last_hold_size;
     }
-    
+
     my @items = trade_items( $ship, $resources );
-    
+
     if (!@items) {
         warn "insufficient items to fill ship\n";
         $last_hold_size = $ship->{hold_size};
         next;
     }
-    
+
     my $return;
     if ( $dryrun ) {
         $return->{ship} = {
@@ -164,18 +164,18 @@ for my $ship (@ships) {
             }
         );
     }
-    
+
     printf "Pushed from '%s' to '%s' using '%s' size '%d', arriving '%s'\n",
         $from,
         $to,
         $return->{ship}{name},
         $return->{ship}{hold_size},
         $return->{ship}{date_arrives};
-    
+
     if ($verbose) {
         print Dump(\@items);
     }
-    
+
     last if $max_ships && $ship_count == $max_ships;
     $ship_count++;
 }
@@ -184,29 +184,29 @@ exit;
 
 sub trade_items {
     my ( $ship, $resources ) = @_;
-    
+
     my ( $food, $ore, $water, $energy ) = resource_totals( $resources );
-    
+
     my $total = sum( $food, $ore, $water, $energy );
-    
+
     if ($debug) {
         warn <<DEBUG;
 Total available to push: $total
 
 DEBUG
     }
-    
+
     my $food_percent   = $food   ? ($food   / $total) : 0;
     my $ore_percent    = $ore    ? ($ore    / $total) : 0;
     my $water_percent  = $water  ? ($water  / $total) : 0;
     my $energy_percent = $energy ? ($energy / $total) : 0;
-    
+
     if ($debug) {
         my $food   = sprintf "%.2f",   $food_percent * 100;
         my $ore    = sprintf "%.2f",    $ore_percent * 100;
         my $water  = sprintf "%.2f",  $water_percent * 100;
         my $energy = sprintf "%.2f", $energy_percent * 100;
-        
+
         warn <<DEBUG;
 Percentages to push:
   food: $food\%
@@ -216,27 +216,27 @@ energy: $energy\%
 
 DEBUG
     }
-    
+
     my $trade = {};
     my $hold  = $ship->{hold_size};
-    
+
     my $max_push = $hold > $total ? $total
                  :                  $hold;
-    
+
     subtotals( $max_push, $trade, $resources, $food_percent,   \@foods    );
     subtotals( $max_push, $trade, $resources, $ore_percent,    \@ores     );
     subtotals( $max_push, $trade, $resources, $water_percent,  ['water']  );
     subtotals( $max_push, $trade, $resources, $energy_percent, ['energy'] );
-    
+
     if ($debug) {
         my $food   = 0;
         my $ore    = 0;
         my $water  = $trade->{water};
         my $energy = $trade->{energy};
-        
+
         map { $food += $trade->{$_} } @foods;
         map { $ore  += $trade->{$_} } @ores;
-        
+
         warn <<DEBUG;
 Totals after calculating individual resources (foods, ores):
   food: $food
@@ -246,26 +246,26 @@ energy: $energy
 
 DEBUG
     }
-    
+
     # don't go to zero in any resource
     for my $type ( @foods, @ores, 'water', 'energy' ) {
-        
+
         next if !$trade->{$type};
-        
+
         if ( ( $resources->{$type} - $trade->{$type} ) == 0 ) {
             --$trade->{$type};
         }
     }
-    
+
     if ($debug) {
         my $food   = 0;
         my $ore    = 0;
         my $water  = $trade->{water};
         my $energy = $trade->{energy};
-        
+
         map { $food += $trade->{$_} } @foods;
         map { $ore  += $trade->{$_} } @ores;
-        
+
         warn <<DEBUG;
 Totals ensuring none drop to zero:
   food: $food
@@ -275,9 +275,9 @@ energy: $energy
 
 DEBUG
     }
-    
+
     my $total_trade = sum( values %$trade );
-    
+
     if ($debug) {
         warn <<DEBUG;
 Total resources to push: $total_trade
@@ -285,27 +285,27 @@ Total resources to push: $total_trade
 
 DEBUG
     }
-    
+
     if ( ( $total_trade / $hold ) < $fill_ratio ) {
         # ship not full enough
         return;
     }
-    
+
     # new totals for next ship
     map {
         $resources->{$_} -= $trade->{$_}
     }
     @foods, @ores, 'water', 'energy';
-    
+
     if ($debug) {
         my $food   = 0;
         my $ore    = 0;
         my $water  = $resources->{water}  || 0;
         my $energy = $resources->{energy} || 0;
-        
+
         map { $food += $resources->{$_}||0 } @foods;
         map { $ore  += $resources->{$_}||0 } @ores;
-        
+
         warn <<DEBUG;
 Remaining after push:
   food: $food
@@ -315,7 +315,7 @@ energy: $energy
 
 DEBUG
     }
-    
+
     return map {
             +{
                 type     => $_,
@@ -330,12 +330,12 @@ DEBUG
 
 sub resource_totals {
     my ( $resources ) = @_;
-    
+
     my $food   = sum( @{$resources}{ @foods } );
     my $ore    = sum( @{$resources}{ @ores } );
     my $water  = $resources->{water};
     my $energy = $resources->{energy};
-    
+
     if ($debug) {
         warn <<DEBUG;
 On planet:
@@ -346,12 +346,12 @@ energy: $energy
 
 DEBUG
     }
-    
+
     $food   = ( ($food   - $min_level) > 0 ) ? ($food   - $min_level) : 0;
     $ore    = ( ($ore    - $min_level) > 0 ) ? ($ore    - $min_level) : 0;
     $water  = ( ($water  - $min_level) > 0 ) ? ($water  - $min_level) : 0;
     $energy = ( ($energy - $min_level) > 0 ) ? ($energy - $min_level) : 0;
-    
+
     if ($debug) {
         warn <<DEBUG;
 Available above min_level:
@@ -362,17 +362,17 @@ energy: $energy
 
 DEBUG
     }
-    
+
     return $food, $ore, $water, $energy;
 }
 
 sub subtotals {
     my ( $hold, $trade, $resources, $percent, $types ) = @_;
-    
+
     $hold *= $percent;
-    
+
     my $total_available = sum( @{$resources}{@$types} );
-    
+
     if ( $total_available == 0 ) {
         @{$trade}{@$types} = ( 0 x scalar @$types );
     }
@@ -382,12 +382,12 @@ sub subtotals {
     else {
         # more available than the ship can carry
         my $ratio = $hold / $total_available;
-        
+
         @{$trade}{@$types} = map {
             floor( $_ * $ratio )
         } @{$resources}{@$types};
     }
-    
+
     return;
 }
 

@@ -53,35 +53,35 @@ foreach my $planet_id ( sort keys %$planets ) {
     my $planet    = $client->body( id => $planet_id );
     my $result    = $planet->get_buildings;
     my $body      = $result->{status}->{body};
-    
+
     my $buildings = $result->{buildings};
 
     # Find the Trade Ministry
     my $trade_id = first {
             $buildings->{$_}->{name} eq 'Trade Ministry'
     } keys %$buildings;
-    
+
     # Find the Subspace Transporter
     my $transporter_id = first {
             $buildings->{$_}->{name} eq 'Subspace Transporter'
     } keys %$buildings;
-    
-    
+
+
     if ($trade_id) {
         my $trade_min = $client->building( id => $trade_id, type => 'Trade' );
-        
+
         my $trades = get_trades( $trade_min );
-        
+
         if ( @$trades ) {
             $my_trades{$name}{'Trade Ministry'} = $trades;
         }
     }
-    
+
     if ($transporter_id) {
         my $transporter = $client->building( id => $transporter_id, type => 'Transporter' );
-        
+
         my $trades = get_trades( $transporter );
-        
+
         if ( @$trades ) {
             $my_trades{$name}{'Subspace Transporter'} = $trades;
         }
@@ -92,21 +92,21 @@ for my $name (sort keys %my_trades) {
     printf "%s\n", $name;
     print "=" x length $name;
     print "\n";
-    
+
     for my $building (sort keys %{ $my_trades{$name} }) {
         printf "%s\n", $building;
-        
+
         my @trades = @{ $my_trades{$name}{$building} };
-        
+
         for my $trade (@trades) {
             printf "Posted: %s\n", $trade->{date_offered};
             printf "\tAsking %d Essentia for:\n", $trade->{ask};
-            
+
             for my $item ( @{ $trade->{offer} } ) {
                 printf "\t%s\n", $item;
             }
         }
-        
+
         print "\n";
     }
 }
@@ -116,22 +116,22 @@ sub get_trades {
 
     my $trades = $building->view_my_market;
     my $count  = $trades->{trade_count};
-    
+
     return [] if !$count;
-    
+
     my $page = 1;
-    
+
     my @trades = @{ $trades->{trades} };
-    
+
     $count -= $trades_per_page;
-    
+
     while ( $count > 0 ) {
         $page++;
-        
+
         push @trades, @{ $building->view_my_market( $page )->{trades} };
-        
+
         $count -= $trades_per_page;
     }
-    
+
     return \@trades;
 }

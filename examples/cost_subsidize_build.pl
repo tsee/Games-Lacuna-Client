@@ -33,12 +33,12 @@ print "------|------|------\n";
 my $total = 0;
 
 for my $i ( $start .. $end ) {
-    
+
     my $cost = floor( $i / 3 )
             || 1;
-    
+
     $total += $cost;
-    
+
     printf "   %2d |   %2d |   %3d\n",
         $i,
         $cost,
