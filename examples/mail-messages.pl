@@ -113,7 +113,7 @@ my $response;
 
 for my $mail_id (@ids) {
     $total_messages++;
-    
+
     get_message( $mail_id )
         or last;
 }
@@ -142,10 +142,10 @@ sub filter_mail {
     my $sql = "SELECT mail_index.id FROM mail_index LEFT JOIN mail_message "
             . "ON mail_index.id = mail_message.id "
             . "WHERE mail_message.id IS NULL ";
-    
+
     if ( @tags ) {
         $sql .= " AND (";
-        
+
         $sql .= join " OR ",
                 map {
                     "tags_json LIKE '%$_%'"
@@ -153,23 +153,23 @@ sub filter_mail {
                 map {
                     ucfirst
                 }@tags;
-        
+
         $sql .= ")";
     }
-    
+
     if ( @subject ) {
         $sql .= " AND (";
-        
+
         $sql .= join " OR ",
                 map {
                     "subject LIKE '%$_%'"
                 } @subject;
-        
+
         $sql .= ")";
     }
-    
+
     my $rows = $dbh->selectall_arrayref( $sql );
-    
+
     return map {
             $_->[0]
         } @$rows;
@@ -177,14 +177,14 @@ sub filter_mail {
 
 sub get_message {
     my ( $mail_id ) = @_;
-    
+
     $response = $inbox->read_message( $mail_id );
-    
+
     save_to_db();
-    
+
     check_rpc_limit()
         or return;
-    
+
     return 1;
 }
 
@@ -199,36 +199,36 @@ INSERT OR REPLACE INTO mail_message
 VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
 SQL
     );
-    
+
     my $mail = $response->{message};
-    
+
     my @bind = @{$mail}{qw( id body )};
-    
+
     push @bind, $mail->{attachments}{image} ? @{ $mail->{attachments}{image} }{qw( url title link )}
                 :                             ( undef, undef, undef );
-    
+
     push @bind, $mail->{attachments}{link} ? @{ $mail->{attachments}{link} }{qw( url label )}
                 :                            ( undef, undef );
-    
+
     push @bind, $mail->{attachments}{map} ? @{ $mail->{attachments}{map} }{'surface'}
                 :                             ( undef );
-    
+
     push @bind, $json->Dump( $mail->{recipients} );
-    
+
     push @bind, $mail->{attachments}{table} ? $json->Dump( $mail->{attachments}{table} )
                 :                             undef;
-    
+
     push @bind, $mail->{attachments}{map} ? $json->Dump( $mail->{attachments}{map}{buildings} )
                 :                           undef;
-    
+
     if ( $opts{debug} ) {
         warn "DEBUG:     Inserting message: $mail->{id}\n";
     }
-    
+
     $insert_sth->execute(
         @bind,
     );
-    
+
     if ( $mail->{has_archive} ) {
         # update index
         my $index_sth = $dbh->prepare_cached(
@@ -244,7 +244,7 @@ sub check_rpc_limit {
     # only need to check this once
     if ( !$server_rpc_limit ) {
         $server_rpc_limit = $response->{status}{server}{rpc_limit};
-        
+
         if ( $server_rpc_limit < $opts{'max-rpc'} ) {
             warn <<MSG;
 Warning:
@@ -254,9 +254,9 @@ this may result in you running out of calls for the day.
 MSG
         }
     }
-    
+
     my $rpc_count = $response->{status}{empire}{rpc_count};
-    
+
     if ( $rpc_count >= $opts{'max-rpc'} ) {
         print <<MSG;
 Error:
@@ -265,7 +265,7 @@ Have exceeded --max-rpc : currently used $rpc_count
 MSG
         return;
     }
-    
+
     return 1;
 }
 
@@ -283,10 +283,10 @@ Usage: $0 CONFIG_FILE
     --ok             # If neither --subject of any of the below `tags`
                      # options are given, you must provide --ok to force it
                      # to download mail
-    
+
     --subject X      # Download only messages matching the given string,
                      # and number of --subject options may be provided
-    
+
     # To restrict the downloads to only messages with certain tags,
     # you may provide any of the following 5 options
     --tutorial

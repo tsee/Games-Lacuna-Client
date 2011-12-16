@@ -41,11 +41,11 @@ my @costs  = [ @ARGV ];
 for ( 1 .. $levels ) {
     my $last_level = $costs[$#costs];
     my @this_level;
-    
+
     for my $i ( @$last_level ) {
         push @this_level, $i*$multiplier;
     }
-    
+
     push @costs, \@this_level;
 }
 
@@ -62,7 +62,7 @@ my @length = map { 0 } @{ $costs[0] };
 for my $i ( 0 .. $#costs ) {
     for my $j ( 0 .. $#{$costs[$i]} ) {
         my $length = length $costs[$i][$j];
-        
+
         $length[$j] = $length
             if $length > $length[$j];
     }
@@ -74,13 +74,13 @@ print "Level\n";
 
 for my $i ( 0 .. $#costs ) {
     printf "%5d", $i;
-    
+
     for my $j ( 0 .. $#{$costs[$i]} ) {
         my $length = $length[$j];
-        
+
         printf " %${length}s", $costs[$i][$j];
     }
-    
+
     print "\n";
 }
 

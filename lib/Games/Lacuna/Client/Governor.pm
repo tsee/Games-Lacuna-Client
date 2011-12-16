@@ -119,9 +119,9 @@ sub govern {
     message("Governing ".$status->{name}) if ($self->{config}->{verbosity}->{message});
     Games::Lacuna::Client::PrettyPrint::show_status($status) if ($self->{config}->{verbosity}->{summary});
     Games::Lacuna::Client::PrettyPrint::surface($surface_image,$details) if ($self->{config}->{verbosity}->{surface_map});
-    $self->{cache}->{body}->{$pid} = $details; 
+    $self->{cache}->{body}->{$pid} = $details;
     for my $bid (keys %{$self->{cache}->{body}->{$pid}}) {
-        $self->{cache}->{body}->{$pid}->{$bid}->{pretty_type} = 
+        $self->{cache}->{body}->{$pid}->{$bid}->{pretty_type} =
             Games::Lacuna::Client::Buildings::type_from_url( $self->{cache}->{body}->{$pid}->{$bid}->{url} );
     }
 
@@ -139,11 +139,11 @@ sub govern {
 
 
     $status->{happiness_capacity} = $cfg->{resource_profile}->{happiness}->{storage_target} || 1;
-   
+
     for my $res (qw(food ore water energy happiness waste)) {
-        my ( $amount, $capacity, $rate ) = @{$status}{ 
-            $res eq 'happiness' ? 'happiness' : "$res\_stored", 
-            "$res\_capacity", 
+        my ( $amount, $capacity, $rate ) = @{$status}{
+            $res eq 'happiness' ? 'happiness' : "$res\_stored",
+            "$res\_capacity",
             "$res\_hour"
         };
         $rate += 0.00001;
@@ -162,10 +162,10 @@ sub govern {
     }
 
     my $current_queue = scalar grep { exists $_->{pending_build} } values %$details;
-    $self->{current}->{build_queue} = [ 
-        map { 
-            { 
-                building_id => $_, 
+    $self->{current}->{build_queue} = [
+        map {
+            {
+                building_id => $_,
                 seconds_remainings => $details->{$_}->{pending_build}->{seconds_remaining},
             }
         } grep { exists $details->{$_}->{pending_build} } keys %$details
@@ -174,7 +174,7 @@ sub govern {
     $self->{next_action}->{$pid} = max(map { $_->{pending_build}->{seconds_remaining} + time } values %$details);
     if ($current_queue == $max_queue) {
         warning("Build queue is full on ".$self->{current}->{status}->{name}) if ($self->{config}->{verbosity}->{warning});
-    } 
+    }
 
     for my $priority (@{$cfg->{priorities}}) {
         $self->do_priority($priority);
@@ -292,7 +292,7 @@ sub send_pushes {
     my @selected_routes;
 
     for my $candidate (@candidates) {
-        # Cull trade push candidates whose travel time is greater than 
+        # Cull trade push candidates whose travel time is greater than
         # configured maximum travel time.
         my $max_travel_time = $self->{config}->{push_max_travel_time};
         if (defined $max_travel_time) {
@@ -308,7 +308,7 @@ sub send_pushes {
     }
 
     for my $ship (keys %partial_routes) {
-        
+
         my @potential_destinations;
         for my $dest ( keys %{$partial_routes{$ship}} ) {
             my $first = $partial_routes{$ship}->{$dest}->[0];
@@ -357,7 +357,7 @@ sub send_pushes {
 
             # Don't consider this route if the recipient planet can't store the load
             # or if the source planet doesn't have the resources anymore.
-            for my $shipping_item (@{$route->{items}}) {            
+            for my $shipping_item (@{$route->{items}}) {
                 my $type = $shipping_item->{type};
                 my $qty  = $shipping_item->{quantity};
                 my $res  = (any {$_ eq $type} $self->food_types) ? 'food' :
@@ -368,7 +368,7 @@ sub send_pushes {
 
                 # Reduce space_left by projected usage at current production levels on target
                 $space_left -= int($self->{status}->{$dest}->{"$res\_hour"} * ($route->{travel_time}/3600));
-  
+
                 next route if ($avail_res < $qty);
                 next route if ($space_left < $qty);
             }
@@ -379,7 +379,7 @@ sub send_pushes {
             # Give large bonus to metric if the destination is actually requesting something.
             my $carrying_food = any { my $x=$_; any { $x eq $_ } $self->food_types } @carrying;
             my $carrying_ore = any { my $x=$_; any { $x eq $_ } $self->ore_types } @carrying;
-            my $metric = ($load_size / $route->{travel_time}) + 
+            my $metric = ($load_size / $route->{travel_time}) +
                 (any { $info->{$dest}->{$_}->{requested} > 0 } @carrying) ? 10_000 :
                 (($info->{$dest}->{food}->{requested} > 0) && $carrying_food) ? 10_000 :
                 (($info->{$dest}->{ore}->{requested} > 0) && $carrying_ore) ? 10_000 : 0;
@@ -392,7 +392,7 @@ sub send_pushes {
         push @selected_routes, $selected_route;
 
         # Reduce the space_left at the target, and the availability at the source
-        for my $shipping_item (@{$selected_route->{items}}) {            
+        for my $shipping_item (@{$selected_route->{items}}) {
             my $type = $shipping_item->{type};
             my $qty  = $shipping_item->{quantity};
             my $res  = (any {$_ eq $type} $self->food_types) ? 'food' :
@@ -461,7 +461,7 @@ sub coordinate_push_mode {
                 my $orig = $mode ? $pid   : $other;
                 my $dest = $mode ? $other : $pid;
 
-                my $avail = $mode ? min( $info->{$other}->{$res}->{space_left}, $reqd ) : min( $info->{$other}->{$res}->{available} , $reqd ); 
+                my $avail = $mode ? min( $info->{$other}->{$res}->{space_left}, $reqd ) : min( $info->{$other}->{$res}->{available} , $reqd );
                 my @ships;
                 if( $info->{$orig}->{trade} ){
                     @ships = defined $self->{trade_ships}->{$orig}
@@ -732,7 +732,7 @@ sub recycling {
     my $res = undef;
     if ($criteria eq 'split') { # Split evenly
         @recycle_res{@rr}= (int($to_recycle/3)) x 3;
-    } 
+    }
     elsif (any {$criteria eq $_} @rr) { # Named resource only
         $res = $criteria;
     }
@@ -811,7 +811,7 @@ sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes 
                         if ($spec_available > 0) {
                             $self->{push_info}->{$pid}->{$spec}->{available} = $spec_available;
                         }
-                   } 
+                   }
                    $self->{push_info}->{$pid}->{$res}->{available} = sum(map { $_->{available} } @{ $self->{push_info}->{$pid} }{$res eq 'food' ? $self->food_types : $self->ore_types});
                 } else {
                    $self->{push_info}->{$pid}->{$res}->{available} = $available;
@@ -844,9 +844,9 @@ sub pushes {  # This stage merely analyzes what we have or need.  Actual pushes 
                                          $profile->{specifics}->{_default_});
                 next if ($spec_profile->{requested_amount} == 0);
                 my $amt = $spec_profile->{requested_amount} - $stored->{$spec};
-                $self->{push_info}->{$pid}->{$spec}->{requested} = $amt;    
+                $self->{push_info}->{$pid}->{$spec}->{requested} = $amt;
             }
-        } 
+        }
     }
 }
 
@@ -903,9 +903,9 @@ sub refresh_cache {
 sub refresh_building_details {
     my ($self, $details, $bldg_id) = @_;
     my $client = $self->{client};
-    
+
     if (not exists $details->{$bldg_id}->{pretty_type}) {
-        $details->{$bldg_id}->{pretty_type} = 
+        $details->{$bldg_id}->{pretty_type} =
             Games::Lacuna::Client::Buildings::type_from_url( $details->{$bldg_id}->{url} );
     }
 
@@ -920,12 +920,12 @@ sub refresh_building_details {
 
 sub write_cache {
     my ($self) = shift;
-    
+
     my $cache_file = $self->{config}->{cache_dir} . "/buildings.json";
-    
+
     $self->{cache}->{cache_time} = time;
 
-    if(open( my $fh, '>', $cache_file)) { 
+    if(open( my $fh, '>', $cache_file)) {
         print $fh to_json($self->{cache});
         close $fh;
     }
@@ -960,11 +960,11 @@ sub attempt_upgrade {
 
     my @options = part {
         my $bid = $_->{building_id};
-        my $insuff_resources = 
-            any { ($status->{"$_\_stored"} - $self->building_details($pid,$bid)->{upgrade}->{cost}->{$_}) 
-                < $build_above{$_} 
+        my $insuff_resources =
+            any { ($status->{"$_\_stored"} - $self->building_details($pid,$bid)->{upgrade}->{cost}->{$_})
+                < $build_above{$_}
             } qw(food ore water energy);
-        my $waste_overflow = 
+        my $waste_overflow =
             ($status->{waste_stored} + $self->building_details($pid,$bid)->{upgrade}->{cost}->{waste})
                 > $status->{waste_capacity};
         return (not $insuff_resources and not $waste_overflow)+0;
@@ -987,7 +987,7 @@ sub attempt_upgrade {
             next;
         }
 
-        eval { 
+        eval {
             trace(sprintf("Attempting to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level})) if ($self->{config}->{verbosity}->{trace});
             if (not $self->{config}->{dry_run}) {
                $upgrade->upgrade();
@@ -1044,8 +1044,8 @@ sub resource_buildings {
         } elsif ($type eq 'consumption' && $details->{"$res\_hour"} < 0) {
             $pertinent = 1;
         }
-        push @pertinent_buildings, $self->{client}->building( 
-                id => $bid, 
+        push @pertinent_buildings, $self->{client}->building(
+                id => $bid,
                 type => $pretty_type,
             ) if $pertinent;
     }
@@ -1111,16 +1111,16 @@ Games::Lacuna::Client::Governor - A rudimentary configurable module for automati
 
 =head1 DESCRIPTION
 
-This module implements a rudimentary configurable automaton for maintaining your colonies.  
+This module implements a rudimentary configurable automaton for maintaining your colonies.
 Currently, this means automation of upgrade and recycling tasks, but more is planned.
 The intent is that the automation should be highly configurable, which of course has a cost
 of a complex configuration file.
 
 This script makes an effort to do its own crude caching of building data in order to minimize
 the number of RPC calls per invocation.  In order to build its cache on first run, this script
-will call ->view() on every building in your empire.  This is expensive.  However, after the 
+will call ->view() on every building in your empire.  This is expensive.  However, after the
 first run, you can expect the script to run between 1-5 calls per colony.  In my tests the
-script currently makes about 10-20 calls per invocation for an empire with 4 colonies.  
+script currently makes about 10-20 calls per invocation for an empire with 4 colonies.
 Running on an hourly cron job, this is acceptable for me.
 
 The building data for any particular building does get refreshed from the server if the
@@ -1190,7 +1190,7 @@ very distant colonies.  If not defined, there is no restriction.
 =head2 push_minimum_load
 
 This is a proportion, i.e. 0.5 for 50%.  It indicates the minimum amount
-of used cargo space to require before a ship will be sent on a push.  
+of used cargo space to require before a ship will be sent on a push.
 E.g., if set to 0.25, a ship must be at least 25% full of its maximum
 cargo capacity or it will not be considered eligible for a push.
 
@@ -1264,12 +1264,12 @@ settings.
 
 =head2 allow_downgrades
 
-(Not yet implemented).  Allow downgrading buildings if negative production 
+(Not yet implemented).  Allow downgrading buildings if negative production
 levels are causing problems.  True or false.
 
 =head2 crisis_threshhold_hours
 
-A number of hours, decimals allowed.  
+A number of hours, decimals allowed.
 
 If the script detects that you will exceed
 your storage capacity for any given resource in less than this amount of time,
@@ -1277,7 +1277,7 @@ a "storage crisis" condition is triggered which forces storage upgrades for your
 resources.
 
 If the script detects that your amount of this resource will drop to zero
-in less than this amount of time, a "production crisis" condition is 
+in less than this amount of time, a "production crisis" condition is
 triggered which forces production upgrades for those resources.
 
 =head2 exclude
@@ -1331,7 +1331,7 @@ to pass without action.
 =head2 profile_storage_tolerance
 
 Not yet implemented.  Will permit deviations from the storage profile
-to pass without action. 
+to pass without action.
 
 =head2 recycle_when_negative
 
@@ -1437,7 +1437,7 @@ this amount times your capacity.
 =head2 requested_level
 
 When a push is requested, the amount we would like to receive is calculated to be
-enough to bring the amount of resource up to this level. This is a proportion 
+enough to bring the amount of resource up to this level. This is a proportion
 between 0 and 1 interpreted as this amount times your capacity.
 
 =head2 specifics
@@ -1470,7 +1470,7 @@ Only relevant for waste.  If above this level, trigger a recycling job (if possi
 
 =head2 recycle_reserve
 
-Only relevant for waste.  When recycling, leave this amount of waste in storage. 
+Only relevant for waste.  When recycling, leave this amount of waste in storage.
 I.e., don't recycle it all.
 
 =head2 recycle_selection
@@ -1506,9 +1506,9 @@ Pick whichever we produce least of
 
 L<Games::Lacuna::Client>, by Steffen Mueller on which this module is dependent.
 
-Of course also, the Lacuna Expanse API docs themselves at L<http://us1.lacunaexpanse.com/api>. 
+Of course also, the Lacuna Expanse API docs themselves at L<http://us1.lacunaexpanse.com/api>.
 
-The L<Games::Lacuna::Client distribution> includes two files pertinent to this script. Well, three.  We need 
+The L<Games::Lacuna::Client distribution> includes two files pertinent to this script. Well, three.  We need
 L<Games::Lacuna::Client::PrettyPrint> for output.
 
 Also, in F<examples>, you've got the example config file in governor.yml, and the example script in governor.pl.

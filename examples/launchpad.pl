@@ -98,7 +98,7 @@ Sends all available ships of type shiptype to target.
 
 You must supply shiptype and target. Target should be of the form:
 
-        "body_id:id_goes_here" 
+        "body_id:id_goes_here"
         "body_name:My Planet"
         "star_id:id_goes_here"
         "star_name:My Star"
@@ -109,7 +109,7 @@ Examples:
         "star_id:5"
         "star_name:Knioschow"
 
-Support for x/y not yet implemented. 
+Support for x/y not yet implemented.
 
 
 =head1 AUTHOR

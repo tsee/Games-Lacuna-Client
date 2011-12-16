@@ -4,7 +4,7 @@
 # score each body and systems by arbritray standards
 #
 # Usage: perl score_bodies.pl
-#  
+#
 use strict;
 use warnings;
 use Getopt::Long qw(GetOptions);
@@ -48,7 +48,7 @@ GetOptions(
   'stations'     => \$opt_s,
   'systems'      => \$opt_o,
 );
-  
+
   usage() if ($help);
   if ($opt_o) {
     $opt_a = $opt_g = $opt_h = $opt_s = 1;
@@ -103,8 +103,8 @@ GetOptions(
     if (not defined($bod->{water}) or $bod->{water} eq '') { $bod->{water} = 0; }
     if (not defined($bod->{zone})) { $bod->{zone} = 0; }
     $bod->{size} = 0 if ($bod->{size} eq '');
-    unless (defined($bod->{empire})) { $bod->{empire}->{name} = "unclaimed"; } 
-    unless (defined($bod->{star_name})) { $bod->{star_name} = ""; } 
+    unless (defined($bod->{empire})) { $bod->{empire}->{name} = "unclaimed"; }
+    unless (defined($bod->{star_name})) { $bod->{star_name} = ""; }
     $bod->{image} =~ s/-.//;
     $bod->{dist}  = sprintf("%.2f", sqrt(($home_x - $bod->{x})**2 + ($home_y - $bod->{y})**2));
     $bod->{sdist} = sprintf("%.2f", sqrt(($home_x - $stars->{$bod->{star_id}}->{x})**2 +
@@ -155,10 +155,10 @@ GetOptions(
     next if ($bod->{type} eq "H" and $opt_h == 0);
     next if ($bod->{type} eq "S" and $opt_s == 0);
     next if ($bod->{dist} > $max_dist);
-  
+
     printf "%s\t" x ( scalar @fields - 2),
            $bod->{name}, $bod->{star_name}, $bod->{bscore},
-           $sys{"$bod->{star_id}"}->{sscore}, $sys{"$bod->{star_id}"}->{gscore}, 
+           $sys{"$bod->{star_id}"}->{sscore}, $sys{"$bod->{star_id}"}->{gscore},
            $sys{"$bod->{star_id}"}->{TS}, $sys{"$bod->{star_id}"}->{TBS},
            $sys{"$bod->{star_id}"}->{TCS}, $sys{"$bod->{star_id}"}->{TYS},
            $sys{"$bod->{star_id}"}->{TCYS}, $sys{"$bod->{star_id}"}->{FW},
@@ -176,7 +176,7 @@ exit;
 
 sub score_foodw {
   my ($size_a) = @_;
-  
+
   my $score = 0;
   my $skip = 0;
   my $num;
@@ -276,17 +276,17 @@ sub score_system_fp {
     if ( ($bod->{orbit} == 1 or $bod->{orbit} == 7) &&
          ($bod->{size} >= MIN_H1)) {
       $sys->{"$star_id"}->{H} += 1;
-      $sys->{"$star_id"}->{TCYS} += $bod->{size}; 
+      $sys->{"$star_id"}->{TCYS} += $bod->{size};
     }
     elsif ( ($bod->{orbit} == 3) and
          ($bod->{size} >= MIN_H3)) {
       $sys->{"$star_id"}->{H} += 1;
-      $sys->{"$star_id"}->{TCYS} += $bod->{size}; 
+      $sys->{"$star_id"}->{TCYS} += $bod->{size};
     }
     elsif ( ($bod->{orbit} >= 2 and $bod->{orbit} <= 6) &&
          ($bod->{size} >= MIN_H5)) {
       $sys->{"$star_id"}->{H} += 1;
-      $sys->{"$star_id"}->{TCYS} += $bod->{size}; 
+      $sys->{"$star_id"}->{TCYS} += $bod->{size};
     }
     $sys->{"$star_id"}->{HA} += 1;
   }
@@ -294,12 +294,12 @@ sub score_system_fp {
     if ( ($bod->{orbit} == 1 or $bod->{orbit} == 7) &&
          ($bod->{size} >= MIN_G1)) {
       $sys->{"$star_id"}->{G} += 1;
-      $sys->{"$star_id"}->{TCYS} += $bod->{size}; 
+      $sys->{"$star_id"}->{TCYS} += $bod->{size};
     }
     elsif ( ($bod->{orbit} >= 2 and $bod->{orbit} <= 6) &&
          ($bod->{size} >=  MIN_G5)) {
       $sys->{"$star_id"}->{G} += 1;
-      $sys->{"$star_id"}->{TCYS} += $bod->{size}; 
+      $sys->{"$star_id"}->{TCYS} += $bod->{size};
     }
   }
   elsif ($bod->{type} eq "A") {
@@ -316,7 +316,7 @@ sub score_system_fp {
 
 sub score_rock {
   my ($bod, $nodist) = @_;
-  
+
   my $score = 0;
 
   unless ($nodist) {
@@ -361,7 +361,7 @@ sub score_atype {
 
 sub score_planet {
   my ($bod, $nodist) = @_;
-  
+
   my $score = 0;
   if ($bod->{size} >= 60 or ($bod->{size} >= 55 && $bod->{orbit} == 3)) {
     $score += 50;
@@ -374,7 +374,7 @@ sub score_planet {
     elsif ($bod->{dist} < 31) { $score += 10; }
     elsif ($bod->{dist} < 51) { $score += 5; }
   }
-  
+
   if ($bod->{water} > 9000) { $score += 15; }
   elsif ($bod->{water} > 7000) { $score += 10; }
   elsif ($bod->{water} > 6000) { $score += 5; }
@@ -466,7 +466,7 @@ sub get_coord {
     return $planets->{"$pname"}->{x}, $planets->{"$pname"}->{y};
   }
   return $px, $py
-  
+
 }
 
 sub usage {
@@ -485,7 +485,7 @@ Options:
   --asteroid  - If looking at asteroid stats
   --gas       - If looking at gas giant stats
   --habitable - If looking at habitable stats
-  --systems   - If looking at a whole system.  
+  --systems   - If looking at a whole system.
 END
  exit 1;
 }

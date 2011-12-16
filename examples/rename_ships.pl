@@ -91,30 +91,30 @@ while( my($name,$id) = each %planets ){
   my $planet    = $client->body( id => $id );
   my $result    = $planet->get_buildings;
   my $body      = $result->{status}->{body};
-  
+
   my $buildings = $result->{buildings};
 
   # Find the first Space Port
   my $space_port_id = List::Util::first {
     $buildings->{$_}->{name} eq 'Space Port'
   } keys %$buildings;
-  
+
   next unless $space_port_id;
-  
+
   my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
-  
+
   my $return = $space_port->view_all_ships(
     { no_paging => 1 },
   );
   my @ships = @{ $return->{ships} };
-  
+
   if( $opts{type} ){
     @ships = grep {
       my $ship = $_;
       any { $ship->{type} eq $_ } @{ $opts{type} };
     } @ships;
   }
-  
+
   for my $ship ( @ships ){
     my $name = $ship->{name};
     if(
@@ -201,9 +201,9 @@ sub do_format{
   while( my($new,$old) = each %alias ){
     $ship->{$new} = $ship->{$old};
   }
-  
+
   my $name = '';
-  
+
   for my $elem (@stream){
     if( $elem =~ s/^\$\{([^{}]*)\}$/$1/ ){
       $elem = do_replace($elem,$ship);
@@ -230,7 +230,7 @@ Renames multiple ships at the same time.
 
 rename_ships.pl --type scow --format '${type} &{int(cargo/1000)||q[]}'
 
-rename_ships.pl -t scow 
+rename_ships.pl -t scow
 -f 'Scow &{int(cargo/1000)}-&{int(speed/100)}&{combat>100?" [".int(combat/100)."]":q[]}'
 
 =head1 OPTIONS

@@ -55,7 +55,7 @@ around call => sub {
   my $uri = shift;
   my $method = shift;
   my $params = shift;
-  
+
 
     # Call the method.  If a Captcha error is returned, attempt to handle it
     # and re-call the method, up to 3 times
@@ -63,7 +63,7 @@ around call => sub {
     my $is_interactive   = is_interactive();
     my $captcha_attempts = 0;
     my $res;
-    
+
     while ($trying) {
         $trying = 0;
 

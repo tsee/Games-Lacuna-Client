@@ -58,16 +58,16 @@ my $target_type;
 
 if ($star) {
     my $star_result = $client->map->get_star_by_name($star)->{star};
-    
+
     if ($planet) {
         # send to planet on star
         my $bodies = $star_result->{bodies};
-        
+
         my ($body) = first { $_->{name} eq $planet } @$bodies;
-        
+
         die "Planet '$planet' not found at star '$star'"
             if !$body;
-        
+
         $target_id   = $body->{id};
         $target_name = "$planet [$star]";
         $target_type = "body_id";
@@ -89,7 +89,7 @@ else {
             last;
         }
     }
-    
+
     die "Colony '$planet' not found"
         if !$target_id;
 }
@@ -142,24 +142,24 @@ my %trade_withdrawn;
 
 for my $ship ( @$available ) {
     next if $speed && $speed != $ship->{speed};
-    
+
     my $trade =
         first {
                $_->{offer_quantity} == $ship->{hold_size}
             && !$trade_withdrawn{ $_->{id} }
         }
         @trades;
-    
+
     next if !$trade;
-    
+
     $space_port->send_ship( $ship->{id}, { $target_type => $target_id } );
-    
+
     # withdraw trade
     $transporter->withdraw_trade( $trade->{id} );
     $trade_withdrawn{ $trade->{id} } = 1;
-    
+
     printf "Sent %s to %s\n", $ship->{name}, $target_name;
-    
+
     $sent++;
     last if $max && $max == $sent;
 }
@@ -168,25 +168,25 @@ for my $ship ( @$available ) {
 sub get_trades {
     my $trades = $transporter->view_my_trades;
     my $count  = $trades->{trade_count};
-    
+
     return if !$count;
-    
+
     my $page = 1;
-    
+
     my @trades = @{ $trades->{trades} };
-    
+
     $count -= $trades_per_page;
-    
+
     while ( $count > 0 ) {
         $page++;
-        
+
         push @trades, @{ $transporter->view_my_trades( $page )->{trades} };
-        
+
         $count -= $trades_per_page;
     }
-    
+
     @trades = grep { $_->{offer_type} eq 'waste' } @trades;
-    
+
     return @trades;
 }
 

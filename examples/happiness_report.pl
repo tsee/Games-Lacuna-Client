@@ -45,9 +45,9 @@ foreach my $name ( sort keys %planets ) {
     # Load planet data
     my $planet = $client->body( id => $planets{$name} );
     my $body   = $planet->get_status->{body};
-    
+
     next if $body->{type} eq 'space station';
-    
+
     push @results, {
         name      => $name,
         happy     => format_number( $body->{happiness} ),

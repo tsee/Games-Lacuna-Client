@@ -73,7 +73,7 @@ while ( my $row = $csv->getline($fh) ) {
         or die "Can't insert star: " . $insert_star->errstr;
 
     for my $extrapolate (@$planets) {
-        my ( $orbit, $x, $y ) = $extrapolate->( $x, $y );   
+        my ( $orbit, $x, $y ) = $extrapolate->( $x, $y );
         $insert_orbital->execute( $id, $orbit, $x, $y );
     }
 }

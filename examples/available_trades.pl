@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 use strict;
 use warnings;
 use FindBin;
@@ -33,7 +33,7 @@ GetOptions(
 sub show_usage{
 print << '__END_USAGE__';
 Usage:  perl available_trades.pl [options]
-    
+
 This script will pull the list of available trades from a trade ministry or
 subspace transporter, optionally filter and sort it, and present it in a
 single list, optionally with ANSI color-coding.
@@ -45,7 +45,7 @@ Valid options:
   --help           Show this usage message.
   --max-pages <n>  Pull at most <n> pages from the building.  Default=20.
   --color          Show ANSI colors.
-  --sst            Show trades at the subspace transporter rather than 
+  --sst            Show trades at the subspace transporter rather than
                    the trade ministry (trade ministry is default).
   --planet         specify the planet (by name) to use for the listing.
                    If not specified, the script scans your empire for
@@ -53,7 +53,7 @@ Valid options:
   --filter <type>  Only show trades that are offering something of this type
                    Can be one of:
                      food ore water waste energy glyph prisoner ship plan
-                   
+
 __END_USAGE__
 exit(0);
 }

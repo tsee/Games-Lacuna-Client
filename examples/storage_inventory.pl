@@ -81,7 +81,7 @@ sub print_hash
 sub show_usage
 {
   my $script = basename($0);
-  
+
   print << "_END_USAGE_";
 Usage:  perl $script {--food} {--ore} {--planet="Planet Name"} account_file
 
@@ -198,7 +198,7 @@ PLANET_LOOP:
 foreach my $planet_id (sort keys %$planets)
 {
   my $planet_name = $planets->{$planet_id};
-  
+
   ## If we are looking for only one planet
   if ($target_planet && (uc($planet_name) ne uc($target_planet)))
   {
@@ -209,20 +209,20 @@ foreach my $planet_id (sort keys %$planets)
   ## Load planet data
   my $planet    = $client->body(id => $planet_id);
   my $result    = $planet->get_buildings;
-  ## Extract body from the results 
+  ## Extract body from the results
   my $body      = $result->{status}->{body};
   ## Create reference for easier to read code
   my $buildings = $result->{buildings};
 
   ## List for resource storage buildings found on planet
   my @storage_buildings = ();
-  
+
   ## Iterate through the types
   for my $type (@types)
   {
     ## initialize hash
     $stores->{$planet_name}->{$type} = {};
-    
+
     ## Determine name of building, based on resource type
     my $building = {
       food => 'Food Reserve',

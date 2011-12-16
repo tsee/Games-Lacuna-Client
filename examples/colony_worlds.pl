@@ -4,8 +4,8 @@
 # your range of orbits.  Ranks them and presents a summary view.  The scoring algorithm is very
 # simply and probably needs work.
 #
-# Usage: perl colony_worlds.pl [sort]  
-#  
+# Usage: perl colony_worlds.pl [sort]
+#
 # [sort] is 'score' by default, may also be 'distance', 'water', 'size'.  Shows in descending order.
 #
 # Sample output for a planet:
@@ -177,7 +177,7 @@ my $max_orbit = $data->{species}->{max_orbit};
 
 # Get planets
 my $planets        = $data->{status}->{empire}->{planets};
-my $home_planet_id = $data->{status}->{empire}->{home_planet_id}; 
+my $home_planet_id = $data->{status}->{empire}->{home_planet_id};
 my ($hx,$hy)       = @{$client->body(id => $home_planet_id)->get_status()->{body}}{'x','y'};
 
 # Get obervatories;
@@ -209,9 +209,9 @@ for my $star (@stars) {
             next;
         }
     }
-    
-    push @planets, grep { 
-		not defined $_->{empire} && $_->{orbit} >= $min_orbit && $_->{orbit} <= $max_orbit && 
+
+    push @planets, grep {
+		not defined $_->{empire} && $_->{orbit} >= $min_orbit && $_->{orbit} <= $max_orbit &&
 		( $_->{type} eq 'habitable planet' || $conditions->{'gas_giant'} && $_->{type} eq 'gas giant' )
 	} @{$star->{bodies}};
 }
@@ -245,7 +245,7 @@ for my $p (@planets) {
     $p->{size_score}  = (($p->{size} > 50 ? 50 : $p->{size} ) - 30) * 5;
     $p->{ore_score}   = (scalar grep { $p->{ore}->{$_} > 1 } keys %{$p->{ore}}) * 5;
     $p->{food_score}   = food_count($p)*100/$max_basic_food_buildings;
-    
+
     $p->{score}       = calculate_score($p);
 }
 
@@ -254,7 +254,7 @@ for my $p (@planets) {
     my $count = 0;
     my $limit = $conditions->{limit} || 255;
 
- 
+
 PLANET: for my $p (sort { $b->{$sortby} <=> $a->{$sortby} } @planets) {
         foreach my $building (@buildings) {
             my $prereqs=$building_prereqs{$building};

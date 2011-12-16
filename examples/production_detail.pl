@@ -62,23 +62,23 @@ my @detail;
 for my $id ( keys %$buildings ) {
     my $type     = Games::Lacuna::Client::Buildings::type_from_url( $buildings->{$id}{url} );
     my $building = $client->building( id => $id, type => $type );
-    
+
     push @detail, $building->view->{building};
 }
 
 if ( $sort ) {
     $sort = lc $sort;
-    
+
     @detail = sort {
         $a->{"${sort}_hour"} <=> $b->{"${sort}_hour"}
     } @detail;
 }
 else {
     # sort by total production
-    
+
     # don't include waste or happiness
     my @types = qw( food ore water energy );
-    
+
     @detail = sort {
         my $a_total = sum( @{$a}{ map { "${_}_hour" } @types } );
         my $b_total = sum( @{$b}{ map { "${_}_hour" } @types } );
@@ -98,15 +98,15 @@ for my $building (@detail) {
         $building->{level},
         $building->{x},
         $building->{y};
-    
+
     my $max = max map { length format_number $building->{"${_}_hour"} } @types;
-    
+
     for my $type (@types) {
         printf "%6s/hr: %${max}s\n",
             ucfirst($type),
             format_number( $building->{"${type}_hour"} );
     }
-    
+
     print "\n";
 }
 

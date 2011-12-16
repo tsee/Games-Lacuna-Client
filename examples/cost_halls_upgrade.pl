@@ -29,9 +29,9 @@ print "------|------\n";
 my $total = 0;
 
 for my $i ( $start .. $end ) {
-    
+
     $total += $i;
-    
+
     printf "   %2d |   %3d\n",
         $i,
         $total;
