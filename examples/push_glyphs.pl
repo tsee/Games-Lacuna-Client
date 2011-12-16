@@ -106,6 +106,7 @@ if ($ship_name) {
     my $ships = $trade_min->get_trade_ships->{ships};
 
     my ($ship) =
+      sort { $b->{speed} <=> $a->{speed}
       grep { $_->{name} =~ /\Q$ship_name/i } @$ships;
 
     if ($ship) {

@@ -175,7 +175,7 @@ use utf8;
 
 #  print "$glc->{total_calls} api calls made.\n";
 #  print "You have made $glc->{rpc_count} calls today\n";
-exit; 
+exit;
 
 sub load_stars {
   my ($starfile, $range, $hx, $hy) = @_;
