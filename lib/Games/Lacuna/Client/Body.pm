@@ -14,11 +14,12 @@ use Class::XSAccessor {
 
 sub api_methods {
   return {
-    get_buildings => { default_args => [qw(session_id body_id)] },
-    get_status    => { default_args => [qw(session_id body_id)] },
-    get_buildable => { default_args => [qw(session_id body_id)] },
-    rename        => { default_args => [qw(session_id body_id)] },
-    abandon       => { default_args => [qw(session_id body_id)] },
+    get_buildings       => { default_args => [qw(session_id body_id)] },
+    rearrange_buildings => { default_args => [qw(session_id body_id)] },
+    get_status          => { default_args => [qw(session_id body_id)] },
+    get_buildable       => { default_args => [qw(session_id body_id)] },
+    rename              => { default_args => [qw(session_id body_id)] },
+    abandon             => { default_args => [qw(session_id body_id)] },
   };
 }
 
