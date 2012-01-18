@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Usage: probes.pl -h
-#
+#  
 
 use strict;
 use warnings;
@@ -22,7 +22,7 @@ GetOptions(
   'config=s' => \$cfg_file,
   'help' => \$help,
 );
-
+  
   my $glc = Games::Lacuna::Client->new(
     cfg_file => $cfg_file,
 #    debug    => 1,
@@ -146,7 +146,7 @@ Stars may be repeated if multiple observatories probe the same star, but we will
 
 Options:
   --help                 - Prints this out
-  --output <file>        - Output file, default: data/probe_data_raw.yml
+  --output <file>        - Output file, default: data/probe_data_raw.js
 
 END
  exit 1;
