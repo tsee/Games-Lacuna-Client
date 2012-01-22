@@ -50,6 +50,7 @@ our @BuildingTypes = (qw(
     SubspaceSupplyDepot
     TempleOfTheDrajilites
     TheftTraining
+    TheDillonForge
     ThemePark
     Trade
     Transporter
