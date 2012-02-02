@@ -107,7 +107,6 @@ our @BuildingTypes = (qw(
     Syrup
     TerraformingLab
     TerraformingPlatform
-    TheDillonForge
     University
     Volcano
     WasteDigester
