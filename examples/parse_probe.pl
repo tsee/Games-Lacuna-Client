@@ -3,7 +3,7 @@
 # Script to parse thru the probe data
 #
 # Usage: perl parse_probe.pl probe_file
-#  
+#
 # Write this to put out system stats
 #
 use strict;
@@ -23,7 +23,7 @@ GetOptions(
   'y=i' => \$home_y,
   'p=s' => \$probe_file,
 );
-  
+
   my $bod;
   my $bodies = YAML::XS::LoadFile($probe_file);
 
@@ -35,8 +35,8 @@ GetOptions(
 
 for $bod (@$bodies) {
 #  next unless ( defined($bod->{empire}) && $bod->{empire}->{alignment} eq "hostile-isolationist");
-  if (not defined($bod->{empire}->{name})) { $bod->{empire}->{name} = "unclaimed"; } 
-  if (not defined($bod->{water})) { $bod->{water} = 0; } 
+  if (not defined($bod->{empire}->{name})) { $bod->{empire}->{name} = "unclaimed"; }
+  if (not defined($bod->{water})) { $bod->{water} = 0; }
   $bod->{image} =~ s/-.//;
   print join(",", $bod->{star_name}, $bod->{star_id}, $bod->{distance}, $bod->{orbit}, $bod->{image},
                          $bod->{name}, $bod->{x}, $bod->{y}, $bod->{empire}->{name},

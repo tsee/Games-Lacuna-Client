@@ -41,19 +41,19 @@ foreach my $planet (keys %{$empire_data->{'planets'}}){
 
     print "\n+=========== $name ============\n";
 
-    my $cur_waste = $status->{'waste_stored'} . "/" . $status->{'waste_capacity'}; 
-    my $cur_waste_n = $status->{'waste_stored'} / $status->{'waste_capacity'}; 
+    my $cur_waste = $status->{'waste_stored'} . "/" . $status->{'waste_capacity'};
+    my $cur_waste_n = $status->{'waste_stored'} / $status->{'waste_capacity'};
     if ($cur_waste_n > $cap_thresh){
 
         print "| Over threshold ($cur_waste) ";
         if ($status->{'waste_hour'} > 0 ){
             print "and positive growth - recycling\n";
-            my $response = schedule_recycle($planet, $status, $recyc_prop); 
+            my $response = schedule_recycle($planet, $status, $recyc_prop);
             print "| $response \n";
         }else{
             if ($cur_waste_n > $hard_thresh){
                 print " and over hard threshold - recycling\n";
-            my $response = schedule_recycle($planet, $status,  $hard_prop); 
+            my $response = schedule_recycle($planet, $status,  $hard_prop);
             print "| $response \n";
             }else{
                 print "but negative growth - NOT recycling\n";
@@ -192,11 +192,11 @@ sub schedule_recycle{
 #}
 =head1 SYNOPSIS
 
-Use with care. 
+Use with care.
 
 This will find any planets with waste over a certain threshold and positive
-waste generation, and automatically recycle a certain amount of their waste. 
-One day I'll make it a daemon, but for now you can cron it. 
+waste generation, and automatically recycle a certain amount of their waste.
+One day I'll make it a daemon, but for now you can cron it.
 
 By default the threshold is 50% of waste capacity, and it will recycle 50% of
 the waste. It'll split them among the recyclers it finds on the planet, and

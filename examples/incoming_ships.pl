@@ -42,9 +42,9 @@ foreach my $planet_id ( sort keys %$planets ) {
     my $planet    = $client->body( id => $planet_id );
     my $result    = $planet->get_buildings;
     my $body      = $result->{status}->{body};
-    
+
     next unless $body->{incoming_foreign_ships};
-    
+
     my $buildings = $result->{buildings};
 
     my $planetShips;
@@ -54,14 +54,14 @@ foreach my $planet_id ( sort keys %$planets ) {
         my $space_port_id = List::Util::first {
                 $buildings->{$_}->{name} eq 'Space Port'
         } keys %$buildings;
-        
+
         my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
-        
+
         my $ships = $space_port->view_foreign_ships($pageNum)->{ships};
         push @$planetShips, @$ships;
         last if scalar @$ships != 25;
     }
-    
+
     push @incoming, {
         name  => $name,
         ships => $planetShips,
@@ -72,19 +72,19 @@ for my $planet (@incoming) {
     printf "%s\n", $planet->{name};
     print "=" x length $planet->{name};
     print "\n";
-    
+
     for my $ship (@{ $planet->{ships} }) {
-        
+
         my $type = $ship->{type_human} ? $ship->{type_human}
                  :                       'Unknown ship';
-        
+
         my $from = $ship->{from}{name} ? sprintf( "%s [%s]",
                                             $ship->{from}{name},
                                             $ship->{from}{empire}{name} )
                  :                       'Unknown location';
-        
+
         my $when = $ship->{date_arrives};
-        
+
         print <<OUTPUT;
 $type from $from
 Arriving $when

@@ -16,7 +16,7 @@ use utf8;
     v          => 0,
     config     => "lacuna.yml",
     datafile   => "data/data_blackhole.js",
-    maxdist    => 450,
+    maxdist    => 300,
   );
 
   my $ok = GetOptions(\%opts,
@@ -77,7 +77,7 @@ use utf8;
   }
 
   my $ofh;
-  open($ofh, ">", $opts{datafile}) || die "Could not open $opts{datafile}";
+  open($ofh, ">", $opts{datafile}) || die "Could not create $opts{datafile}";
 
   my $glc = Games::Lacuna::Client->new(
     cfg_file => $opts{config},
@@ -205,8 +205,21 @@ sub load_stars {
 sub usage {
   die <<"END_USAGE";
 Usage: $0 CONFIG_FILE
-       --planet PLANET_NAME
-       --CONFIG_FILE  defaults to lacuna.yml
+       --planet         PLANET_NAME
+       --CONFIG_FILE    defaults to lacuna.yml
+       --x              X coordinate of target
+       --y              Y coordinate of target
+       --id             id of target
+       --target         target name of target (note you only need one of the 3 methods)
+       --help|h         This help message
+       --datafile       Output file, default data/data_blackhole.js
+       --config         Lacuna Config, default lacuna.yml
+       --make_asteroid  make an asteroid of target, only use against uninhabited planets
+       --make_planet    make a planet of asteroid, only use against non-mined asteroids
+       --increase_size  Increase size of habitable planet or asteroid
+       --change_type    Change type of habitable planet
+       --swap_places    Swap planet with targetted body
+       --view           View options
 
 END_USAGE
 

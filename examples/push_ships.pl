@@ -74,7 +74,7 @@ my $to_dock_count;
 {
     my $to_body      = $client->body( id => $planets_by_name{$to} );
     my $to_buildings = $to_body->get_buildings->{buildings};
-    
+
     my $space_port_id = first {
         $to_buildings->{$_}->{url} eq '/spaceport'
     }
@@ -83,11 +83,11 @@ my $to_dock_count;
 
     die "No spaceport found on target planet\n"
         if !$space_port_id;
-    
+
     my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
-    
+
     $to_dock_count = $space_port->view->{docks_available};
-    
+
     die "No docks available in target SpacePort\n"
         if !$to_dock_count;
 }
@@ -105,11 +105,11 @@ my $trade_min = $client->building( id => $trade_min_id, type => 'Trade' );
 my @trade_ships = @{ $trade_min->get_trade_ships($to_id)->{ships} };
 
 if ($trade_type) {
-    
+
     @trade_ships = grep {
         $_->{type} =~ m/$trade_type/
     } @trade_ships;
-    
+
 }
 
 my $get_ships_result = $trade_min->get_ships;
@@ -143,26 +143,26 @@ for my $trade_ship (@trade_ships) {
     last if $min_push > scalar @push_ships;
     last if $min_push > $to_dock_count;
     last if $to_dock_count < 1;
-    
+
     my $max_ships = floor( $trade_ship->{hold_size} / $hold_required );
-    
+
     my $ship_count = $max_ships > scalar @push_ships ? scalar @push_ships
                    :                                   $max_ships;
-    
+
     $ship_count = $to_dock_count
         if $ship_count > $to_dock_count;
-    
+
     my @push_ships = splice @push_ships, 0, $ship_count;
-    
+
     my @items;
-    
+
     for my $push_ship (@push_ships) {
         push @items, {
             type    => 'ship',
             ship_id => $push_ship->{id},
         };
     }
-    
+
     my $return = $trade_min->push_items(
         $to_id,
         \@items,
@@ -170,10 +170,10 @@ for my $trade_ship (@trade_ships) {
             ship_id => $trade_ship->{id},
         },
     );
-    
+
     printf "Pushed %s\n", join ',', map {"'$_'"} map { $_->{name} } @push_ships;
     printf "Using '%s', arriving %s\n", $return->{ship}{name}, $return->{ship}{date_arrives};
-    
+
     $to_dock_count -= $ship_count;
 }
 

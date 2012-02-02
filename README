@@ -4,7 +4,7 @@ NAME
 SYNOPSIS
       use Games::Lacuna::Client;
       my $client = Games::Lacuna::Client->new(cfg_file => 'path/to/myempire.yml');
-  
+
       # or manually:
       my $client = Games::Lacuna::Client->new(
         uri      => 'https://path/to/server',
@@ -14,10 +14,10 @@ SYNOPSIS
         #session_peristent => 1, # only makes sense with cfg_file set!
         #debug    => 1,
       );
-  
+
       my $res = $client->alliance->find("The Understanding");
       my $id = $res->{alliances}->[0]->{id};
-  
+
       use Data::Dumper;
       print Dumper $client->alliance->view_profile( $res->{alliances}->[0]->{id} );
 

@@ -50,27 +50,27 @@ for my $name ( sort keys %planets ) {
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );
     my $result    = $planet->get_buildings;
-    
+
     my $buildings = $result->{buildings};
 
     # Find the Deployed Bleeders
     my @bleeders = grep {
             $buildings->{$_}->{url} eq '/deployedbleeder'
     } keys %$buildings;
-    
+
     if (@bleeders) {
         printf "%s has %d deployed bleeders\n", $name, scalar(@bleeders);
-        
+
         if ($demolish) {
             for my $id (@bleeders) {
                 my $bleeder = $client->building( id => $id, type => 'DeployedBleeder' );
-                
+
                 $bleeder->demolish;
             }
-            
+
             print "All bleeders on planet demolished\n";
         }
-        
+
         print "\n";
     }
 }

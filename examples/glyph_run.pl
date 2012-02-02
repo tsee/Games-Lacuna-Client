@@ -72,7 +72,7 @@ foreach $planet_name (@selected_planets)
             $return = $building->search_for_glyph($ore);
             $searching = 1;
         };
-        
+
         if ($@) {
             warn "'$planet_name' - Error: $@\n";
             next;
@@ -86,7 +86,7 @@ foreach $planet_name (@selected_planets)
         print "Can't find any of ", (join ',', keys %requestedGlyphs), " on planet '$planet_name'\n";
         next;
     }
-    
+
 }
 
 exit;

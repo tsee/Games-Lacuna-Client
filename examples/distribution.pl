@@ -30,7 +30,7 @@ use YAML::Dumper;
   }
 
   usage() if ($help or !$planet_name);
-  
+
   my $client = Games::Lacuna::Client->new(
     cfg_file => $cfg_file,
     # debug    => 1,
@@ -44,7 +44,7 @@ use YAML::Dumper;
 
 # Get planets
   my $planets        = $data->{status}->{empire}->{planets};
-  my $home_planet_id = $data->{status}->{empire}->{home_planet_id}; 
+  my $home_planet_id = $data->{status}->{empire}->{home_planet_id};
 
 # Get Storage
   my $distcent;

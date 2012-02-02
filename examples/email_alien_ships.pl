@@ -84,9 +84,9 @@ foreach my $name ( sort keys %planets ) {
     my $planet    = $client->body( id => $planets{$name} );
     my $result    = $planet->get_buildings;
     my $body      = $result->{status}->{body};
-    
+
     next unless $body->{incoming_foreign_ships};
-    
+
     my $buildings = $result->{buildings};
 
     # Find the Space Port
@@ -94,30 +94,30 @@ foreach my $name ( sort keys %planets ) {
             $buildings->{$_}->{name} eq 'Space Port'
     } keys %$buildings;
     next unless $space_port_id;
-    
+
     my $space_port = $client->building( id => $space_port_id, type => 'SpacePort' );
-    
+
     my @new_ships;
 
     for (my $pageNum = 1; ; $pageNum++)
     {
         my $ships = $space_port->view_foreign_ships($pageNum)->{ships};
-        
+
         for my $ship (@$ships) {
             # only keep ships not from our own empire
             next if $ship->{from}{empire}{id} && $ship->{from}{empire}{id} == $empire->{id};
-            
+
             # check cache
             next if grep {
                    $_->{id} == $ship->{id}
                 && $_->{date_arrives} eq $ship->{date_arrives}
             } @{ $cache->{$name} };
-            
+
             push @new_ships, $ship;
         }
         last if scalar @$ships != 25;
     }
-    
+
     push @incoming, {
         name  => $name,
         ships => \@new_ships,
@@ -133,28 +133,28 @@ for my $planet (@incoming) {
     $body .= sprintf "%s\n", $planet->{name};
     $body .= "=" x length $planet->{name};
     $body .= "\n";
-    
+
     my %count;
     map { $count{ $_->{type_human} } ++ }
         @{ $planet->{ships} };
-    
+
     for my $type ( keys %count ) {
         $body .= sprintf "%s: %d\n", $type, $count{$type};
     }
     $body .= "\n";
-    
+
     for my $ship (@{ $planet->{ships} }) {
-        
+
         my $type = $ship->{type_human} ? $ship->{type_human}
                  :                       'Unknown ship';
-        
+
         my $from = $ship->{from}{name} ? sprintf( "%s [%s]",
                                             $ship->{from}{name},
                                             $ship->{from}{empire}{name} )
                  :                       'Unknown location';
-        
+
         my $when = $ship->{date_arrives};
-        
+
         $body .= <<OUTPUT;
 $type from $from
 Arriving $when

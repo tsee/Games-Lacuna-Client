@@ -146,7 +146,7 @@ Stars may be repeated if multiple observatories probe the same star, but we will
 
 Options:
   --help                 - Prints this out
-  --output <file>        - Output file, default: data/probe_data_raw.yml
+  --output <file>        - Output file, default: data/probe_data_raw.js
 
 END
  exit 1;

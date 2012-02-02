@@ -80,7 +80,7 @@ sub recall_all {
         warn "Would have called recall_all()\n";
         return [];
     }
-    
+
     return $space_port->recall_all->{ships};
 }
 
@@ -92,53 +92,53 @@ sub recall_select {
                 body_name => $opts{orbiting},
             },
         )->{orbiting};
-    
+
     if ( exists $opts{type} ) {
         @$ships =
             grep {
                 $_->{type} eq $opts{type}
             } @$ships;
     }
-    
+
     die "Matched no ships\n"
         if !@$ships;
-    
+
     if ( $opts{max} && @$ships > $opts{max} ) {
         $#$ships = $opts{max}-1;
     }
-    
+
     if ( $opts{dryrun} ) {
         print "DRYRUN\n";
         print "======\n";
     }
-    
+
     # recall
     for my $ship (@$ships) {
         $space_port->recall_ship( $ship->{id} )
             unless $opts{dryrun};
-        
+
         printf "%s recalled\n",
             $ship->{name};
     }
-    
+
     return $ships;
 }
 
 # rename ships
 sub rename_ships {
     my ( $ships ) = @_;
-    
+
     print "\n";
-    
+
     for my $ship (@$ships) {
-        
+
         my $name = $ship->{type_human};
-        
+
         $space_port->name_ship(
             $ship->{id},
             $name,
             );
-        
+
         printf qq{Renamed "%s" to "%s"\n},
             $ship->{name},
             $name;

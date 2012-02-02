@@ -73,13 +73,13 @@ for my $want_glyph ( @glyphs ) {
     for my $candidate ( @$candidate_glyphs ) {
         next if grep { $candidate->{id} == $_->{id} }
             @use_glyphs;
-        
+
         next if $candidate->{type} ne lc $want_glyph;
-        
+
         push @use_glyphs, $candidate;
         next WANT;
     }
-    
+
     die "Do not have glyph '$want_glyph' available\n";
 }
 
@@ -93,9 +93,9 @@ exit;
 
 sub usage {
     my ($message) = @_;
-    
+
     $message = $message ? "$message\n\n" : '';
-    
+
     die <<"END_USAGE";
 ${message}Usage: $0 CONFIG_FILE
     --planet PLANET_NAME

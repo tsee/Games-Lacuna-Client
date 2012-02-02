@@ -47,7 +47,7 @@ unless ( $my_empire_id )
 }
 
 my @allied_empires = @{ $config->{allied_empires} };
-unless ( @allied_empires ) 
+unless ( @allied_empires )
 {
     warn "No allied_empires found.\n";
 }
@@ -162,7 +162,7 @@ LacunaMap::DB::Bodies->iterate(
     my $eid = $body->empire_id;
     if ($eid) {
       if ($eid == $my_empire_id) { $color = $green; }
-      elsif ($allied_empires{$eid}) { 
+      elsif ($allied_empires{$eid}) {
         if ($private) { $color = $purple; }
         else { $color = $green; }
       }
