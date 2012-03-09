@@ -40,7 +40,8 @@
         'meta_type',
         'meta_type_list',
         'building_label',
-        'building_type_from_label'
+        'building_type_from_label',
+        'building_glyph_recipes'
     ];
     list_functions = [];
     CALL list_functions.import(
@@ -188,6 +189,18 @@ our %EXPORT_TAGS = (
     sub building_labels {
         my @labels = values %label;
         return wantarray ? @labels : [@labels];
+    }
+}
+{
+    my %recipes = (
+    [%- FOREACH building_data.recipes %]
+        [% key %] => [[%- FOREACH recipe IN value %][qw([%- FOREACH glyph IN recipe %] [% glyph %] [%- END %])], [%- END %]],
+    [%- END %]
+    );
+    sub building_glyph_recipes{
+        my( $building ) = @_;
+        return if !exists $recipes{$building};
+        return wantarray ? @{ $recipes{$building} } : $recipes{$building}[0];
     }
 }
 {
