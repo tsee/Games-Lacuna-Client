@@ -61,6 +61,7 @@ around call => sub {
     # and re-call the method, up to 3 times
     my $trying           = 1;
     my $is_interactive   = is_interactive();
+    my $try_captcha      = $self->{client}->open_captcha || $self->{client}->prompt_captcha;
     my $captcha_attempts = 0;
     my $res;
 
@@ -75,11 +76,26 @@ around call => sub {
         if ($res and $res->has_error
             and $res->error->code eq '1016'
             and $is_interactive
-            and $self->{client}->prompt_captcha
+            and $try_captcha
             and ++$captcha_attempts <= 3
         ) {
             my $captcha = $self->{client}->captcha;
+            my $browser;
+            
+            if ( $self->{client}->open_captcha ) {
+                warn "open_captcha\n";
+                $browser = $captcha->open_in_browser;
+            }
+            else {
+                warn "open_captcha not set\n";
+            }
+            
+            if ( !defined $browser && $self->{client}->prompt_captcha ) {
+                $captcha->print_url;
+            }
+            
             my $answer = $captcha->prompt_for_solution;
+            
             $captcha->solve($answer);
             $trying = 1;
         }

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Carp 'croak';
 
+use Browser::Open qw( open_browser );
 use Games::Lacuna::Client;
 use Games::Lacuna::Client::Module;
 our @ISA = qw(Games::Lacuna::Client::Module);
@@ -34,10 +35,23 @@ sub fetch {
     return $result;
 }
 
-sub prompt_for_solution {
+sub open_in_browser {
+    my $self = shift;
+    my $result = $self->fetch;
+    my $ok = open_browser( $result->{url} );
+    return 1 if defined $ok && $ok == 0;
+    
+    return;
+}
+
+sub print_url {
     my $self = shift;
     my $result = $self->fetch;
     print "URL: $result->{url}\n";
+}
+
+sub prompt_for_solution {
+    my $self = shift;
     print "Answer? ";
     my $answer = <STDIN>;
     chomp($answer);
