@@ -16,6 +16,8 @@ AlgaePond:
     - food
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ uraninite, methane ]
 AmalgusMeadow:
   label: Amalgus Meadow
   produces: food
@@ -23,6 +25,8 @@ AmalgusMeadow:
     - food
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ beryl, trona ]
 Apple:
   label: Apple Orchard
   produces: food
@@ -58,78 +62,104 @@ Beach1:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum ]
 Beach10:
   label: 'Beach [10]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, methane ]
 Beach11:
   label: 'Beach [11]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, chromite ]
 Beach12:
   label: 'Beach [12]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, goethite ]
 Beach13:
   label: 'Beach [13]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, galena ]
 Beach2:
   label: 'Beach [2]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, gypsum ]
 Beach3:
   label: 'Beach [3]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, magnetite ]
 Beach4:
   label: 'Beach [4]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, uraninite ]
 Beach5:
   label: 'Beach [5]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, halite ]
 Beach6:
   label: 'Beach [6]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, rutile ]
 Beach7:
   label: 'Beach [7]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, chalcopyrite ]
 Beach8:
   label: 'Beach [8]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, sulfur ]
 Beach9:
   label: 'Beach [9]'
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ gypsum, anthracite ]
 Bean:
   label: Amalgus Bean Plantation
   produces: food
@@ -162,12 +192,16 @@ BeeldebanNest:
     - food
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ anthracite, trona, kerogen ]
 BlackHoleGenerator:
   label: Black Hole Generator
   tags:
     - glyph
     - command
   type: glyph
+  glyph_recipes:
+    - [ kerogen, beryl, anthracite, monazite ]
 Bread:
   label: Bread Bakery
   produces: food
@@ -242,6 +276,8 @@ CitadelOfKnope:
     - glyph
     - ship
   type: glyph
+  glyph_recipes:
+    - [ beryl, sulfur, monazite, galena ]
 CloakingLab:
   label: Cloaking Lab
   tags:
@@ -277,12 +313,16 @@ CrashedShipSite:
     - glyph
     - ship
   type: glyph
+  glyph_recipes:
+    - [ monazite, trona, gold, bauxite ]
 Crater:
   label: Crater
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ rutile ]
 CulinaryInstitute:
   label: Culinary Institute
   tags:
@@ -318,6 +358,8 @@ DentonBrambles:
     - food
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ rutile, geothite ]
 DeployedBleeder:
   label: Deployed Bleeder
   produces: waste
@@ -416,6 +458,8 @@ GasGiantPlatform:
     - infrastructure
     - ship
   type: command
+  glyph_recipes:
+    - [ sulfur, methane, galena, anthracite ]
 GeneticsLab:
   label: Genetics Lab
   tags:
@@ -437,11 +481,15 @@ GeoThermalVent:
     - energy
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ chalcopyrite, sulfur ]
 GratchsGauntlet:
   label: Gratch's Gauntlet
   tags:
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ chromite, bauxite, gold, kerogen ]
 GreatBallOfJunk:
   label: Great Ball of Junk
   produces: happiness
@@ -457,11 +505,19 @@ Grove:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ methane ]
 HallsOfVrbansk:
   label: Halls of Vrbansk
   tags:
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ goethite, halite, gypsum, trona ]
+    - [ gold, anthracite, uraninite, bauxite ]
+    - [ kerogen, methane, sulfur, zircon ]
+    - [ monazite, fluorite, beryl, magnetite ]
+    - [ rutile, chromite, chalcopyrite, galena ]
 HydroCarbon:
   label: Hydrocarbon Energy Plant
   produces: energy
@@ -498,6 +554,8 @@ InterDimensionalRift:
     - glyph
     - storage
   type: glyph
+  glyph_recipes:
+    - [ methane, zircon, fluorite ]
 JunkHengeSculpture:
   label: Junk Henge Sculpture
   produces: happiness
@@ -514,6 +572,8 @@ KalavianRuins:
     - glyph
     - happiness
   type: glyph
+  glyph_recipes:
+    - [ galena, gold ]
 KasternsKeep:
   label: Kastern's Keep
   tags:
@@ -570,12 +630,16 @@ Lagoon:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ chalcopyrite ]
 Lake:
   label: Lake
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ goethite ]
 Lapis:
   label: Lapis Orchard
   produces: food
@@ -596,12 +660,16 @@ LapisForest:
     - food
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ halite, anthracite ]
 LibraryOfJith:
   label: Library of Jith
   tags:
     - glyph
     - infrastructure
   type: glyph
+  glyph_recipes:
+    - [ anthracite, bauxite, beryl, chalcopyrite ]
 LuxuryHousing:
   label: Luxury Housing
   produces: happiness
@@ -640,6 +708,8 @@ MalcudField:
     - food
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ fluorite, kerogen ]
 MassadsHenge:
   label: Massad's Henge
   tags:
@@ -704,6 +774,8 @@ NaturalSpring:
     - glyph
     - water
   type: glyph
+  glyph_recipes:
+    - [ magnetite, halite ]
 Network19:
   label: Network 19 Affiliate
   produces: happiness
@@ -730,6 +802,8 @@ OracleOfAnid:
     - glyph
     - infrastructure
   type: glyph
+  glyph_recipes:
+    - [ gold, uraninite, bauxite, goethite ]
 OreRefinery:
   label: Ore Refinery
   produces: ore
@@ -767,6 +841,8 @@ PantheonOfHagness:
     - glyph
     - planet
   type: glyph
+  glyph_recipes:
+    - [ gypsum, trona, beryl, anthracite ]
 Park:
   label: Park
   produces: happiness
@@ -859,12 +935,16 @@ Ravine:
     - storage
     - waste
   type: glyph
+  glyph_recipes:
+    - [ zircon, methane, galena, fluorite ]
 RockyOutcrop:
   label: Rocky Outcropping
   tags:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ trona ]
 SAW:
   label: Shield Against Weapons
   tags:
@@ -902,6 +982,8 @@ Sand:
     - decoration
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ bauxite ]
 Security:
   label: Security Ministry
   tags:
@@ -1006,6 +1088,8 @@ TempleOfTheDrajilites:
     - command
     - glyph
   type: glyph
+  glyph_recipes:
+    - [ kerogen, rutile, chromite, chalcopyrite ]
 TerraformingLab:
   label: Terraforming Lab
   tags:
@@ -1013,6 +1097,8 @@ TerraformingLab:
     - command
     - infrastructure
   type: command
+  glyph_recipes:
+    - [ methane, zircon, magnetite, beryl ]
 TerraformingPlatform:
   label: Terraforming Platform
   tags:
@@ -1068,6 +1154,8 @@ Volcano:
     - glyph
     - ore
   type: glyph
+  glyph_recipes:
+    - [ magnetite, uraninite ]
 Warehouse:
   label: Warehouse
   stores:

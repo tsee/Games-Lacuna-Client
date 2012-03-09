@@ -74,4 +74,16 @@ sub labels{
   }
   return \%type;
 }
+
+sub recipes{
+  my($self) = @_;
+  my %recipes;
+  my $yaml = $self->{yaml};
+  for my $building ( sort keys %$yaml ){
+    next if !exists $yaml->{$building}{recipes};
+    my $recipes = $yaml->{$building}{recipes};
+    push @{ $recipes{$building} }, @$recipes;
+  }
+  return \%recipes;
+}
 1;
