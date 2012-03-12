@@ -29,12 +29,12 @@ use List::MoreUtils qw(any);
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types get_tags tag_list meta_building_list meta_type meta_type_list building_label building_type_from_label ship_tags_list ship_tags ship_type_human is_food_type is_ore_type );
+our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types building_types building_labels get_tags tag_list meta_building_list meta_type meta_type_list building_label building_type_from_label building_glyph_recipes ship_tags_list ship_tags ship_type_human is_food_type is_ore_type );
 our %EXPORT_TAGS = (
-    list     => [qw( food_types ore_types ship_types ship_attribute_types )],
+    list     => [qw( food_types ore_types ship_types ship_attribute_types building_types building_labels )],
     resource => [qw( food_types ore_types )],
     tag      => [qw( get_tags tag_list )],
-    meta     => [qw( meta_building_list meta_type meta_type_list building_label building_type_from_label )],
+    meta     => [qw( meta_building_list meta_type meta_type_list building_label building_type_from_label building_glyph_recipes )],
     ship     => [qw( ship_types ship_attribute_types ship_tags_list ship_tags ship_type_human )],
     is       => [qw( is_food_type is_ore_type )],
     all      => [@EXPORT],
@@ -617,6 +617,25 @@ our %EXPORT_TAGS = (
         $name =~ s/[^\w]//g;
         return $type_from_label{$name};
     }
+    
+    sub building_types {
+        my @types = keys %label;
+        return wantarray ? @types : [@types];
+    }
+    
+    sub building_labels {
+        my @labels = values %label;
+        return wantarray ? @labels : [@labels];
+    }
+}
+{
+    my %recipes = (
+    );
+    sub building_glyph_recipes{
+        my( $building ) = @_;
+        return if !exists $recipes{$building};
+        return wantarray ? @{ $recipes{$building} } : $recipes{$building}[0];
+    }
 }
 {
     my %ships = (
@@ -937,6 +956,10 @@ Games::Lacuna::Client::Types
 
 =item ship_attribute_types
 
+=item building_types
+
+=item building_labels
+
 =item ship_attribute_types
 
 =item get_tags
@@ -952,6 +975,8 @@ Games::Lacuna::Client::Types
 =item building_label
 
 =item building_type_from_label
+
+=item building_glyph_recipes
 
 =item ship_types
 

@@ -21,6 +21,7 @@ my %WriteMakefileArgs = (
   'NAME' => 'Games::Lacuna::Client',
   'PREREQ_PM' => {
     'AnyEvent' => '0',
+    'Browser::Open' => '0.04',
     'Class::MOP' => '0',
     'Class::XSAccessor' => '1.07',
     'Crypt::SSLeay' => '0',

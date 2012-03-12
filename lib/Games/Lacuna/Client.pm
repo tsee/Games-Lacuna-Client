@@ -28,6 +28,7 @@ use Class::XSAccessor {
     cfg_file
     rpc_sleep
     prompt_captcha
+    open_captcha
   )],
 };
 
@@ -54,6 +55,8 @@ sub new {
     $opt{name}     = defined $opt{name} ? $opt{name} : $yml->{empire_name};
     $opt{password} = defined $opt{password} ? $opt{password} : $yml->{empire_password};
     $opt{uri}      = defined $opt{uri} ? $opt{uri} : $yml->{server_uri};
+    $opt{open_captcha}   = defined $opt{open_captcha}   ? $opt{open_captcha}   : $yml->{open_captcha};
+    $opt{prompt_captcha} = defined $opt{prompt_captcha} ? $opt{prompt_captcha} : $yml->{prompt_captcha};
     for (qw(uri api_key session_start session_id session_persistent cache_dir)) {
       if (exists $yml->{$_}) {
         $opt{$_} = defined $opt{$_} ? $opt{$_} : $yml->{$_};
@@ -331,6 +334,13 @@ F<examples> subdirectory.
   session_start:
   session_id:
   session_persistent:
+  
+  open_captcha: 1   # Will attempt to open the captcha URL in a browser,
+                    # and prompts for the answer. If the browser-open fails,
+                    # falls back to prompt_captcha behaviour if that setting
+                    # is also true
+  
+  prompt_captcha: 1 # Will print an image URL, and prompts for the answer
 
 =head1 SEE ALSO
 
