@@ -193,7 +193,7 @@ our %EXPORT_TAGS = (
 }
 {
     my %recipes = (
-    [%- FOREACH building_data.recipes %]
+    [%- FOREACH building_data.glyph_recipes %]
         [% key %] => [[%- FOREACH recipe IN value %][qw([%- FOREACH glyph IN recipe %] [% glyph %] [%- END %])], [%- END %]],
     [%- END %]
     );
