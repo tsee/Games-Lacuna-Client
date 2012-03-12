@@ -75,13 +75,13 @@ sub labels{
   return \%type;
 }
 
-sub recipes{
+sub glyph_recipes{
   my($self) = @_;
   my %recipes;
   my $yaml = $self->{yaml};
   for my $building ( sort keys %$yaml ){
-    next if !exists $yaml->{$building}{recipes};
-    my $recipes = $yaml->{$building}{recipes};
+    next if !exists $yaml->{$building}{glyph_recipes};
+    my $recipes = $yaml->{$building}{glyph_recipes};
     push @{ $recipes{$building} }, @$recipes;
   }
   return \%recipes;
