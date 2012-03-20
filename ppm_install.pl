@@ -13,6 +13,7 @@ exit;
 sub mod_list {
   my @list = qw(
 AnyEvent
+Browser::Open
 Class::MOP
 Class::XSAccessor
 Crypt::SSLeay
