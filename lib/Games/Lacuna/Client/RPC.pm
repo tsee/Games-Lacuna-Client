@@ -83,11 +83,7 @@ around call => sub {
             my $browser;
             
             if ( $self->{client}->open_captcha ) {
-                warn "open_captcha\n";
                 $browser = $captcha->open_in_browser;
-            }
-            else {
-                warn "open_captcha not set\n";
             }
             
             if ( !defined $browser && $self->{client}->prompt_captcha ) {
