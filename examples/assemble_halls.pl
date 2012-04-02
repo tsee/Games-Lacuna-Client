@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Build Halls of Vrbansk recipes, wherever they can be assembled
+# Assemble Halls of Vrbansk recipes, wherever they can be assembled
 #
 
 use strict;
@@ -36,6 +36,7 @@ if ($opts{planet}) {
 
 my $glc = Games::Lacuna::Client->new(
     cfg_file => $opts{config} || "$FindBin::Bin/../lacuna.yml",
+    rpc_sleep => 1,
 );
 
 my $empire = $glc->empire->get_status->{empire};
@@ -170,10 +171,22 @@ while (@builds < $need) {
 
 for my $build (sort { $a->{type} cmp $b->{type} } @builds) {
     if ($opts{'dry-run'}) {
-        output("Would have built a Halls #$build->{type} on $build->{planet}\n");
+#        output("Would have built a Halls #$build->{type} on $build->{planet}\n");
     } else {
         output("Building a Halls #$build->{type} on $build->{planet}\n");
-        $build->{arch}->assemble_glyphs($build->{glyphs});
+        my $ok = eval {
+          $build->{arch}->assemble_glyphs($build->{glyphs});
+        };
+        unless ($ok) {
+          my $error = $@;
+          if ($error =~ /1010/) {
+            print $error," taking a minute off.\n";
+            sleep(60);
+          }
+          else {
+            die "$error\n";
+          }
+        }
     }
     $plan_count{$build->{planet}}++;
 }
