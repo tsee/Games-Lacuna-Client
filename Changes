@@ -1,6 +1,8 @@
 Revision history for Perl extension Games::Lacuna::Client.
 
 {{$NEXT}}
+
+0.003     2012-04-06 09:35:55 America/Vancouver
   - Added rename_species function to Genetics Lab
   - Added species_rename.pl for changing species and description
 
