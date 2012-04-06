@@ -76,9 +76,16 @@ CONFIGURATION FILE
       session_start:
       session_id:
       session_persistent:
+  
+      open_captcha: 1   # Will attempt to open the captcha URL in a browser,
+                        # and prompts for the answer. If the browser-open fails,
+                        # falls back to prompt_captcha behaviour if that setting
+                        # is also true
+  
+      prompt_captcha: 1 # Will print an image URL, and prompts for the answer
 
 SEE ALSO
-    API docs at <http://us1.lacunaexpanse.com/api>.
+    API docs at <http://us1.lacunaexpanse.com/api/>.
 
     A few ready-to-use tools of varying quality live in the examples
     subdirectory.
