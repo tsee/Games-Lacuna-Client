@@ -49,8 +49,8 @@ our @BuildingTypes = (qw(
     StationCommand
     SubspaceSupplyDepot
     TempleOfTheDrajilites
-    TheftTraining
     TheDillonForge
+    TheftTraining
     ThemePark
     Trade
     Transporter
