@@ -29,12 +29,12 @@ use List::MoreUtils qw(any);
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types building_types building_labels get_tags tag_list meta_building_list meta_type meta_type_list building_label building_type_from_label building_glyph_recipes ship_tags_list ship_tags ship_type_human ship_berth_level is_food_type is_ore_type );
+our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types building_types building_labels get_tags tag_list meta_building_list meta_type meta_type_list building_label building_type_from_label building_glyph_recipes building_requires_ores ship_tags_list ship_tags ship_type_human ship_berth_level is_food_type is_ore_type );
 our %EXPORT_TAGS = (
     list     => [qw( food_types ore_types ship_types ship_attribute_types building_types building_labels )],
     resource => [qw( food_types ore_types )],
     tag      => [qw( get_tags tag_list )],
-    meta     => [qw( meta_building_list meta_type meta_type_list building_label building_type_from_label building_glyph_recipes )],
+    meta     => [qw( meta_building_list meta_type meta_type_list building_label building_type_from_label building_glyph_recipes building_requires_ores )],
     ship     => [qw( ship_types ship_attribute_types ship_tags_list ship_tags ship_type_human ship_berth_level )],
     is       => [qw( is_food_type is_ore_type )],
     all      => [@EXPORT],
@@ -681,6 +681,38 @@ our %EXPORT_TAGS = (
     }
 }
 {
+    my %requires_ores = (
+        Apple => [qw( gysum monazite sulfur )],
+        Bean => [qw( gysum monazite sulfur )],
+        CloakingLab => [qw( bauxite chalcopyrite gold )],
+        Corn => [qw( gysum monazite sulfur )],
+        Dairy => [qw( trona )],
+        Denton => [qw( gysum monazite sulfur )],
+        Fission => [qw( monazite uraninite )],
+        Fusion => [qw( galena halite )],
+        GasGiantLab => [qw( beryl chromite bauxite goethite magnetite rutile )],
+        GasGiantPlatform => [qw( beryl chromite bauxite goethite magnetite rutile )],
+        HydroCarbon => [qw( anthracite kerogen methane )],
+        Lapis => [qw( gysum monazite sulfur )],
+        MunitionsLab => [qw( monazite uraninite )],
+        OreRefinery => [qw( fluorite sulfur )],
+        PilotTraining => [qw( gold )],
+        Potato => [qw( gysum monazite sulfur )],
+        Propulsion => [qw( bauxite beryl chromite goethite magnetite rutile )],
+        SAW => [qw( bauxite chalcopyrite chromite gold magnetite monazite rutile )],
+        TerraformingPlatform => [qw( gysum monazite sulfur )],
+        WasteEnergy => [qw( beryl gypsum zircon )],
+        WasteTreatment => [qw( halite sulfur trona )],
+        WaterReclamation => [qw( halite sulfur )],
+        Wheat => [qw( gysum monazite sulfur )],
+    );
+    sub building_requires_ores{
+        my( $building ) = @_;
+        return if !exists $requires_ores{$building};
+        return wantarray ? @{ $requires_ores{$building} } : $requires_ores{$building}[0];
+    }
+}
+{
     my %ships = (
         barge => {
             type_human => 'Barge',
@@ -1105,6 +1137,8 @@ Games::Lacuna::Client::Types
 =item building_type_from_label
 
 =item building_glyph_recipes
+
+=item building_requires_ores
 
 =item ship_types
 
