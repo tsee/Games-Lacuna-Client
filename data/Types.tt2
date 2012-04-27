@@ -54,6 +54,7 @@
         'ship_tags_list',
         'ship_tags',
         'ship_type_human',
+        'ship_berth_level',
     ];
     functions = [];
     CALL functions.import(
@@ -213,6 +214,7 @@ our %EXPORT_TAGS = (
                 '[% tag %]',
             [%~ END %]
             ],
+            berth_level => [% pair.value.berth_level %],
         },
         [%~ END %]
     );
@@ -242,6 +244,11 @@ our %EXPORT_TAGS = (
         my( $type ) = @_;
         return unless $type;
         return $ships{$type}{type_human};
+    }
+    sub ship_berth_level {
+        my( $type ) = @_;
+        return unless $type;
+        return $ships{$type}{berth_level};
     }
 }
 1;
