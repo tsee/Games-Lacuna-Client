@@ -767,6 +767,20 @@ our %EXPORT_TAGS = (
                 'Trade',
             ],
         },
+        hulk_fast => {
+            type_human => 'Hulk Fast',
+            tags       => [
+                'Mining',
+                'Trade',
+            ],
+        },
+        hulk_huge => {
+            type_human => 'Hulk Huge',
+            tags       => [
+                'Mining',
+                'Trade',
+            ],
+        },
         mining_platform_ship => {
             type_human => 'Mining Platform Ship',
             tags       => [
@@ -831,6 +845,24 @@ our %EXPORT_TAGS = (
         },
         scow => {
             type_human => 'Scow',
+            tags       => [
+                'War',
+            ],
+        },
+        scow_fast => {
+            type_human => 'Scow Fast',
+            tags       => [
+                'War',
+            ],
+        },
+        scow_large => {
+            type_human => 'Scow Large',
+            tags       => [
+                'War',
+            ],
+        },
+        scow_mega => {
+            type_human => 'Scow Mega',
             tags       => [
                 'War',
             ],
