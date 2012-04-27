@@ -29,13 +29,13 @@ use List::MoreUtils qw(any);
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types building_types building_labels get_tags tag_list meta_building_list meta_type meta_type_list building_label building_type_from_label building_glyph_recipes ship_tags_list ship_tags ship_type_human is_food_type is_ore_type );
+our @EXPORT = qw( food_types ore_types ship_types ship_attribute_types building_types building_labels get_tags tag_list meta_building_list meta_type meta_type_list building_label building_type_from_label building_glyph_recipes ship_tags_list ship_tags ship_type_human ship_berth_level is_food_type is_ore_type );
 our %EXPORT_TAGS = (
     list     => [qw( food_types ore_types ship_types ship_attribute_types building_types building_labels )],
     resource => [qw( food_types ore_types )],
     tag      => [qw( get_tags tag_list )],
     meta     => [qw( meta_building_list meta_type meta_type_list building_label building_type_from_label building_glyph_recipes )],
-    ship     => [qw( ship_types ship_attribute_types ship_tags_list ship_tags ship_type_human )],
+    ship     => [qw( ship_types ship_attribute_types ship_tags_list ship_tags ship_type_human ship_berth_level )],
     is       => [qw( is_food_type is_ore_type )],
     all      => [@EXPORT],
 );
@@ -688,12 +688,14 @@ our %EXPORT_TAGS = (
                 'Mining',
                 'Trade',
             ],
+            berth_level => 1,
         },
         bleeder => {
             type_human => 'Bleeder',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         cargo_ship => {
             type_human => 'Cargo Ship',
@@ -702,18 +704,21 @@ our %EXPORT_TAGS = (
                 'Mining',
                 'Trade',
             ],
+            berth_level => 1,
         },
         colony_ship => {
             type_human => 'Colony Ship',
             tags       => [
                 'Colonization',
             ],
+            berth_level => 1,
         },
         detonator => {
             type_human => 'Detonator',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         dory => {
             type_human => 'Dory',
@@ -722,24 +727,28 @@ our %EXPORT_TAGS = (
                 'Mining',
                 'Trade',
             ],
+            berth_level => 1,
         },
         drone => {
             type_human => 'Drone',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         excavator => {
             type_human => 'Excavator',
             tags       => [
                 'Exploration',
             ],
+            berth_level => 1,
         },
         fighter => {
             type_human => 'Fighter',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         freighter => {
             type_human => 'Freighter',
@@ -747,6 +756,7 @@ our %EXPORT_TAGS = (
                 'Mining',
                 'Trade',
             ],
+            berth_level => 1,
         },
         galleon => {
             type_human => 'Galleon',
@@ -754,12 +764,14 @@ our %EXPORT_TAGS = (
                 'Mining',
                 'Trade',
             ],
+            berth_level => 1,
         },
         gas_giant_settlement_ship => {
             type_human => 'Gas Giant Settlement Ship',
             tags       => [
                 'Colonization',
             ],
+            berth_level => 1,
         },
         hulk => {
             type_human => 'Hulk',
@@ -767,6 +779,7 @@ our %EXPORT_TAGS = (
                 'Mining',
                 'Trade',
             ],
+            berth_level => 20,
         },
         hulk_fast => {
             type_human => 'Hulk Fast',
@@ -774,6 +787,7 @@ our %EXPORT_TAGS = (
                 'Mining',
                 'Trade',
             ],
+            berth_level => 25,
         },
         hulk_huge => {
             type_human => 'Hulk Huge',
@@ -781,54 +795,63 @@ our %EXPORT_TAGS = (
                 'Mining',
                 'Trade',
             ],
+            berth_level => 30,
         },
         mining_platform_ship => {
             type_human => 'Mining Platform Ship',
             tags       => [
                 'Mining',
             ],
+            berth_level => 1,
         },
         observatory_seeker => {
             type_human => 'Observatory Seeker',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         placebo => {
             type_human => 'Placebo',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         placebo2 => {
             type_human => 'Placebo II',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         placebo3 => {
             type_human => 'Placebo III',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         placebo4 => {
             type_human => 'Placebo IV',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         placebo5 => {
             type_human => 'Placebo V',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         placebo6 => {
             type_human => 'Placebo VI',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         probe => {
             type_human => 'Probe',
@@ -836,6 +859,7 @@ our %EXPORT_TAGS = (
                 'Exploration',
                 'Intelligence',
             ],
+            berth_level => 1,
         },
         scanner => {
             type_human => 'Scanner',
@@ -843,42 +867,49 @@ our %EXPORT_TAGS = (
                 'Exploration',
                 'Intelligence',
             ],
+            berth_level => 1,
         },
         scow => {
             type_human => 'Scow',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         scow_fast => {
             type_human => 'Scow Fast',
             tags       => [
                 'War',
             ],
+            berth_level => 20,
         },
         scow_large => {
             type_human => 'Scow Large',
             tags       => [
                 'War',
             ],
+            berth_level => 15,
         },
         scow_mega => {
             type_human => 'Scow Mega',
             tags       => [
                 'War',
             ],
+            berth_level => 25,
         },
         security_ministry_seeker => {
             type_human => 'Security Ministry Seeker',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         short_range_colony_ship => {
             type_human => 'Short Range Colony Ship',
             tags       => [
                 'Colonization',
             ],
+            berth_level => 1,
         },
         smuggler_ship => {
             type_human => 'Smuggler Ship',
@@ -887,24 +918,28 @@ our %EXPORT_TAGS = (
                 'Mining',
                 'Trade',
             ],
+            berth_level => 1,
         },
         snark => {
             type_human => 'Snark',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         snark2 => {
             type_human => 'Snark II',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         snark3 => {
             type_human => 'Snark III',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         space_station => {
             type_human => 'Space Station Hull',
@@ -912,54 +947,63 @@ our %EXPORT_TAGS = (
                 'Intelligence',
                 'War',
             ],
+            berth_level => 1,
         },
         spaceport_seeker => {
             type_human => 'Spaceport Seeker',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         spy_pod => {
             type_human => 'Spy Pod',
             tags       => [
                 'Intelligence',
             ],
+            berth_level => 1,
         },
         spy_shuttle => {
             type_human => 'Spy Shuttle',
             tags       => [
                 'Intelligence',
             ],
+            berth_level => 1,
         },
         stake => {
             type_human => 'Stake',
             tags       => [
                 'Colonization',
             ],
+            berth_level => 1,
         },
         supply_pod => {
             type_human => 'Supply Pod',
             tags       => [
                 'Colonization',
             ],
+            berth_level => 1,
         },
         supply_pod2 => {
             type_human => 'Supply Pod II',
             tags       => [
                 'Colonization',
             ],
+            berth_level => 1,
         },
         supply_pod3 => {
             type_human => 'Supply Pod III',
             tags       => [
                 'Colonization',
             ],
+            berth_level => 1,
         },
         supply_pod4 => {
             type_human => 'Supply Pod IV',
             tags       => [
                 'Colonization',
             ],
+            berth_level => 1,
         },
         surveyor => {
             type_human => 'Surveyor',
@@ -967,24 +1011,28 @@ our %EXPORT_TAGS = (
                 'Exploration',
                 'Intelligence',
             ],
+            berth_level => 1,
         },
         sweeper => {
             type_human => 'Sweeper',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
         terraforming_platform_ship => {
             type_human => 'Terraforming Platform Ship',
             tags       => [
                 'Colonization',
             ],
+            berth_level => 1,
         },
         thud => {
             type_human => 'Thud',
             tags       => [
                 'War',
             ],
+            berth_level => 1,
         },
     );
 
@@ -1005,6 +1053,11 @@ our %EXPORT_TAGS = (
         my( $type ) = @_;
         return unless $type;
         return $ships{$type}{type_human};
+    }
+    sub ship_berth_level {
+        my( $type ) = @_;
+        return unless $type;
+        return $ships{$type}{berth_level};
     }
 }
 1;
@@ -1062,6 +1115,8 @@ Games::Lacuna::Client::Types
 =item ship_tags
 
 =item ship_type_human
+
+=item ship_berth_level
 
 =item is_food_type
 
