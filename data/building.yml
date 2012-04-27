@@ -34,6 +34,10 @@ Apple:
     orbit:
       - 3
     phosphorus: ~
+  requires_ores:
+    - gysum
+    - monazite
+    - sulfur
   tags:
     - food
   type: food
@@ -167,6 +171,10 @@ Bean:
     orbit:
       - 4
     phosphorus: ~
+  requires_ores:
+    - gysum
+    - monazite
+    - sulfur
   tags:
     - food
   type: food
@@ -280,6 +288,10 @@ CitadelOfKnope:
     - [ beryl, sulfur, monazite, galena ]
 CloakingLab:
   label: Cloaking Lab
+  requires_ores:
+    - bauxite
+    - chalcopyrite
+    - gold
   tags:
     - command
     - infrastructure
@@ -293,6 +305,10 @@ Corn:
       - 2
       - 3
     phosphorus: ~
+  requires_ores:
+    - gysum
+    - monazite
+    - sulfur
   tags:
     - food
   type: food
@@ -337,6 +353,8 @@ Dairy:
     orbit:
       - 3
     trona: ~
+  requires_ores:
+    - trona
   tags:
     - food
   type: food
@@ -348,6 +366,10 @@ Denton:
       - 5
       - 6
     phosphorus: ~
+  requires_ores:
+    - gysum
+    - monazite
+    - sulfur
   tags:
     - food
   type: food
@@ -425,6 +447,9 @@ Fission:
   produces: energy
   requires:
     university: 6
+  requires_ores:
+    - monazite
+    - uraninite
   tags:
     - energy
   type: energy
@@ -441,11 +466,21 @@ Fusion:
   produces: energy
   requires:
     university: 9
+  requires_ores:
+    - galena
+    - halite
   tags:
     - energy
   type: energy
 GasGiantLab:
   label: Gas Giant Lab
+  requires_ores:
+    - beryl
+    - chromite
+    - bauxite
+    - goethite
+    - magnetite
+    - rutile
   tags:
     - command
     - infrastructure
@@ -453,6 +488,13 @@ GasGiantLab:
   type: command
 GasGiantPlatform:
   label: Gas Giant Settlement Platform
+  requires_ores:
+    - beryl
+    - chromite
+    - bauxite
+    - goethite
+    - magnetite
+    - rutile
   tags:
     - command
     - infrastructure
@@ -523,6 +565,10 @@ HydroCarbon:
   produces: energy
   requires:
     university: 1
+  requires_ores:
+    - anthracite
+    - kerogen
+    - methane
   tags:
     - energy
   type: energy
@@ -647,6 +693,10 @@ Lapis:
     orbit:
       - 2
     phosphorus: ~
+  requires_ores:
+    - gysum
+    - monazite
+    - sulfur
   tags:
     - food
   type: food
@@ -762,6 +812,9 @@ MissionCommand:
   type: command
 MunitionsLab:
   label: Munitions Lab
+  requires_ores:
+    - monazite
+    - uraninite
   tags:
     - command
     - infrastructure
@@ -807,6 +860,9 @@ OracleOfAnid:
 OreRefinery:
   label: Ore Refinery
   produces: ore
+  requires_ores:
+    - fluorite
+    - sulfur
   tags:
     - ore
   type: ore
@@ -869,6 +925,8 @@ Pie:
   type: food
 PilotTraining:
   label: Pilot Training Facility
+  requires_ores:
+    - gold
   tags:
     - command
     - infrastructure
@@ -907,11 +965,22 @@ Potato:
       - 3
       - 4
     phosphorus: ~
+  requires_ores:
+    - gysum
+    - monazite
+    - sulfur
   tags:
     - food
   type: food
 Propulsion:
   label: Propulsion System Factory
+  requires_ores:
+    - bauxite
+    - beryl
+    - chromite
+    - goethite
+    - magnetite
+    - rutile
   tags:
     - command
     - infrastructure
@@ -947,6 +1016,14 @@ RockyOutcrop:
     - [ trona ]
 SAW:
   label: Shield Against Weapons
+  requires_ores:
+    - bauxite
+    - chalcopyrite
+    - chromite
+    - gold
+    - magnetite
+    - monazite
+    - rutile
   tags:
     - command
     - defense
@@ -1101,6 +1178,10 @@ TerraformingLab:
     - [ methane, zircon, magnetite, beryl ]
 TerraformingPlatform:
   label: Terraforming Platform
+  requires_ores:
+    - gysum
+    - monazite
+    - sulfur
   tags:
     - colony
     - command
@@ -1178,6 +1259,10 @@ WasteDigester:
 WasteEnergy:
   label: Waste Energy Plant
   produces: energy
+  requires_ores:
+    - beryl
+    - gypsum
+    - zircon
   tags:
     - energy
     - waste
@@ -1200,6 +1285,10 @@ WasteSequestration:
   type: storage
 WasteTreatment:
   label: Waste Treatment Center
+  requires_ores:
+    - halite
+    - sulfur
+    - trona
   tags:
     - waste
   type: waste
@@ -1218,6 +1307,9 @@ WaterPurification:
 WaterReclamation:
   label: Water Reclamation Facility
   produces: water
+  requires_ores:
+    - halite
+    - sulfur
   tags:
     - water
   type: water
@@ -1236,6 +1328,10 @@ Wheat:
       - 3
       - 4
     phosphorus: ~
+  requires_ores:
+    - gysum
+    - monazite
+    - sulfur
   tags:
     - food
   type: food

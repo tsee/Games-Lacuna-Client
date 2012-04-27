@@ -86,4 +86,16 @@ sub glyph_recipes{
   }
   return \%recipes;
 }
+
+sub building_requires_ores{
+  my($self) = @_;
+  my %requires_ores;
+  my $yaml = $self->{yaml};
+  for my $building ( sort keys %$yaml ){
+    next if !exists $yaml->{$building}{requires_ores};
+    my $requires_ores = $yaml->{$building}{requires_ores};
+    push @{ $requires_ores{$building} }, @$requires_ores;
+  }
+  return \%requires_ores;
+}
 1;
