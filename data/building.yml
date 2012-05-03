@@ -579,7 +579,7 @@ IBS:
     - space_station_module
   type: command
 IntelTraining:
-  label: Intel Training Facility
+  label: Intel Training
   tags:
     - command
     - infrastructure
@@ -766,7 +766,7 @@ MassadsHenge:
     - glyph
   type: glyph
 MayhemTraining:
-  label: Mayhem Training Facility
+  label: Mayhem Training
   tags:
     - command
     - infrastructure
@@ -951,7 +951,7 @@ PoliceStation:
     - space_station_module
   type: command
 PoliticsTraining:
-  label: Politics Training Facility
+  label: Politics Training
   tags:
     - command
     - infrastructure
@@ -1193,7 +1193,7 @@ TheDillonForge:
     - glyph
   type: glyph
 TheftTraining:
-  label: Theft Training Facility
+  label: Theft Training
   tags:
     - command
     - infrastructure
