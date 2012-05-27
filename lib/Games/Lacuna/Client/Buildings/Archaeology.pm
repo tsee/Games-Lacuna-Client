@@ -14,6 +14,7 @@ sub api_methods {
     search_for_glyph    => { default_args => [qw(session_id building_id)] },
     subsidize_search    => { default_args => [qw(session_id building_id)] },
     get_glyphs          => { default_args => [qw(session_id building_id)] },
+    get_glyph_summary   => { default_args => [qw(session_id building_id)] },
     assemble_glyphs     => { default_args => [qw(session_id building_id)] },
     get_ores_available_for_processing => { default_args => [qw(session_id building_id)] },
     view_excavators     => { default_args => [qw(session_id building_id)] },
