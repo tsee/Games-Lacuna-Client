@@ -58,7 +58,7 @@ my $empire  = $client->empire->get_status->{empire};
 my $planets = $empire->{planets};
 
 # reverse hash, to key by name instead of id
-my %planets_by_name = reverse %$planets;
+my %planets_by_name = map { $planets->{$_}, $_ } keys %$planets;
 
 my $to_id = $planets_by_name{$to}
     or die "--to planet not found";
@@ -74,7 +74,7 @@ my $trade_min_id = first {
 
 my $trade_min = $client->building( id => $trade_min_id, type => 'Trade' );
 
-my $glyphs_result = $trade_min->get_glyphs;
+my $glyphs_result = $trade_min->get_glyph_summary;
 my @glyphs        = @{ $glyphs_result->{glyphs} };
 
 if ( $match_glyph ) {
@@ -89,35 +89,52 @@ if ( !@glyphs ) {
     exit;
 }
 
-if ( $max && @glyphs > $max ) {
-    splice @glyphs, $max;
+if ($max) {
+  my $total = 0;
+  for my $glyph (sort { $a->{type} cmp $b->{type} } @glyphs) {
+    print "$glyph->{type} $glyph->{quantity}\n";
+    if ( ($total + $glyph->{quantity}) > $max) {
+      $glyph->{quantity} = $max - $total;
+      $total = $max;
+    }
+    else {
+      $total += $glyph->{quantity};
+    }
+  }
 }
 
 my $ship_id;
 
 if ( $ship_name ) {
     my $ships = $trade_min->get_trade_ships->{ships};
-
-    my ($ship) =
-        sort {
-            $b->{speed} <=> $a->{speed}
-        }
+    
+    my ($ship) = 
         grep {
             $_->{name} =~ /\Q$ship_name/i
         } @$ships;
-
+    
     if ( $ship ) {
         my $cargo_each = $glyphs_result->{cargo_space_used_each};
-        my $cargo_req  = $cargo_each * scalar @glyphs;
-
+        my $cargo_req = 0;
+        for my $glyph (@glyphs) {
+          $cargo_req += $glyph->{quantity} * $cargo_each;
+        }
+        
         if ( $ship->{hold_size} < $cargo_req ) {
             my $count = floor( $ship->{hold_size} / $cargo_each );
-
-            splice @glyphs, $count;
-
-            warn sprintf "Specified ship cannot hold all plans - only pushing %d plans\n", $count;
+            my $total = 0;
+            for my $glyph (sort { $a->{type} cmp $b->{type} } @glyphs) {
+              if ( ($total + $glyph->{quantity}) > $count) {
+                $glyph->{quantity} = $count - $total;
+                $total = $count;
+              }
+              else {
+                $total += $glyph->{quantity};
+              }
+            }
+            warn sprintf "Specified ship cannot hold all glyphs - only pushing %d glyphs\n", $count;
         }
-
+        
         $ship_id = $ship->{id};
     }
     else {
@@ -126,13 +143,20 @@ if ( $ship_name ) {
     }
 }
 
-my @items =
-    map {
-        +{
-            type     => 'glyph',
-            glyph_id => $_->{id},
-        }
-    } @glyphs;
+my @items;
+my $shipping = 0;
+for my $glyph (@glyphs) {
+  push @items, {
+    type => "glyph",
+    name => $glyph->{type},
+    quantity => $glyph->{quantity},
+  } if ($glyph->{quantity} > 0);
+}
+print "Items\n";
+for my $item (@items) {
+  print "$item->{type} $item->{name} $item->{quantity}\n";
+  $shipping += $item->{quantity};
+}
 
 my $return = $trade_min->push_items(
     $to_id,
@@ -141,7 +165,7 @@ my $return = $trade_min->push_items(
              : ()
 );
 
-printf "Pushed %d glyphs\n", scalar @glyphs;
+printf "Pushed %d glyphs\n", $shipping;
 printf "Arriving %s\n", $return->{ship}{date_arrives};
 
 exit;
