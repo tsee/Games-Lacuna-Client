@@ -7,23 +7,23 @@ use lib "$FindBin::Bin/../lib";
 use List::Util            (qw(first max));
 use Getopt::Long          (qw(GetOptions));
 use Games::Lacuna::Client ();
+use Games::Lacuna::Client::Types qw( get_tags building_type_from_label meta_type );
 use JSON;
 use utf8;
 
-  my $planet_name;
+  my @planets;
+  my @skip_planets;
   my $cfg_file = "lacuna.yml";
   my $skip = 1;
-  my $nodump = 0;
-
-  my @skip_planets = (
-  );
+  my $dump = 0;
+  my $outfile = 'log/data_plans.js';
 
   GetOptions(
-    'planet=s'    => \$planet_name,
-    'config=s'    => \$cfg_file,
-    'skip!'       => \$skip,
-    'dumpfile=s'  => \$dumpfile,
-    'nodump'      => \$nodump,
+    'planet=s@' => \@planets,
+    'config=s'  => \$cfg_file,
+    'skip=s@'   => \@skip_planets,
+    'outfile=s' => \$outfile,
+    'dump'      => \$dump,
   );
 
   unless ( $cfg_file and -e $cfg_file ) {
@@ -46,9 +46,9 @@ use utf8;
     # debug    => 1,
   );
 
-  unless ($nodump) {
-    my $pf;
-    open($pf, ">", "$dumpfile") or die "Could not open $dumpfile for writing\n";
+  my $pf;
+  if ($dump) {
+    open($pf, ">", "$outfile") or die "Could not open $outfile for writing\n";
   }
 
   my $json = JSON->new->utf8(1);
@@ -63,18 +63,19 @@ use utf8;
   my $max_length;
   my $all_plans;
   my %plan_hash;
-  foreach my $name ( sort keys %planets ) {
-    next if defined $planet_name && $planet_name ne $name;
-    next if ($skip && grep { $_ eq $name } @skip_planets);
+  foreach my $pname ( sort keys %planets ) {
+    next if (scalar @planets and !(grep {lc $pname eq lc $_ } @planets));
+    next if (scalar @skip_planets and (grep {lc $pname eq lc $_ } @planets));
     sleep 2;
 
     # Load planet data
-    my $planet    = $client->body( id => $planets{$name} );
+    my $planet    = $client->body( id => $planets{$pname} );
     my $result    = $planet->get_buildings;
     my $body      = $result->{status}->{body};
     
     my $buildings = $result->{buildings};
 
+    next if $result->{status}{body}{type} eq 'space station';
     # PPC or SC
     my $command_url = $result->{status}{body}{type} eq 'space station'
                     ? '/stationcommand'
@@ -95,10 +96,10 @@ use utf8;
     
     next if !@$plans;
 
-    $plan_hash{"$name"} = $plans;
+    $plan_hash{"$pname"} = $plans;
     
-    printf "%s\n", $name;
-    print "=" x length $name;
+    printf "%s\n", $pname;
+    print "=" x length $pname;
     print "\n";
     
     $max_length = max map { length $_->{name} } @$plans;
@@ -124,7 +125,7 @@ use utf8;
     sleep 2;
   }
   print "We have $all_plans plans.\n";
-  unless ($nodump) {
+  if ($dump) {
     print $pf $json->pretty->canonical->encode(\%plan_hash);
     close $pf;
   }
