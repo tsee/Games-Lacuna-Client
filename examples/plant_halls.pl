@@ -64,7 +64,7 @@ do {
     if ( $build_time ) {
         $build_time += 5;
         print "Sleeping for $build_time while build queue empties\n";
-        sleep $build_time;
+        #sleep $build_time;
     }
 
     my $queue_length = queue_length( $buildings );

@@ -36,6 +36,7 @@ unless ( $governor_config and -e $governor_config ) {
 my $client = Games::Lacuna::Client->new(
     cfg_file => $cfg_file,
     rpc_sleep => 1,
+    #rpc_verbose => 1,
     #debug    => 1,
 );
 

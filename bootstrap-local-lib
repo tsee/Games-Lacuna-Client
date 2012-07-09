@@ -14,7 +14,7 @@ cd local-lib-1.008004/  \
     && make && make install \
     && cd .. \
     && rm -rf local-lib-1.008004.tar.gz local-lib-1.008004 App-cpanminus-1.4008.tar.gz App-cpanminus-1.4008 \
-    && cpanm -L local-lib JSON::RPC::LWP Text::CSV \
+    && cpanm -L local-lib JSON::RPC::LWP Text::CSV IO::Interactive \
     && mkdir cache
 
 echo
