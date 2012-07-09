@@ -8,7 +8,7 @@
 
 package Games::Lacuna::Client::Governor::Excavator;
 use strict;
-use warnings qw(FATAL all);
+use warnings qw(all);
 use Carp;
 use English qw(-no_match_vars);
 use Data::Dumper;
@@ -42,22 +42,36 @@ use Hash::Merge qw(merge);
             return;
         }
 
-        my ($observatory) = $gov->find_buildings('Observatory');
-        if( $observatory ){
+
+        my $observatory_stars = $gov->{cache}->{observatory_stars};
+
+        unless ($observatory_stars)
+        {
+            my @observatories = $gov->find_all_buildings('Observatory');
             my @stars;
-            do {
-                my $page = 0;
-                while( $page <= 4 ){
-                    $page++;
-                    my $data = $observatory->get_probed_stars($page);
-                    push @stars, @{$data->{stars}};
-                    last if $page * $PROBES_PER_PAGE >= $data->{star_count};
+            foreach my $observatory (@observatories)
+            {
+                if( $observatory ){
+                    do {
+                        my $page = 0;
+                        while( $page <= 4 ){
+                            $page++;
+                            my $data = $observatory->get_probed_stars($page);
+                            push @stars, @{$data->{stars}};
+                            last if $page * $PROBES_PER_PAGE >= $data->{star_count};
+                        }
+                    };
                 }
-            };
-            $gov->{_observatory_plugin}{stars}{$pid} = {
-                stars       => \@stars,
-            };
+            }
+            #$observatory_stars = $gov->{cache}->{observatory_stars} = \@stars;
+            $observatory_stars = \@stars;
         }
+
+        $gov->{_observatory_plugin}{stars}{$pid} = {
+            stars       => $observatory_stars,
+        };
+        my $planet_name = $gov->{status}{$pid}{name};
+        trace(scalar @$observatory_stars . " stars to check for excavator from $planet_name") if ($gov->{config}->{excavator}->{trace});
 
         ### Now find Spaceports.
         my (@spaceports) = $gov->find_buildings('SpacePort');
@@ -140,7 +154,7 @@ use Hash::Merge qw(merge);
                 }
             };
             eval {
-                trace("Excavator is loading cached static star map...");
+                trace("Excavator is loading cached static star map...") if $gov->{config}->{verbosity}->{trace};
                 $gov->{_static_stars} = lock_retrieve( $cache_path );
             };
             warning(
@@ -199,12 +213,16 @@ use Hash::Merge qw(merge);
             return;
         }
 
+
+# TODO: we don't need find all observatories above, as this does the job, we just need to make
+# everything use the probed stars list
         my %probed_stars;
         ### Identify all probed stars.
         for my $pid ( @pids ){
             for my $star ( @{$gov->{_observatory_plugin}{stars}{$pid}{stars}} ){
                 if( exists $probed_stars{$star->{name}} ){
-                    warning(sprintf "Star %s has multiple probes!", $star->{name});
+                    my $planet_name = $gov->{planet_names}->{$pid};
+        #            warning(sprintf "Star %s has multiple probes! duplicate probe from %s", $star->{name}, $planet_name);
                     next;
                 }
                 $probed_stars{$star->{name}} = $star;
@@ -295,34 +313,25 @@ use Hash::Merge qw(merge);
             $_ => $docked;
         } keys %{$gov->{_observatory_plugin}{ports}};
 
+        my $dry_run = $gov->{config}{dry_run} ? "[DRYRUN]: " : '';
+
         ### Select our targets. Naively.
-        my %furthest_launch;
-        my %excavator_from_planet;
         PLANET:
         for my $pid ( keys %docked_excavators ){
+            my $planet = $gov->{status}{$pid}{name};
             my $furthest_stars = $distances_by_planet->{$pid};
+            trace("selecting targets for $excavator_cnt{$pid} excavators from $planet from " . scalar @$furthest_stars . " stars") if ($gov->{config}->{excavator}->{trace});
             STAR:
             for my $star ( @{$furthest_stars} ){
-                next PLANET if not $excavator_cnt{$pid};
-                next STAR if $traveling_excavators{$star} or $furthest_launch{$star};
-                $furthest_launch{$star} = $pid;
-                trace("adding star $star") if ($gov->{config}->{excavator}->{trace});
-                push @{$excavator_from_planet{$pid}}, $star;
-                $excavator_cnt{$pid}--;
-            }
-        }
+                trace("excavator already travelling to star $star") if $traveling_excavators{$star} && ($gov->{config}->{excavator}->{trace});
+                next STAR if $traveling_excavators{$star};
+#                trace("adding star $star") if ($gov->{config}->{excavator}->{trace});
 
-        my $dry_run = $gov->{config}{dry_run} ? "[DRYRUN]: " : '';
-        ### Launch.
-        PLANET:
-        while( my ($pid, $star_targets) = each %excavator_from_planet ){
-            my $planet = $gov->{status}{$pid}{name};
-            STAR:
-            for my $star ( @$star_targets ){
                 my ($excavator_id) = keys %{$gov->{_observatory_plugin}{ports}{$pid}{excavator2port}};
                 last STAR if not $excavator_id;
-                my $port  = delete $gov->{_observatory_plugin}{ports}{$pid}{excavator2port}{$excavator_id};
+                my $port  = $gov->{_observatory_plugin}{ports}{$pid}{excavator2port}{$excavator_id};
 
+                trace("excavators left: " . scalar keys %{$gov->{_observatory_plugin}{ports}{$pid}{excavator2port}}) if ($gov->{config}->{excavator}->{trace});
                 my @target_planets;
 
                 trace("targetting planets of $star") if ($gov->{config}->{excavator}->{trace});
@@ -330,20 +339,18 @@ use Hash::Merge qw(merge);
 
                 foreach my $target_planet (@{$star_data->{bodies}})
                 {
+                    my $target_name = $target_planet->{name};
+                    my $last_attempt = $gov->{cache}->{excavator}->{planets}->{$pid}->{$target_planet->{id}} || 0;
                     # don't excavate on occupied planets, it annoys people and they'll probable destroy the excavator anyway
                     next if $target_planet->{empire};
                     next if $target_planet->{station};
-                    next if $target_planet->{alliance};
-                    next if $target_planet->{incoming_foreign_ships};
+                   # next if $target_planet->{alliance};
+                   # next if $target_planet->{incoming_foreign_ships};
+#                    warning("sent to $target_name recently") if $last_attempt > (time - 30 * 24 * 60 * 60);
+                    next if $last_attempt > (time - 30 * 24 * 60 * 60);
 
                     trace($target_planet->{name} . " is viable") if ($gov->{config}->{excavator}->{trace});
-                    push @target_planets, $target_planet;
-                }
 
-
-                foreach my $target_planet (@target_planets)
-                {
-                    my $target_name = $target_planet->{name};
                     eval {
                         if( not $dry_run ){
                             $port->send_ship( $excavator_id, { body_id => $target_planet->{id} } );
@@ -351,8 +358,14 @@ use Hash::Merge qw(merge);
                     };
                     if( my $e = Exception::Class->caught ){
                         if( $e->isa('LacunaRPCException') and $e->code == 1009 ){
-                            warning("Unable to send excavator from $planet.");
+                            warning("Unable to send excavator from $planet. $e");
+                            next STAR if ($e =~ /Can only be sent to asteroids and uninhabited planets/);
                             next PLANET;
+                        }
+                        if( $e->isa('LacunaRPCException') and $e->code == 1010 ){
+                            $gov->{cache}->{excavator}->{planets}->{$pid}->{$target_planet->{id}} = time;
+                            warning("Sent excavator to $target_name recently") if ($gov->{config}->{excavator}->{trace});
+                            $gov->write_cache;
                         }
                         else {
                             warning("Unable to send excavator[$excavator_id] from $planet to $target_name @ $star: $e");
@@ -360,7 +373,9 @@ use Hash::Merge qw(merge);
                     }
                     else {
                         action("${dry_run} excavator[$excavator_id] sent from $planet to $target_name @ $star");
-                        next PLANET;
+                        delete $gov->{_observatory_plugin}{ports}{$pid}{excavator2port}{$excavator_id};
+                        $gov->{cache}->{excavator}->{planets}->{$pid}->{$target_planet->{id}} = time;
+                        next STAR;
                     }
                 }
             }
