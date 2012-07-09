@@ -12,6 +12,7 @@ use warnings qw(FATAL all);
 use Carp;
 use English qw(-no_match_vars);
 use Data::Dumper;
+use Hash::Merge qw(merge);
 
 {
     use Storable qw(lock_nstore lock_retrieve);
@@ -31,7 +32,7 @@ use Data::Dumper;
         # There's only one.
         my ($observatory) = $gov->find_buildings('Observatory');
         if( not $observatory ){
-            warning("There is no Observatory on $planet");
+            warning("There is no Observatory on $planet") if $gov->{config}->{verbosity}->{warning};;
             return;
         }
 
@@ -210,7 +211,8 @@ use Data::Dumper;
         for my $pid ( @pids ){
             for my $star ( @{$gov->{_observatory_plugin}{stars}{$pid}{stars}} ){
                 if( exists $probed_stars{$star->{name}} ){
-                    warning(sprintf "Star %s has multiple probes!", $star->{name});
+                    my $planet = $gov->{status}{$pid}{name};
+                    warning(sprintf "Star %s has multiple probes, duplicate probe from $planet!", $star->{name}) if $gov->{config}->{verbosity}->{warning};;
                     next;
                 }
                 $probed_stars{$star->{name}} = $star;
@@ -218,7 +220,7 @@ use Data::Dumper;
         }
 
         if( not any { $class->can_observe($gov, $_); } @pids ){
-            trace("All observatories are capped, aborting.");
+            trace("All observatories are capped, aborting.") if $gov->{config}->{verbosity}->{warning};;
             return;
         }
 
@@ -258,11 +260,24 @@ use Data::Dumper;
         ### For each planet, sort the stars based on their distances from it.
         my %distances_by_planet;
         for my $pid ( keys %pid_loc ){
-            $distances_by_planet{$pid} = [
-                sort {
+
+            my $planet = $gov->{status}->{$pid}->{name};
+            next unless $planet;
+            my $config = merge($gov->{config}{colony}{$planet} || {}, $gov->{config}{colony}{_default_});
+            my $order = $config->{probe}->{order} || 'nearest';
+
+            # nearest first, default order
+            my @distances = sort {
                    $planet_distances{$pid}{$a} <=> $planet_distances{$pid}{$b}
-                } keys %{ $planet_distances{$pid} }
-            ];
+                } keys %{ $planet_distances{$pid} };
+
+            if ($order eq 'furthest') {
+                @distances = reverse @distances;
+            } elsif ($order eq 'random') {
+                @distances = fisher_yates_shuffle(\@distances);
+            }
+
+            $distances_by_planet{$pid} = \@distances;
         }
 
         ### Launch ze Probes!
@@ -330,9 +345,12 @@ use Data::Dumper;
             my $planet = $gov->{status}{$pid}{name};
             STAR:
             for my $star ( @$star_targets ){
+                next if (exists $gov->{cache}{renamed_stars}{$star} && $gov->{cache}{renamed_stars}{$star} eq "unknown");
+
                 my ($probe_id) = keys %{$gov->{_observatory_plugin}{ports}{$pid}{probe2port}};
                 last STAR if not $probe_id;
-                my $port  = delete $gov->{_observatory_plugin}{ports}{$pid}{probe2port}{$probe_id};
+            #    my $port  = delete $gov->{_observatory_plugin}{ports}{$pid}{probe2port}{$probe_id};
+                my $port  = $gov->{_observatory_plugin}{ports}{$pid}{probe2port}{$probe_id};
 
                 eval {
                     if( not $dry_run ){
@@ -341,15 +359,21 @@ use Data::Dumper;
                 };
                 if( my $e = Exception::Class->caught ){
                     if( $e->isa('LacunaRPCException') and $e->code == 1009 ){
-                        warning("Unable to send probe from $planet, Observatory is capped.");
+                        warning("Unable to send probe from $planet, Observatory is capped.") if $gov->{config}->{verbosity}->{warning};;
                         next PLANET;
+                    }
+                    if( $e->isa('LacunaRPCException') and $e->code == 1002 ){
+                        warning("Unable to send probe from $planet, no star called $star.") if $gov->{config}->{verbosity}->{warning};;
+                        $gov->{cache}{renamed_stars}{$star} = "unknown";
                     }
                     else {
                         warning("Unable to send probe[$probe_id] from $planet to $star: $e");
+                        next STAR;
                     }
                 }
                 else {
                     action("${dry_run}Probe[$probe_id] sent from $planet to $star");
+                    delete $gov->{_observatory_plugin}{ports}{$pid}{probe2port}{$probe_id};
                 }
             }
         }
@@ -357,6 +381,18 @@ use Data::Dumper;
         return;
     }
 
+    # fisher_yates_shuffle( \@array ) : 
+    # generate a random permutation of @array in place
+    sub fisher_yates_shuffle {
+        my $array = shift;
+        my $i;
+        for ($i = @$array; --$i; ) {
+            my $j = int rand ($i+1);
+            next if $i == $j;
+            @$array[$i,$j] = @$array[$j,$i];
+        }
+        return @$array;
+    }
 }
 
 1;
