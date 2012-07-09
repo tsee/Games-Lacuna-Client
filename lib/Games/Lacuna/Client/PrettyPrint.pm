@@ -56,10 +56,10 @@ sub upgrade_report {
     show_bar('=');
     say(_c_('bold yellow'),"Upgrade Options Report",_c_('reset'));
     show_bar('-');
-    printf "%7s %15s %2s %3s %7s %7s %7s %7s %s\n","ID","Type","Lv","Can","Food","Ore","Water","Energy","Waste";
+    printf "%7s %15s %2s %3s %9s %9s %9s %9s %9s %9s\n","ID","Type","Lv","Can","Food","Ore","Water","Energy","Waste","Time";
     show_bar('-');
-    printf "%s%-30s %7s %7s %7s %7s      --%s\n",_c_('bold green'),"Build Above",@{$build_above}{qw(food ore water energy)},_c_('reset');
-    printf "%s%-30s %7s %7s %7s %7s %7s%s\n",_c_('bold green'),"Avail. For Build",
+    printf "%s%-30s %9s %9s %9s %9s      --%s\n",_c_('bold green'),"Build Above",@{$build_above}{qw(food ore water energy)},_c_('reset');
+    printf "%s%-30s %9s %9s %9s %9s %9s%s\n",_c_('bold green'),"Avail. For Build",
         (map { $status->{"$_\_stored"} - $build_above->{$_} } qw(food ore water energy)),
         $status->{"waste_capacity"} - $status->{"waste_stored"},
         _c_('reset');
@@ -67,7 +67,7 @@ sub upgrade_report {
     for my $bldg (@buildings) {
         my $up = $bldg->{upgrade};
         print _c_('cyan');
-        printf "%7s %15s %2s %3s %7s %7s %7s %7s %7s\n",$bldg->{id},substr($bldg->{pretty_type},0,15),$bldg->{level},$up->{can} ? 'YES' : 'NO',map {$up->{cost}->{$_} } qw(food ore water energy waste);
+        printf "%7s %15s %2s %3s %9s %9s %9s %9s %9s %9s\n",$bldg->{id},substr($bldg->{pretty_type},0,15),$bldg->{level},$up->{can} ? 'YES' : 'NO',map {$up->{cost}->{$_} } qw(food ore water energy waste time);
         print _c_('reset');
     }
     if (not scalar @buildings) {
