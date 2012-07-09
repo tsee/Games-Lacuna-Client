@@ -67,6 +67,9 @@ sub run {
             if( my $colony_priorities = $config->{colony}{$planets->{$pid}}{priorities} ){
                 $colony_config->{priorities} = $colony_priorities;
             }
+            if( my $colony_other_upgrades = $config->{colony}{$planets->{$pid}}{other_upgrades} ){
+                $colony_config->{other_upgrades} = $colony_other_upgrades;
+            }
 
             next if ( not exists $colony_config->{priorities} or $colony_config->{exclude} );
             $self->{current}->{planet_id} = $pid;
@@ -115,7 +118,7 @@ sub govern {
     my $status  = $result->{status}->{body};
     $self->{status}->{$pid} = $status;
 
-    Games::Lacuna::Client::PrettyPrint::show_bar('*');
+#    Games::Lacuna::Client::PrettyPrint::show_bar('*');
     message("Governing ".$status->{name}) if ($self->{config}->{verbosity}->{message});
     Games::Lacuna::Client::PrettyPrint::show_status($status) if ($self->{config}->{verbosity}->{summary});
     Games::Lacuna::Client::PrettyPrint::surface($surface_image,$details) if ($self->{config}->{verbosity}->{surface_map});
@@ -424,7 +427,12 @@ sub send_pushes {
             $candidate->{load_size},$candidate->{hold_size}
         );
         if (not $self->{config}->{dry_run}) {
-            $info->{ $candidate->{orig} }->{trade}->push_items( $candidate->{dest}, $candidate->{items}, { ship_id => $candidate->{ship} } );
+            eval {
+                $info->{ $candidate->{orig} }->{trade}->push_items( $candidate->{dest}, $candidate->{items}, { ship_id => $candidate->{ship} } );
+            };
+            if ($@) {
+                warning($@);
+            }
         }
         push @{$self->{sent_ships}}, $candidate->{ship};
     }
@@ -671,6 +679,7 @@ sub other_upgrades {
     my ($self, $type) =  @_;
     my ($status, $config) = @{$self->{current}}{qw(status config)};
     my $planet = $self->{planet_names}->{$self->{current}->{planet_id}};
+    my $colony_config = merge( $self->{config}->{colony}->{ $self->{current}->{planet_id} } || {}, $self->{config}->{colony}->{_default_} );
 
     # Stop without processing if the build queue is full.
     if((defined $self->{current}->{build_queue_remaining}) &&
@@ -681,7 +690,13 @@ sub other_upgrades {
         return;
     }
 
-    my @types = @{$config->{other_upgrades}->{types}};
+    unless (defined $colony_config->{other_upgrades}->{types})
+    {
+        warning("$planet: no types") if $self->{config}->{verbosity}->{warning};
+        return;
+    }
+
+    my @types = @{$colony_config->{other_upgrades}->{types}};
 
     my @buildings;
     foreach my $type (@types) {
@@ -699,7 +714,7 @@ sub other_upgrades {
                 push @buildings, $building;
             }
             else {
-                trace("$planet: $label ($type, $building->{building_id} @ $details->{level}) ($type) already reached $level_limit")
+                trace("$planet: $label ($type, $building->{building_id} @ $details->{level}) already reached $level_limit")
                     if ($self->{config}->{verbosity}->{trace});
             }
         }
@@ -708,7 +723,7 @@ sub other_upgrades {
     # using pertinence_sort, but sort categories dependent on resource capacity will error out
     # - storage and production upgrades handle those cases anyway
     my $sort_type = $config->{other_upgrades}->{upgrade_selection} || $config->{upgrade_selection};
-    my @sorted_buildings = sort { $self->pertinence_sort(undef,$sort_type,undef,$a,$b) } @buildings;
+    #my @sorted_buildings = sort { $self->pertinence_sort(undef,$sort_type,undef,$a,$b) } @buildings;
 
     $self->attempt_other_upgrades(\@buildings, $sort_type);
 }
@@ -726,7 +741,7 @@ sub attempt_other_upgrades {
         {
             my $details = $self->building_details(@{$self->{current}}{planet_id},$building->{building_id});
             my $costs   = $self->{cache}->{building}->{ $building->{building_id} }->{upgrade}->{cost};
-            trace("$planet: $building->{building_id}: $details->{pretty_type} @ $details->{level} upgrade cost: " . sum_keys($costs)) if $self->{config}->{verbosity}->{trace};
+            trace("$planet: $building->{building_id}: $details->{pretty_type} @ $details->{level}                T: $details->{upgrade}->{cost}->{time} upgrade cost: " . sum_keys($costs)) if $self->{config}->{verbosity}->{trace};
         }
     }
  
@@ -997,8 +1012,8 @@ sub write_cache {
 
     $self->{cache}->{cache_time} = time;
 
-    if(open( my $fh, '>', $cache_file)) {
-        print $fh to_json($self->{cache});
+    if(open( my $fh, '>', $cache_file)) { 
+        print $fh to_json($self->{cache}, {utf8 => 1, pretty => 1});
         close $fh;
     }
 }
@@ -1150,6 +1165,33 @@ sub find_buildings {
     return @retlist;
 }
 
+sub find_all_buildings {
+    my ($self, $type) = @_;
+    my $planets        = $self->{status}->{empire}->{planets};
+
+    my @retlist;
+    for my $pid ( keys %$planets ) {
+
+        unless ($self->{cache}->{body}->{$pid})
+        {
+            my $result  = $self->{client}->body( id => $pid )->get_buildings();
+            $self->{status}->{$pid} = $result->{status}->{body};
+            $self->{cache}->{body}->{$pid} = $result->{buildings};
+        }
+
+            my $planet = $self->{status}{$pid}{name};
+
+        for my $bid (keys %{$self->{cache}->{body}->{$pid}}) {
+        $self->{cache}->{body}->{$pid}->{$bid}->{pretty_type} = 
+            Games::Lacuna::Client::Buildings::type_from_url( $self->{cache}->{body}->{$pid}->{$bid}->{url} );
+        #    my $details = $self->building_details($pid,$bid);
+            my $pretty_type = $self->{cache}->{body}->{$pid}->{$bid}->{pretty_type};
+            push @retlist, $self->{client}->building( id => $bid, type => $pretty_type ) if $pretty_type eq $type;
+        }
+    }
+    return @retlist;
+}
+
 sub sum_keys
 {
     my ($hash) = shift;
@@ -1182,8 +1224,8 @@ sub pertinence_sort {
         'least_expensive' => sub { return sum_keys( $cache->{ $left->{building_id} }->{upgrade}->{cost} ) <=> sum_keys( $cache->{ $right->{building_id} }->{upgrade}->{cost} ) },
         'highest_level'   => sub { return $cache->{ $right->{building_id} }->{level} <=> $cache->{ $left->{building_id} }->{level} },
         'lowest_level'    => sub { return $cache->{ $left->{building_id} }->{level} <=> $cache->{ $right->{building_id} }->{level} },
-        'slowest'         => sub { return $cache->{ $right->{building_id} }->{upgrade}->{cost}->{time} <=> $cache->{ $left->{building_id} }->{upgrade}->{cost}->{time} },
-        'fastest'         => sub { return $cache->{ $left->{building_id} }->{upgrade}->{cost}->{time} <=> $cache->{ $right->{building_id} }->{upgrade}->{cost}->{time} },
+        'slowest'         => sub { return $cache->{ $right->{building_id} }->{upgrade}->{cost}->{"time"} <=> $cache->{ $left->{building_id} }->{upgrade}->{cost}->{"time"} },
+        'fastest'         => sub { return $cache->{ $left->{building_id} }->{upgrade}->{cost}->{"time"} <=> $cache->{ $right->{building_id} }->{upgrade}->{cost}->{"time"} },
     };
     return (ref $sort_types->{$preference} eq 'HASH') ? $sort_types->{$preference}->{$type}->() : $sort_types->{$preference}->();
 }
