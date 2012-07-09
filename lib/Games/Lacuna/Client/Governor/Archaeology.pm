@@ -32,7 +32,7 @@ use Data::Dumper;
 
         if ( my $time = $gov->building_details($pid,$arch->{building_id})->{work}{seconds_remaining} ){
             $gov->set_next_action_if_sooner( $time );
-            warning("The Archaeology Ministry on $planet is busy.");
+            warning("The Archaeology Ministry on $planet is busy.") if $gov->{config}->{verbosity}->{warning};
             return;
         }
         my %ore_avail = %{$arch->get_ores_available_for_processing->{ore}};
@@ -63,7 +63,7 @@ use Data::Dumper;
         }
 
         if( not $ore ){
-            warning("$planet: Unable to find a suitable ore for archaeology");
+            warning("$planet: Unable to find a suitable ore for archaeology") if $gov->{config}->{verbosity}->{warning};
             return;
         }
 
