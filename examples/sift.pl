@@ -23,7 +23,7 @@ use utf8;
     v            => 0,
     config       => "lacuna.yml",
     dump         => 0,
-    outfile      => $log_dir . '/sift_plans.js',
+    outfile      => $log_dir . '/sift_shipped.js',
     min_plus     => 0,
     max_plus     => 30,
     min_base     => 1,
@@ -86,7 +86,8 @@ use utf8;
 
   usage() if $opts{h} || !$opts{from} || !$opts{to} || !$ok;
 
-  usage() unless ( select_something(\%opts) );
+  my $gorp;
+  usage() unless ( $gorp = select_something(\%opts) );
 
   my $glc = Games::Lacuna::Client->new(
 	cfg_file => $opts{config},
@@ -132,11 +133,17 @@ use utf8;
   
   my $plan_types = return_ptypes();
 
+  my $send_plans;
+  my $send_glyphs;
 # Will whittle down via match, type args, number of each, and max number
-  my $send_plans = grab_plans(\@plans, $plan_types, \%opts);
+  if ($gorp eq "both" or $gorp eq "plan") {
+    $send_plans = grab_plans(\@plans, $plan_types, \%opts);
+  }
 
 # Will whittle down via match, number of each, and max number
-  my $send_glyphs = grab_glyphs(\@glyphs, \%opts);
+  if ($gorp eq "both" or $gorp eq "glyph") {
+    $send_glyphs = grab_glyphs(\@glyphs, \%opts);
+  }
 
   my @ships;
   if ( $opts{sname} or $opts{stype} ) {
@@ -402,7 +409,7 @@ sub grab_glyphs {
       }
     }
     if ($opts->{g_num}) {
-      $glyph->{quantity} = $opts->{g_num} if ($opts->{g_num} > $glyph->{quantity});
+      $glyph->{quantity} = $opts->{g_num} if ($opts->{g_num} < $glyph->{quantity});
     }
     if ($opts->{g_max}) {
       if ( ( $total + $glyph->{quantity} ) > $opts->{g_max}) {
@@ -424,6 +431,10 @@ sub grab_plans {
   unless ($opts->{p_all}) {
     $opts->{plan_match} = build_match( $plan_types, $opts);
   }
+
+#  my $json = JSON->new->utf8(1);
+#  print $json->pretty->canonical->encode($opts);
+
 # First grab all matched, min & max levels
   my @send_plans;
   my $total = 0;
@@ -433,8 +444,11 @@ sub grab_plans {
         next unless ( grep { $plan->{name} =~ /$_/i } @{$opts->{plan_match}});
       }
     }
+#    print join(":",$plan->{name},$plan->{level}),"\n";
     if ($opts->{p_num}) {
-      $plan->{quantity} = $opts->{p_num} if ($opts->{p_num} > $plan->{quantity});
+#      print "Limiting to $opts->{p_num} from $plan->{quantity} to ";
+      $plan->{quantity} = $opts->{p_num} if ($opts->{p_num} < $plan->{quantity});
+#      print $plan->{quantity},"\n";
     }
     if ($opts->{p_max}) {
       if ( ( $total + $plan->{quantity} ) > $opts->{p_max}) {
@@ -445,11 +459,11 @@ sub grab_plans {
       }
     }
     push @send_plans, $plan
-      unless ( $plan->{quantity} < 1 and
+      if ( $plan->{quantity} > 0 and
                $plan->{level} >= $opts->{min_base} and
                $plan->{level} <= $opts->{max_base} and
                $plan->{extra_build_level} >= $opts->{min_plus} and
-               $plan->{extra_build_level} <= $opts->{min_plus});
+               $plan->{extra_build_level} <= $opts->{max_plus});
   }
   return \@send_plans;
 }
@@ -644,21 +658,38 @@ sub return_ptypes {
 sub select_something {
   my ($opts) = @_;
 
-  my @select = qw(
+  my @pselect = qw(
+    plan_match
+    p_all
     p_city
     p_decor
-    p_halls
-    p_station
-    p_standard
     p_glyph
-    p_all
-    glyph_match
-    g_num
-    g_max
-    g_all
+    p_halls
+    p_standard
+    p_station
   );
+
+  my @gselect = qw(
+    glyph_match
+    g_all
+    g_max
+    g_num
+  );
+
+  my $gsel = 0;
+  my $psel = 0;
   for my $key (keys %$opts) {
-    return 1 if (grep { $_ eq $key } @select);
+    $psel = 1 if ( $opts->{$key} and (grep { $_ eq $key } @pselect));
+    $gsel = 1 if ( $opts->{$key} and (grep { $_ eq $key } @gselect));
+  }
+  if ($gsel and $psel) {
+    return "both";
+  }
+  elsif ($gsel) {
+    return "glyph";
+  }
+  elsif ($psel) {
+    return "plan";
   }
   print STDERR "You must make some sort of selection criteria for glyphs and plans.\n";
   return 0;
@@ -689,11 +720,12 @@ Plan Options
        --max_plus    Maximum Plus to plans to move (only base 1 plans looked at)
        --min_base    Minimum Base for plans to move
        --max_base    Maximum Base for plans to move
-       --p_decor     Grab Decor plans
-       --p_station   Grab Space Station Plans
-       --p_standard  Grab all "standard" building plans
-       --p_glyph     Grab Glyph Plans (that are not decor) Note, they don't up a plot.
        --p_all       Grab All plans
+       --p_decor     Grab Decor plans
+       --p_glyph     Grab Glyph Plans (that are not decor or Halls) Note, they don't up a plot.
+       --p_hall      Grab Hall Plans
+       --p_standard  Grab all "standard" building plans
+       --p_station   Grab Space Station Plans
 
 Glyph Options
        --glyph_match GLYPH NAME REGEX (Can be put in multiple times)
