@@ -50,22 +50,43 @@ use Hash::Merge qw(merge);
         ### Now find Spaceports.
         my (@spaceports) = $gov->find_buildings('SpacePort');
         my @all_probes;
-        my @ships;
+        my @docked_probes;
+        my @building_probes;
         my @traveling;
         my @probe_to_port;
         for my $sp ( @spaceports ){
                 my $data = $sp->view_all_ships({ "no_paging" => 1 });
                 push @all_probes, grep { $_->{type} eq 'probe' } @{$data->{ships}};
-                push @ships, grep { $_->{task} eq 'Docked' and $_->{type} eq 'probe' } @{$data->{ships}};
-                push @probe_to_port, map {; $_->{id} => $sp } @ships;
+                push @docked_probes, grep { $_->{task} eq 'Docked' and $_->{type} eq 'probe' } @{$data->{ships}};
+                push @building_probes, grep { $_->{task} eq 'Building' and $_->{type} eq 'probe' } @{$data->{ships}};
+                push @probe_to_port, map {; $_->{id} => $sp } @docked_probes;
                 push @traveling, grep { $_->{task} eq 'Travelling' and $_->{type} eq 'probe' } @{$data->{ships}};
         }
 
         # Build more probes if directed
         my (@shipyards) = $gov->find_buildings('Shipyard');
         my $build_probes = $config->{build_probes} || 0;
-        my $probes_to_build = $build_probes - scalar @all_probes;
-        trace(sprintf("$planet: Found %d probes, configured to build if less than %d found.",scalar @all_probes,$build_probes)) if ($gov->{config}->{verbosity}->{trace});
+        my $probes_available = scalar @docked_probes + scalar @building_probes;
+        my $probes_to_build = $build_probes - $probes_available;
+        trace(sprintf("$planet: Found %d probes, configured to build if less than %d found.",$probes_available,$build_probes)) if ($gov->{config}->{verbosity}->{trace});
+
+        {
+            my $oid = $observatory->{building_id};
+            my $o   = $gov->building_details($pid, $oid);
+            my $active_probes   = scalar @stars;
+            my $inactive_probes = scalar @all_probes;
+            my $max_probes = $o->{level} * $PROBES_PER_LVL;
+            if ($active_probes >= $o->{level} * $PROBES_PER_LVL)
+            {
+                trace("Observatory at $planet is at maximum active probes ($active_probes > $max_probes), not sending more") if ($gov->{config}->{verbosity}->{trace});
+                return;
+            }
+            if ($active_probes + $inactive_probes >= $o->{level} * $PROBES_PER_LVL)
+            {
+                trace("Observatory at $planet is at maximum probes ($active_probes + $inactive_probes > $max_probes), not building more") if ($gov->{config}->{verbosity}->{trace});
+                $probes_to_build = 0;
+            }
+        }
         while ($probes_to_build > 0) {
             eval {
                 $shipyards[0]->build_ship('probe');
@@ -80,7 +101,7 @@ use Hash::Merge qw(merge);
 
         $gov->{_observatory_plugin}{ports}{$pid} = {
             ports => \@spaceports,
-            docked => \@ships,
+            docked => \@docked_probes,
             travel => \@traveling,
             probe2port => { @probe_to_port },
         };
@@ -123,6 +144,7 @@ use Hash::Merge qw(merge);
 
         require LWP::UserAgent;
         my $ua = LWP::UserAgent->new;
+        $ua->ssl_opts(verify_hostname=>0);
 
         if( -e $cache_path ){
             ### Check file age.
@@ -235,6 +257,7 @@ use Hash::Merge qw(merge);
         my %valid_target_stars =
             map  {; $_ => $stars{$_} }
             grep { not exists $probed_stars{$_} }
+            grep { not (exists $gov->{cache}{renamed_stars}{$_} && $gov->{cache}{renamed_stars}{$_} eq "unknown") }
             keys %stars;
 
         ### Determine star distances from Colonies.
@@ -332,6 +355,7 @@ use Hash::Merge qw(merge);
             for my $star ( @{$closest_stars} ){
                 next PLANET if not $probe_cnt{$pid};
                 next STAR if $traveling_probes{$star} or $closest_launch{$star};
+                next STAR if (exists $gov->{cache}{renamed_stars}{$star} && $gov->{cache}{renamed_stars}{$star} eq "unknown");
                 $closest_launch{$star} = $pid;
                 push @{$probe_from_planet{$pid}}, $star;
                 $probe_cnt{$pid}--;
@@ -343,9 +367,14 @@ use Hash::Merge qw(merge);
         PLANET:
         while( my ($pid, $star_targets) = each %probe_from_planet ){
             my $planet = $gov->{status}{$pid}{name};
+            warning("sending probes from $planet, remaining stars:", scalar @$star_targets);
             STAR:
             for my $star ( @$star_targets ){
-                next if (exists $gov->{cache}{renamed_stars}{$star} && $gov->{cache}{renamed_stars}{$star} eq "unknown");
+                if (exists $gov->{cache}{renamed_stars}{$star} && $gov->{cache}{renamed_stars}{$star} eq "unknown")
+                {
+                warning("skipping $star - renamed");
+                    next;
+                }
 
                 my ($probe_id) = keys %{$gov->{_observatory_plugin}{ports}{$pid}{probe2port}};
                 last STAR if not $probe_id;
@@ -360,7 +389,7 @@ use Hash::Merge qw(merge);
                 if( my $e = Exception::Class->caught ){
                     if( $e->isa('LacunaRPCException') and $e->code == 1009 ){
                         warning("Unable to send probe from $planet, Observatory is capped.") if $gov->{config}->{verbosity}->{warning};;
-                        next PLANET;
+                #        next PLANET;
                     }
                     if( $e->isa('LacunaRPCException') and $e->code == 1002 ){
                         warning("Unable to send probe from $planet, no star called $star.") if $gov->{config}->{verbosity}->{warning};;
