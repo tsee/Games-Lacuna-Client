@@ -7,6 +7,7 @@ use Scalar::Util 'weaken';
 use Time::HiRes qw( sleep );
 
 use Games::Lacuna::Client;
+use Data::Dumper;
 
 use IO::Interactive qw( is_interactive );
 
@@ -74,6 +75,13 @@ around call => sub {
         sleep($self->{client}->rpc_sleep) if $self->{client}->rpc_sleep;
 
         if ($res and $res->has_error
+            and $res->error->code eq '-32603')
+        {
+            warn "too many calls, sleeping";
+            sleep(60);
+            $trying = 1;
+        }
+        elsif ($res and $res->has_error
             and $res->error->code eq '1016'
             and $is_interactive
             and $try_captcha
@@ -106,7 +114,7 @@ around call => sub {
      $self->{client}{call_stats}{$method}++;
 
      LacunaRPCException->throw(
-         error   => "RPC Error (" . $res->error->code . "): " . $res->error->message,
+         error   => "RPC Error (" . $res->error->code . "): " . $res->error->message . " e: " . Dumper($res->error),
          code    => $res->error->code,
          ## Note we don't use the key 'message'. Exception::Class stringifies based
          ## on "message or error" attribute. For backwards compatiblity we don't
