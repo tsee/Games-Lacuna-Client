@@ -36,12 +36,20 @@ use Hash::Merge qw(merge);
             return;
         }
         my $details = $gov->building_details($pid, $archaeology->{building_id});
-        unless ($details->{level} >= 15)
+        unless ($details->{level} >= 11)
         {
-            trace("$planet: Archaeology Ministry @ $details->{level}, needs to be at least 15 to build excavators") if ($gov->{config}->{verbosity}->{trace});
+            trace("$planet: Archaeology Ministry @ $details->{level}, needs to be at least 11 to build excavators") if ($gov->{config}->{verbosity}->{trace});
             return;
         }
 
+        my $max_excavators = $details->{level} - 10;
+        my $active_excavators = scalar keys %{$archaeology->view_excavators()};
+        if ($active_excavators >= $max_excavators)
+        {
+            trace("Archaeology at $planet is at maximum excavators ($active_excavators >= $max_excavators), not trying to send more") if ($gov->{config}->{verbosity}->{trace});
+            return;
+        }
+            trace("Archaeology at $planet is not at maximum excavators ($active_excavators < $max_excavators), trying to send more") if ($gov->{config}->{verbosity}->{trace});
 
         my $observatory_stars = $gov->{cache}->{observatory_stars};
 
@@ -91,6 +99,14 @@ use Hash::Merge qw(merge);
         my (@shipyards) = $gov->find_buildings('Shipyard');
         my $build_excavators = $config->{build_excavators} || 0;
         my $excavators_to_build = $build_excavators - scalar @all_excavators;
+        my $total_excavators = $active_excavators + @all_excavators;
+
+        if ($total_excavators >= $max_excavators)
+        {
+            trace("Archaeology at $planet is at maximum excavators ($total_excavators > $max_excavators), not building more") if ($gov->{config}->{verbosity}->{trace});
+            $excavators_to_build = 0;
+        }
+
         trace(sprintf("$planet: Found %d excavators, configured to build if less than %d found.",scalar @all_excavators,$build_excavators)) if ($gov->{config}->{verbosity}->{trace});
         while ($excavators_to_build > 0) {
             eval {
@@ -129,6 +145,7 @@ use Hash::Merge qw(merge);
 
         require LWP::UserAgent;
         my $ua = LWP::UserAgent->new;
+        $ua->ssl_opts(verify_hostname=>0);
 
         if( -e $cache_path ){
             ### Check file age.
@@ -185,7 +202,7 @@ use Hash::Merge qw(merge);
             return;
         }
 
-        trace("Excavator is downloading static star map...");
+        trace("Excavator is downloading static star map...") if ($gov->{config}->{verbosity}->{trace});
         my $raw_csv = $response->decoded_content;
         require Text::CSV;
         my $csv = Text::CSV->new;
@@ -209,7 +226,7 @@ use Hash::Merge qw(merge);
 
         my @pids = keys %{ $gov->{_observatory_plugin}{stars} };
         if( not @pids ){
-            trace("$planet: No observatories found, aborting.");
+            trace("$planet: No observatories found, aborting.") if ($gov->{config}->{verbosity}->{trace});
             return;
         }
 
@@ -358,11 +375,17 @@ use Hash::Merge qw(merge);
                     };
                     if( my $e = Exception::Class->caught ){
                         if( $e->isa('LacunaRPCException') and $e->code == 1009 ){
-                            warning("Unable to send excavator from $planet. $e");
-                            next STAR if ($e =~ /Can only be sent to asteroids and uninhabited planets/);
-                            next PLANET;
+                            warning("Unable to send excavator from $planet to $target_name. $e");
+                            if ($e =~ /Can only be sent to asteroids and habitable planets/)
+                            {
+                                $gov->{cache}->{excavator}->{planets}->{$pid}->{$target_planet->{id}} = time;
+                          #      next STAR;
+                            }
+                            next PLANET if ($e =~ /Max Excavators allowed at this Archaeology level is/);
+
+                        #    next PLANET;
                         }
-                        if( $e->isa('LacunaRPCException') and $e->code == 1010 ){
+                        elsif( $e->isa('LacunaRPCException') and $e->code == 1010 ){
                             $gov->{cache}->{excavator}->{planets}->{$pid}->{$target_planet->{id}} = time;
                             warning("Sent excavator to $target_name recently") if ($gov->{config}->{excavator}->{trace});
                             $gov->write_cache;
@@ -375,7 +398,7 @@ use Hash::Merge qw(merge);
                         action("${dry_run} excavator[$excavator_id] sent from $planet to $target_name @ $star");
                         delete $gov->{_observatory_plugin}{ports}{$pid}{excavator2port}{$excavator_id};
                         $gov->{cache}->{excavator}->{planets}->{$pid}->{$target_planet->{id}} = time;
-                        next STAR;
+                        #next STAR;
                     }
                 }
             }
