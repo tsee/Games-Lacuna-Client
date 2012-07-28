@@ -342,6 +342,9 @@ sub send_ship {
     printf "Would of pushed %d plans and %d glyphs, leaving %d plans and %d glyphs.\n",
            $pship, $gship, $pleft, $gleft;
   }
+  elsif ($pship + $gship == 0) {
+    print "Nothing to ship!\n";
+  }
   else {
     my $return = eval{ $trade_min->push_items(
       $to_id,
