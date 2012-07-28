@@ -292,7 +292,8 @@ sub send_ship {
     for my $glyph (@{$sent_glyphs}) {
       $gcargo_req += $glyph->{quantity} * $gcargo_each;
     }
-    if ( $ship->{hold_size} < $pcargo_req + $gcargo_each ) {
+#    print "$pcargo_req plan space and $gcargo_req glyph space needed with $ship->{hold_size} hold size.\n";
+    if ( $ship->{hold_size} < $pcargo_req + $gcargo_req ) {
       ( $sent_plans, $left_plans, $sent_glyphs, $left_glyphs) =
         pack_cargo( $sent_plans,  $pcargo_each, $pcargo_req,
                     $sent_glyphs, $gcargo_each, $gcargo_req,
