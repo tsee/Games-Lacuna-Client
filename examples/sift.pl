@@ -507,32 +507,14 @@ sub return_ptypes {
 
   my %plan_types;
 
+# Lost City (A) - (I)
   $plan_types{city} = [
-    "Lost City of Tyleon (A)",
-    "Lost City of Tyleon (B)",
-    "Lost City of Tyleon (C)",
-    "Lost City of Tyleon (D)",
-    "Lost City of Tyleon (E)",
-    "Lost City of Tyleon (F)",
-    "Lost City of Tyleon (G)",
-    "Lost City of Tyleon (H)",
-    "Lost City of Tyleon (I)",
+    "Lost City of Tyleon",
    ];
 
+# Beach [1] - [13]
   $plan_types{decor} = [
-    "Beach [1]",
-    "Beach [2]",
-    "Beach [3]",
-    "Beach [4]",
-    "Beach [5]",
-    "Beach [6]",
-    "Beach [7]",
-    "Beach [8]",
-    "Beach [9]",
-    "Beach [10]",
-    "Beach [11]",
-    "Beach [12]",
-    "Beach [13]",
+    "Beach",
     "Crater",
     "Grove of Trees",
     "Lagoon",
@@ -726,7 +708,7 @@ Plan Options
        --max_base    Maximum Base for plans to move
        --p_all       Grab All plans
        --p_decor     Grab Decor plans
-       --p_glyph     Grab Glyph Plans (that are not decor or Halls) Note, they don't up a plot.
+       --p_glyph     Grab Glyph Plans (that are not decor or Halls) Note, they don't use a plot.
        --p_hall      Grab Hall Plans
        --p_standard  Grab all "standard" building plans
        --p_station   Grab Space Station Plans
