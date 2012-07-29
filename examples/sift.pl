@@ -133,8 +133,8 @@ use utf8;
   
   my $plan_types = return_ptypes();
 
-  my $send_plans;
-  my $send_glyphs;
+  my $send_plans = [];
+  my $send_glyphs = [];
 # Will whittle down via match, type args, number of each, and max number
   if ($gorp eq "both" or $gorp eq "plan") {
     $send_plans = grab_plans(\@plans, $plan_types, \%opts);
