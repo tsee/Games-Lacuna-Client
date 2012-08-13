@@ -28,6 +28,7 @@ use Exception::Class;
     'config=s',
     'dumpfile=s',
     'maxlevel=i',
+    'number=i',
     'wait=i',
   );
 
@@ -146,6 +147,9 @@ sub bstats {
   if (scalar @sarr > ($dlevel + 1 - $bcnt)) {
     splice @sarr, ($dlevel + 1 - $bcnt);
   }
+  if (scalar @sarr > ($opts{number})) {
+    splice @sarr, ($opts{number} + 1 - $bcnt);
+  }
   return (\@sarr);
 }
 
@@ -190,6 +194,7 @@ Options:
   --planet <name>    - Specify planet
   --dumpfile         - data dump for all the info we don't print
   --maxlevel         - do not upgrade if this level has been achieved.
+  --number           - only upgrade at most this number of buildings
 END
   exit 1;
 }
