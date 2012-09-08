@@ -453,6 +453,11 @@ Fission:
   tags:
     - energy
   type: energy
+Fissure:
+  label: Fissure
+  tags:
+    - glyph
+  type: glyph
 FoodReserve:
   label: Food Reserve
   stores:

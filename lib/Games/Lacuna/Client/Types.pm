@@ -178,6 +178,7 @@ our %EXPORT_TAGS = (
             Crater
             DentonBrambles
             EssentiaVein
+            Fissure
             GeoThermalVent
             GratchsGauntlet
             Grove
@@ -327,6 +328,7 @@ our %EXPORT_TAGS = (
         Espionage => [qw(command infrastructure intelligence)],
         EssentiaVein => [qw(essentia glyph)],
         Fission => [qw(energy)],
+        Fissure => [qw(glyph)],
         FoodReserve => [qw(food storage)],
         Fusion => [qw(energy)],
         GasGiantLab => [qw(command infrastructure ship)],
@@ -490,6 +492,7 @@ our %EXPORT_TAGS = (
         Espionage => "Espionage Ministry",
         EssentiaVein => "Essentia Vein",
         Fission => "Fission Reactor",
+        Fissure => "Fissure",
         FoodReserve => "Food Reserve",
         Fusion => "Fusion Reactor",
         GasGiantLab => "Gas Giant Lab",

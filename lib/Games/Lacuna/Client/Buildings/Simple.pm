@@ -48,6 +48,7 @@ our @BuildingTypes = (qw(
     Espionage
     EssentiaVein
     Fission
+    Fissure
     Fusion
     GasGiantLab
     GasGiantPlatform
