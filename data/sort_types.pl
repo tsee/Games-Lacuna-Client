@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 use strict;
 use warnings;
-use YAML qw'LoadFile DumpFile';
+use YAML::Any qw'LoadFile DumpFile';
 use List::MoreUtils 'uniq';
 
 use File::Spec::Functions qw'catfile';

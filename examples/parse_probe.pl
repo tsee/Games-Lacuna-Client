@@ -9,7 +9,7 @@
 use strict;
 use warnings;
 use Getopt::Long qw(GetOptions);
-use YAML;
+use YAML::Any;
 use YAML::XS;
 use Data::Dumper;
 use utf8;

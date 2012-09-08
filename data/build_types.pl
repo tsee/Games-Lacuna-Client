@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use YAML qw'LoadFile';
+use YAML::Any qw'LoadFile';
 use File::Spec::Functions qw' abs2rel catfile ';
 use Template;
 

@@ -2,7 +2,7 @@ package LoadBuilding;
 use strict;
 use warnings;
 
-use YAML qw'LoadFile thaw';
+use YAML::Any qw'LoadFile thaw';
 use Scalar::Util qw'reftype blessed';
 
 sub _load{

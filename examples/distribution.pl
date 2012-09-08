@@ -9,7 +9,7 @@ use lib "$FindBin::Bin/../lib";
 use List::Util            (qw(first));
 use Games::Lacuna::Client;
 use Getopt::Long qw(GetOptions);
-use YAML;
+use YAML::Any;
 use YAML::Dumper;
 
 

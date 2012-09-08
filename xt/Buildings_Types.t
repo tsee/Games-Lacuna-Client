@@ -3,7 +3,7 @@ use warnings;
 
 use Test::More tests => 4;
 use List::MoreUtils qw'none uniq';
-use YAML qw'LoadFile';
+use YAML::Any qw'LoadFile';
 
 use FindBin;
 
