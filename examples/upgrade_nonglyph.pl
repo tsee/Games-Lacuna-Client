@@ -28,6 +28,7 @@ GetOptions(\%opts,
 	'pause=i',
 	'attempts=i',
 	'skip-platforms',
+	'exit-if-busy',
 	'help',
 	'verbose',
 );
@@ -64,6 +65,11 @@ for my $planet_name ( keys %planets ) {
 				keys %$buildings;
 		
 		if ( $pending_build ) {
+			if ( $level == 1 && $opts{'exit-if-busy'} ) {
+				print "Already something building - honouring --exit-if-busy\n";
+				exit;
+			}
+			
 			printf "Already a build in-progress: will sleep for %d seconds\n", $pending_build;
 			
 			sleep $pending_build + $opts{pause};
@@ -167,6 +173,12 @@ ${message}Usage: $0 [opts]
 
 	--skip-platforms
 		Don't upgrade Terraforming and Gas Giant Platforms. Default true.
+
+	--exit-if-busy
+		Exit immediately if there are already any builds/upgrades in process.
+		Suitable for running under `cron` to stop multiple processes attempting
+		to upgrade the same building.
+		Default false.
 
 	--config CONFIG_FILE
 		Defaults to 'lacuna.yml' in the current directory.
