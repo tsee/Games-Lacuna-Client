@@ -107,7 +107,7 @@ for my $planet_name ( keys %planets ) {
 		
 BUILDING:
 		for my $id ( sort keys %$buildings ) {
-			if ( !$queue ) {
+			if ( $opts{queue} && !$queue ) {
 				print "No space left in Development build queue\n";
 				next PLANET;
 			}
