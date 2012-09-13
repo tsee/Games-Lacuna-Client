@@ -18,7 +18,7 @@ my %opts = (
 	'max-level' => 29,  # I know 30 is max, but for planets with a lot of spaceports, too much energy
 	'pause'     => 3,
 	'attempts'  => 3,
-	config      => "lacuna.yml",
+	'config'    => "lacuna.yml",
 );
 
 GetOptions(\%opts,
@@ -28,7 +28,7 @@ GetOptions(\%opts,
 	'pause=i',
 	'attempts=i',
 	'skip-platforms',
-	'exit-if-busy',
+	'skip-if-busy',
 	'queue',
 	'single-level',
 	'help',
@@ -42,7 +42,7 @@ my $glc = Games::Lacuna::Client->new(
 );
 
 # Load the planets
-my $empire  = $glc->empire->get_status->{empire};
+my $empire = $glc->empire->get_status->{empire};
 
 # reverse hash, to key by name instead of id
 my %planets = reverse %{ $empire->{planets} };
@@ -71,7 +71,11 @@ for my $planet_name ( keys %planets ) {
 			map { $buildings->{$_}{pending_build}{seconds_remaining} }
 				keys %$buildings;
 		
-		if ( $opts{queue} ) {
+		if ( $pending_build && $opts{'skip-if-busy'} && $level == 1 ) {
+			print "Already something building - honouring --skip-if-busy\n";
+			next PLANET;
+		}
+		elsif ( $opts{queue} ) {
 			if ( !$devmin ) {
 				$devmin = get_dev_min( $glc, $buildings )
 					or next PLANET;
@@ -85,11 +89,6 @@ for my $planet_name ( keys %planets ) {
 			}
 		}
 		elsif ( $pending_build ) {
-			if ( $level == 1 && $opts{'exit-if-busy'} ) {
-				print "Already something building - honouring --exit-if-busy\n";
-				exit;
-			}
-			
 			printf "Already a build in-progress: will sleep for %d seconds\n", $pending_build;
 			
 			sleep $pending_build + $opts{pause};
@@ -232,10 +231,10 @@ ${message}Usage: $0 [opts]
 	--skip-platforms
 		Don't upgrade Terraforming and Gas Giant Platforms. Default true.
 
-	--exit-if-busy
-		Exit immediately if there are already any builds/upgrades in process.
-		Suitable for running under `cron` to stop multiple processes attempting
-		to upgrade the same building.
+	--skip-if-busy
+		Skip planet if there are already any builds/upgrades in process.
+		Suitable for running under `cron` to avoid multiple processes
+		attempting to upgrade the same building.
 		Default false.
 
 	--queue
