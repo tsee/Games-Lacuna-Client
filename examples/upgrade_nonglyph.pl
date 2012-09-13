@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use List::Util qw( max );
+use List::Util qw( first max );
 use List::MoreUtils qw( any );
 use Getopt::Long qw(GetOptions);
 use Try::Tiny;
@@ -29,6 +29,8 @@ GetOptions(\%opts,
 	'attempts=i',
 	'skip-platforms',
 	'exit-if-busy',
+	'queue',
+	'single-level',
 	'help',
 	'verbose',
 );
@@ -46,6 +48,7 @@ my $empire  = $glc->empire->get_status->{empire};
 # reverse hash, to key by name instead of id
 my %planets = reverse %{ $empire->{planets} };
 
+PLANET:
 for my $planet_name ( keys %planets ) {
 	next if lc $planet_name ne lc $opts{planet};
 	
@@ -53,6 +56,9 @@ for my $planet_name ( keys %planets ) {
 	
 	# Load planet data
 	my $planet = $glc->body( id => $planets{$planet_name} );
+	my $devmin;
+	my $queue;
+	my $first_upgrade_level;
 	
 	for my $level ( 1 .. $opts{'max-level'}-1 ) {
 		my $buildings = $planet->get_buildings->{buildings};
@@ -64,7 +70,20 @@ for my $planet_name ( keys %planets ) {
 			map { $buildings->{$_}{pending_build}{seconds_remaining} }
 				keys %$buildings;
 		
-		if ( $pending_build ) {
+		if ( $opts{queue} ) {
+			if ( !$devmin ) {
+				$devmin = get_dev_min( $glc, $buildings )
+					or next PLANET;
+				
+				$queue = get_dev_min_queue_space( $devmin );
+			}
+			
+			if ( $first_upgrade_level && $first_upgrade_level != $level ) {
+				print "Finished upgrading --single-level buildings\n";
+				next PLANET;
+			}
+		}
+		elsif ( $pending_build ) {
 			if ( $level == 1 && $opts{'exit-if-busy'} ) {
 				print "Already something building - honouring --exit-if-busy\n";
 				exit;
@@ -80,6 +99,11 @@ for my $planet_name ( keys %planets ) {
 		
 BUILDING:
 		for my $id ( sort keys %$buildings ) {
+			if ( !$queue ) {
+				print "No space left in Development build queue\n";
+				next PLANET;
+			}
+			
 			my $building = $buildings->{$id};
 			
 			next if $building->{level} != $level;
@@ -132,13 +156,46 @@ ATTEMPT:
 			
 			next BUILDING if !$status;
 			
-			my $build_time = $status->{building}{pending_build}{seconds_remaining};
-			
-			printf "Will sleep for %d seconds while upgrade completes\n", $build_time;
-			
-			sleep $build_time + $opts{pause};
+			if ( $opts{queue} ) {
+				$first_upgrade_level ||= $level;
+				
+				$queue--;
+			}
+			else {
+				my $build_time = $status->{building}{pending_build}{seconds_remaining};
+				
+				printf "Will sleep for %d seconds while upgrade completes\n", $build_time;
+				
+				sleep $build_time + $opts{pause};
+			}
 		}
 	}
+}
+
+sub get_dev_min {
+	my ( $glc, $buildings ) = @_;
+	
+	my $id = first {
+        $buildings->{$_}{url} eq "/development"
+    } keys %$buildings;
+
+    if ( !$id ) {
+        print "--queue opt provided, but no Development Ministry found!\n";
+        return;
+    }
+
+    return $glc->building( id => $id, type => "Development" );
+}
+
+sub get_dev_min_queue_space {
+	my ( $devmin ) = @_;
+	
+	my $status = $devmin->view;
+	
+	my $max   = 1 + $status->{building}{level};
+	my $taken = scalar @{ $status->{build_queue} };
+	
+	return $max - $taken;
 }
 
 sub _building {
@@ -178,6 +235,25 @@ ${message}Usage: $0 [opts]
 		Exit immediately if there are already any builds/upgrades in process.
 		Suitable for running under `cron` to stop multiple processes attempting
 		to upgrade the same building.
+		Default false.
+
+	--queue
+		Fill the Development build queue with upgrades, and then exit.
+		Default false
+
+	--single-level
+		Only for use in combination with the --queue opt.
+		If true, will only queue upgrades for buildings at the same level as
+		the first upgrade queued.
+		Example: There are 4 buildings at level L2, L2, L3, L4: if the
+		Development build queue has 4 empty slots, the default behaviour is
+		to queue all 4 buildings for upgrade, in order of the lowest current
+		level first.
+		If --single-level is provided, it will instead only queue the 2 L2
+		buildings for upgrade, and then exit.
+		This may be useful if you have high-level buildings which you don't
+		want upgraded until all the other lower-level buildings are upgraded
+		first.
 		Default false.
 
 	--config CONFIG_FILE
