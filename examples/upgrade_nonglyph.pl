@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use List::Util qw( first max );
-use List::MoreUtils qw( any );
+use List::MoreUtils qw( any none );
 use Getopt::Long qw(GetOptions);
 use Try::Tiny;
 
@@ -22,7 +22,7 @@ my %opts = (
 );
 
 GetOptions(\%opts,
-	'planet|colony=s',
+	'planet|colony=s@',
 	'max-level|maxlevel=i',
 	'config=s',
 	'pause=i',
@@ -36,7 +36,6 @@ GetOptions(\%opts,
 );
 
 usage() if $opts{help};
-usage() if !exists $opts{planet};
 
 my $glc = Games::Lacuna::Client->new(
 	cfg_file => $opts{config},
@@ -50,7 +49,9 @@ my %planets = reverse %{ $empire->{planets} };
 
 PLANET:
 for my $planet_name ( keys %planets ) {
-	next if lc $planet_name ne lc $opts{planet};
+	if ( $opts{planet} ) {
+		next PLANET if none { lc $planet_name eq lc $_ } @{ $opts{planet} };
+	}
 	
 	print "Planet: $planet_name\n";
 	
@@ -106,7 +107,7 @@ BUILDING:
 			
 			my $building = $buildings->{$id};
 			
-			next if $building->{level} != $level;
+			next BUILDING if $building->{level} != $level;
 			
 			my $type = building_type_from_label( $building->{name} );
 			
@@ -114,21 +115,21 @@ BUILDING:
 				printf "Skipping platform: %s\n", _building( $building )
 					if $opts{verbose};
 				
-				next;
+				next BUILDING;
 			}
 			
 			if ( any { $_ eq 'glyph' } get_tags( $type ) ) {
 				printf "Skipping glyph building: %s\n", _building( $building )
 					if $opts{verbose};
 				
-				next;
+				next BUILDING;
 			}
 			
 			if ( any { $_ eq 'sculpture' } get_tags( $type ) ) {
 				printf "Skipping sculpture: %s\n", _building( $building )
 					if $opts{verbose};
 				
-				next;
+				next BUILDING;
 			}
 			
 			if ( $building->{efficiency} != 100 ) {
@@ -137,7 +138,7 @@ BUILDING:
 					$building->{efficiency}
 					if $opts{verbose};
 				
-				next;
+				next BUILDING;
 			}
 			
 			printf "Will upgrade %s\n", _building( $building );
@@ -217,7 +218,7 @@ sub usage {
 ${message}Usage: $0 [opts]
 
 	--planet PLANET-NAME
-		Required. Single argument. No default.
+		1 or more allowed. If not provided, will process all non-SS colonies.
 
 	--max-level LEVEL
 		Defaults to 29.
