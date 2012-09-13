@@ -62,7 +62,15 @@ for my $planet_name ( keys %planets ) {
 	my $first_upgrade_level;
 	
 	for my $level ( 1 .. $opts{'max-level'}-1 ) {
-		my $buildings = $planet->get_buildings->{buildings};
+		my $status    = $planet->get_buildings;
+		my $buildings = $status->{buildings};
+		
+		if ( $level == 1 && $status->{status}{body}{type} eq 'space station' ) {
+			print "Skipping Space Station\n"
+				if $opts{verbose};
+			
+			next PLANET;
+		}
 		
 		# check for builds-in-progress before we start
 		my ( $pending_build ) =
