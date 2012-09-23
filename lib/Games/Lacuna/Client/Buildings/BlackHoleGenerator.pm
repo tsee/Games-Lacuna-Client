@@ -13,6 +13,7 @@ sub api_methods {
   return {
     generate_singularity  => { default_args => [qw(session_id building_id)] },
     get_actions_for       => { default_args => [qw(session_id building_id)] },
+    subsidize_cooldown    => { default_args => [qw(session_id building_id)] },
   };
 }
 

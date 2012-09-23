@@ -15,7 +15,7 @@ use utf8;
     h          => 0,
     v          => 0,
     config     => "lacuna.yml",
-    datafile   => "data/data_blackhole.js",
+    datafile   => "log/blackhole.js",
     maxdist    => 300,
   );
 
@@ -33,7 +33,9 @@ use utf8;
     'increase_size',
     'change_type=i',
     'swap_places',
+    'subsidize_cool',
     'view',
+    'actions',
   );
 
   unless ( $opts{config} and -e $opts{config} ) {
@@ -59,10 +61,10 @@ use utf8;
 
   my $target_id;
   my $params = {};
-  unless ($opts{view}) {
+  unless ($opts{view} or $opts{subsidize_cool}) {
     if ($opts{change_type}) {
-      if ($opts{change_type} < 1 or $opts{change_type} > 21) {
-        print "New Type must be 1-21\n";
+      if ($opts{change_type} < 1 or $opts{change_type} > 41) {
+        print "New Type must be 1-41\n";
         usage();
       }
       else {
@@ -110,7 +112,7 @@ use utf8;
 
   my $target; my $target_name;
   my $bhg =  $glc->building( id => $bhg_id, type => 'BlackHoleGenerator' );
-  unless ($opts{view}) {
+  unless ($opts{view} or $opts{subsidize_cool}) {
     if ( defined $opts{x} && defined $opts{y} ) {
       $target      = { x => $opts{x}, y => $opts{y} };
       $target_name = "$opts{x},$opts{y}";
@@ -132,6 +134,9 @@ use utf8;
     if ($opts{view}) {
       print "Viewing BHG: $bhg_id\n";
     }
+    elsif ($opts{subsidize_cool}) {
+      print "Subsizing Cooldown: $bhg_id\n";
+    }
     else {
       print "Targetting $target_name with $bhg_id\n";
     }
@@ -143,6 +148,12 @@ use utf8;
   my $bhg_out;
   if ($opts{view}) {
     $bhg_out = $bhg->view();
+  }
+  elsif ($opts{subsidize_cool}) {
+    $bhg_out = $bhg->subsidize_cooldown();
+  }
+  elsif ($opts{actions}) {
+    $bhg_out = $bhg->get_actions_for($target);
   }
   elsif ($opts{make_planet}) {
     $bhg_out = $bhg->generate_singularity($target, "Make Planet");
@@ -166,7 +177,7 @@ use utf8;
   print $ofh $json->pretty->canonical->encode($bhg_out);
   close($ofh);
 
-  if ($opts{view}) {
+  if ($opts{view} or $opts{actions} or $opts{subsidize_cool}) {
     print $json->pretty->canonical->encode($bhg_out->{tasks});
   }
   else {
@@ -220,6 +231,8 @@ Usage: $0 CONFIG_FILE
        --change_type    Change type of habitable planet
        --swap_places    Swap planet with targetted body
        --view           View options
+       --actions        View statistics for possible actions with designated target
+       --subsidize_cool Subsidize Cooldown of BHG costing 2e, but allowing immediate reuse.
 
 END_USAGE
 
