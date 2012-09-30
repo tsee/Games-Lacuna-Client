@@ -76,7 +76,10 @@ sub _generate_method_per_spec {
     if ($client->debug) {
       print STDERR "DEBUG: " . __PACKAGE__ . " request " . Data::Dumper::Dumper([$self->uri, $method_name, $params]);
     }
-    my $ret = $client->rpc->call($self->uri, $method_name, $params);
+    my $ret;
+    if (defined($client->rpc)) {
+      $ret = $client->rpc->call($self->uri, $method_name, $params);
+    }
     if ($client->debug) {
       print STDERR "DEBUG: " . __PACKAGE__ . " result " . Data::Dumper::Dumper($ret);
     }
@@ -86,6 +89,9 @@ sub _generate_method_per_spec {
             $ret->{result}{status} ? $ret->{result}{status}{empire}{rpc_count} :
             $ret->{result}{empire} ? $ret->{result}{empire}{rpc_count} :
             $self->client->{rpc_count};
+    }
+    else {
+      $ret->{result} = "Undefined";
     }
 
     return $ret->{result};
