@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #
 # This program manages the star database used by glyphinator
 # It performs the following functions:

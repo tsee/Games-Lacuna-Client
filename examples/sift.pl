@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # For all your plan and glyph sifting needs
 use strict;
 use warnings;

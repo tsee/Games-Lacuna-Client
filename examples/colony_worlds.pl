@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #
 # Script to find worlds known to you (via observatories) which are uninhabited, habitable, and in
 # your range of orbits.  Ranks them and presents a summary view.  The scoring algorithm is very
