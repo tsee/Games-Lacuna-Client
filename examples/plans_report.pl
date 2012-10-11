@@ -85,7 +85,8 @@ foreach my $name ( sort keys %planets ) {
     my %plan_count;
 
     for my $plan ( sort { $a->{name} cmp $b->{name} } @$plans ) {
-        $plan_count{ $plan->{name} }{ $plan->{level} }{ $plan->{extra_build_level} } ++;
+        $plan_count{ $plan->{name} }{ $plan->{level} }{ $plan->{extra_build_level} } =
+	  $plan->{quantity};
     }
 
     my %tags;

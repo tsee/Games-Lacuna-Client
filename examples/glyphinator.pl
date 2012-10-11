@@ -271,7 +271,7 @@ sub get_status {
 
             my $glyphs = $arch->get_glyphs->{glyphs};
             for my $glyph (@$glyphs) {
-                $status->{glyphs}{$glyph->{type}}++;
+                $status->{glyphs}{$glyph->{type}}+=$glyph->{quantity};
             }
         } else {
             verbose("No archaeology ministry on $planet_name\n");
