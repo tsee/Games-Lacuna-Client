@@ -423,6 +423,8 @@ Options:
   --noreserve            - Ignore Reserve number in datafile
   --time      number     - Run for number of seconds
 END
+    my @ship_types = ship_types();
+    print "\nShip types: ", join(", ", sort @ship_types ),"\n";
     exit 1;
 }
 
