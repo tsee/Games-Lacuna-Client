@@ -11,8 +11,9 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    get_probed_stars => { default_args => [qw(session_id building_id)] },
-    abandon_probe    => { default_args => [qw(session_id building_id)] },
+    get_probed_stars   => { default_args => [qw(session_id building_id)] },
+    abandon_probe      => { default_args => [qw(session_id building_id)] },
+    abandon_all_probes => { default_args => [qw(session_id building_id)] },
   };
 }
 
