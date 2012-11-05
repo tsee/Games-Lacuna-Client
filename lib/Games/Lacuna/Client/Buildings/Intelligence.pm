@@ -14,6 +14,8 @@ sub api_methods {
     view                  => { default_args => [qw(session_id building_id)] },
     train_spy             => { default_args => [qw(session_id building_id)] },
     view_spies            => { default_args => [qw(session_id building_id)] },
+    view_all_spies        => { default_args => [qw(session_id building_id)] },
+    view_empire_spies     => { default_args => [qw(session_id building_id)] },
     subsidize_training    => { default_args => [qw(session_id building_id)] },
     burn_spy              => { default_args => [qw(session_id building_id)] },
     name_spy              => { default_args => [qw(session_id building_id)] },
