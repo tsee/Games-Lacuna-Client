@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # usage:
 # > forward_email.pl /path/to/lacuna.yml /path/to/forward_email.yml

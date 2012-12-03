@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 ## Junk building trash removal.
 ## Will use the highest available junk building (that is not built) to purge.
