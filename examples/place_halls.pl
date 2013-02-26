@@ -67,6 +67,7 @@ for my $planet_name (keys %planets) {
         verbose("No Halls on $planet_name\n");
         next;
     }
+    my $halls_left = $halls[0]->{quantity};
 
     # initialize plots
     my %plots;
@@ -82,11 +83,11 @@ for my $planet_name (keys %planets) {
     my $max = $opts{max} || 1;
     for (1..$max) {
         last unless keys %plots;
-        last unless @halls;
+        last unless $halls_left;
         my ($plot) = shuffle(keys %plots);
         my ($x, $y) = $plot =~ /([\d-]+):([\d-]+)/;
         delete $plots{$plot};
-        pop @halls;
+        --$halls_left;
         if ($opts{'dry-run'}) {
             output("Would have placed Halls at $x, $y on $planet_name\n");
         } else {
