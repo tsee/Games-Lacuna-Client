@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #
 # Grab all scan reports from your inbox and summarize them.
 # Currently outputs text.

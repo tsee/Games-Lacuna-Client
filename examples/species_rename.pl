@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Simple script for renaming species and description
 use strict;
 use warnings;

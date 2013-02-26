@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #
 # Script to parse thru the probe data and try to
 # score each body and systems by arbritray standards
