@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Simple program for upgrading spaceports.
+# Simple program for upgrading buildings
 
 use strict;
 use warnings;
@@ -14,12 +14,12 @@ use Exception::Class;
   my %opts = (
         h => 0,
         v => 0,
-        maxlevel => 29,  # I know 30 is max, but for planets with a lot of spaceports, too much energy
+        maxlevel => 30,
         config => "lacuna.yml",
-        dumpfile => "log/space_builds.js",
+        dumpfile => "log/all_builds.js",
         station => 0,
-        wait    => 14 * 60 * 60,
-        number  => 31,
+        wait    => 8 * 60 * 60,
+        sleep  => 1,
   );
 
   GetOptions(\%opts,
@@ -29,21 +29,29 @@ use Exception::Class;
     'config=s',
     'dumpfile=s',
     'maxlevel=i',
-    'number=i',
     'wait=i',
+    'space',
+    'city',
+    'lab',
+#    'match=s@',
+    'match=s',
+    'skip=s@',
+    'type=s@',
+    'sleep=i',
   );
 
   usage() if $opts{h};
   
   my $glc = Games::Lacuna::Client->new(
     cfg_file => $opts{config} || "lacuna.yml",
+    rpc_sleep => $opts{sleep},
     # debug    => 1,
   );
 
   my $json = JSON->new->utf8(1);
   $json = $json->pretty([1]);
   $json = $json->canonical([1]);
-  open(OUTPUT, ">", $opts{dumpfile}) || die "Could not open $opts{dumpfile} for writing.";
+  open(OUTPUT, ">", $opts{dumpfile}) || die "Could not open $opts{dumpfile} for writing";
 
   my $status;
   my $empire = $glc->empire->get_status->{empire};
@@ -72,8 +80,9 @@ use Exception::Class;
         push @skip_planets, $pname;
         next;
       }
-      my ($sarr) = bstats($buildings, $station);
+      my ($sarr, $pending) = bstats($buildings, $station);
       my $seconds = $opts{wait} + 1;
+      $seconds = $pending if ($pending > 0);
       for my $bld (@$sarr) {
         printf "%7d %10s l:%2d x:%2d y:%2d\n",
                  $bld->{id}, $bld->{name},
@@ -88,7 +97,7 @@ use Exception::Class;
         };
         unless ($ok) {
           print "$@ Error; sleeping 60\n";
-          sleep 60;
+#          sleep 60;
         }
       }
       $status->{"$pname"} = $sarr;
@@ -127,19 +136,34 @@ sub bstats {
   my $bcnt = 0;
   my $dlevel = $station ? 121 : 0;
   my @sarr;
+  my $pending = 0;
   for my $bid (keys %$bhash) {
+    next if ($bhash->{$bid}->{name} =~ /Platform/);
     if ($bhash->{$bid}->{name} eq "Development Ministry") {
       $dlevel = $bhash->{$bid}->{level};
     }
     if ( defined($bhash->{$bid}->{pending_build})) {
       $bcnt++;
+      $pending = $bhash->{$bid}->{pending_build}->{seconds_remaining} if ($bhash->{$bid}->{pending_build}->{seconds_remaining} > $pending);
     }
-#    elsif ($bhash->{$bid}->{name} eq "Waste Sequestration Well") {
-    elsif ($bhash->{$bid}->{name} eq "Space Port") {
-#    elsif ($bhash->{$bid}->{name} eq "Shield Against Weapons") {
-      my $ref = $bhash->{$bid};
-      $ref->{id} = $bid;
-      push @sarr, $ref if ($ref->{level} < $opts{maxlevel} && $ref->{efficiency} == 100);
+    else {
+      my $doit = 0;
+      $doit = 1 if (!($bhash->{$bid}->{name} =~ /Space Port|Lost City|Space Station Lab/));
+      $doit = 1 if ($opts{space} and ($bhash->{$bid}->{name} eq "Space Port"));
+      $doit = 1 if ($opts{city}  and ($bhash->{$bid}->{name} =~ /Lost City/ ));
+      $doit = 1 if ($opts{lab}   and ($bhash->{$bid}->{name} =~ /Space Station Lab/));
+      if ($opts{match} and !($bhash->{$bid}->{name} =~ /$opts{match}/)) {
+        $doit = 0;
+      }
+      if ($doit) {
+        print "Doing $bhash->{$bid}->{name}\n";
+        my $ref = $bhash->{$bid};
+        $ref->{id} = $bid;
+        push @sarr, $ref if ($ref->{level} < $opts{maxlevel} && $ref->{efficiency} == 100);
+      }
+      else {
+        print "Skip  $bhash->{$bid}->{name}\n";
+      }
     }
   }
   @sarr = sort { $a->{level} <=> $b->{level} ||
@@ -148,10 +172,7 @@ sub bstats {
   if (scalar @sarr > ($dlevel + 1 - $bcnt)) {
     splice @sarr, ($dlevel + 1 - $bcnt);
   }
-  if (scalar @sarr > ($opts{number})) {
-    splice @sarr, ($opts{number} + 1 - $bcnt);
-  }
-  return (\@sarr);
+  return (\@sarr, $pending);
 }
 
 sub sec2str {
@@ -185,7 +206,7 @@ sub usage {
     diag(<<END);
 Usage: $0 [options]
 
-This program upgrades spaceports on your planet. Faster than clicking each port.
+This program upgrades planets on your planet. Faster than clicking each port.
 It will upgrade in order of level up to maxlevel.
 
 Options:
@@ -195,7 +216,6 @@ Options:
   --planet <name>    - Specify planet
   --dumpfile         - data dump for all the info we don't print
   --maxlevel         - do not upgrade if this level has been achieved.
-  --number           - only upgrade at most this number of buildings
 END
   exit 1;
 }
