@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #
 # Assemble Halls of Vrbansk recipes, wherever they can be assembled
 #
