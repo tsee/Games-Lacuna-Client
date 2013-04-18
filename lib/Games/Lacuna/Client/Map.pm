@@ -16,6 +16,7 @@ sub api_methods {
     get_star_by_name               => { default_args => [qw(session_id)] },
     get_star_by_xy                 => { default_args => [qw(session_id)] },
     search_stars                   => { default_args => [qw(session_id)] },
+    probe_summary_fissures         => { },
   };
 }
 
