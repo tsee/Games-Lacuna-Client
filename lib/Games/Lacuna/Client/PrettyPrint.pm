@@ -236,6 +236,8 @@ sub trade_list {
 
         for my $item ( @offer ){
             my $rt     = $item->type;
+	    (my $qty = $item->quantity) =~ tr/,//d;
+
             printf("%s%15s %s%6s %s%10s %10i %s\n",
                 _c_('bold cyan'),
                 substr($empire,0,15),
@@ -251,8 +253,8 @@ sub trade_list {
                     $rt eq 'ship' ? 'bold white' :
                     'reset'),
                 $rt,
-                $item->quantity,
-                $item->sub_type,
+                $qty,
+		$item->sub_type,
             );
             $empire = '';
             $cost   = '';
