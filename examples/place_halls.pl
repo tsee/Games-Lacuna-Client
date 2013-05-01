@@ -84,7 +84,7 @@ for my $planet_name (keys %planets) {
     for (1..$max) {
         last unless keys %plots;
         last unless $halls_left;
-        my ($plot) = sort keys %plots; #shuffle(keys %plots);
+        my ($plot) = shuffle(keys %plots);
         my ($x, $y) = $plot =~ /([\d-]+):([\d-]+)/;
         delete $plots{$plot};
         --$halls_left;
