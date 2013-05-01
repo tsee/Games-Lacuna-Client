@@ -281,14 +281,25 @@ sub available_trades{
 
   sub type{ 'plan' }
   sub size{ 10_000 }
-  sub quantity{ 1 }
+  sub quantity{
+    my($self) = @_;
+    my($qty) = $$self =~ /(\d+)/;
+    return $qty;
+  }
 
   sub plan_type{
     my($self) = @_;
-    my($name) = $$self =~ /^(.*?) \(/;
+    my($name) = $$self =~ /\d+ (.*?) \(/;
     return meta_type($name);
   }
-  sub sub_type{ plan_type(@_) }
+
+  sub sub_type{
+    my($self) = @_;
+    my($name) = $$self =~ /\d+ (.*) plan/;
+    my $pt = plan_type($self);
+    return $pt ? "$pt: $name" : $name;
+   }
+ 
   sub level{
     my($self) = @_;
     my($level) = $$self =~ /\((\d*[+]?\d*)\)/;
