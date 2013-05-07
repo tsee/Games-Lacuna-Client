@@ -43,7 +43,7 @@ usage() if $help or scalar @planets == 0 or !$stype;
 
 my @ship_types = ship_types();
 
-my $ship_build = first { $_ =~ /$stype/ } @ship_types;
+my $ship_build = first { $_ =~ /^$stype/i } @ship_types;
 
 unless ($ship_build) {
     print "$stype is an unknown type!\n";
@@ -67,8 +67,6 @@ else {
     exit;
 }
 
-my $rpc_cnt;
-my $rpc_lmt;
 my $beg_dt = DateTime->now;
 my $end_dt = DateTime->now;
 if ($time) {
@@ -293,6 +291,8 @@ sub setup_yhash {
 
     my $planet;
     my $yhash;
+    my $rpc_cnt;
+    my $rpc_lmt;
     for $planet ( sort @$planets ) {
         $yhash->{"$planet"}->{keels}   = 0;
         $yhash->{"$planet"}->{reserve} = 0;
@@ -446,6 +446,7 @@ sub ship_types {
           drone
           excavator
           fighter
+          fissure_sealer
           freighter
           galleon
           gas_giant_settlement_ship
