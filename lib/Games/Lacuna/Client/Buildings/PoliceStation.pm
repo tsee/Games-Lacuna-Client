@@ -11,10 +11,13 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 
 sub api_methods {
   return {
-    view_prisoners     => { default_args => [qw(session_id building_id)] },
-    execute_prisoner   => { default_args => [qw(session_id building_id)] },
-    release_prisoner   => { default_args => [qw(session_id building_id)] },
-    view_foreign_spies => { default_args => [qw(session_id building_id)] },
+    view_prisoners        => { default_args => [qw(session_id building_id)] },
+    execute_prisoner      => { default_args => [qw(session_id building_id)] },
+    release_prisoner      => { default_args => [qw(session_id building_id)] },
+    view_foreign_spies    => { default_args => [qw(session_id building_id)] },
+    view_foreign_ships    => { default_args => [qw(session_id building_id)] },
+    view_ships_travelling => { default_args => [qw(session_id building_id)] },
+    view_ships_orbiting   => { default_args => [qw(session_id building_id)] },
   };
 }
 
