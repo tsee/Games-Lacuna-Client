@@ -15,9 +15,11 @@ use Exception::Class;
         h => 0,
         v => 0,
         maxlevel => 30,
+        maxnum => 31,
         config => "lacuna.yml",
         dumpfile => "log/all_builds.js",
         station => 0,
+        maxadd  => 31,
         wait    => 8 * 60 * 60,
         sleep  => 1,
         extra  => [],
@@ -30,10 +32,13 @@ use Exception::Class;
     'planet=s@',
     'config=s',
     'dumpfile=s',
+    'maxadd=i',
     'maxlevel=i',
+    'maxnum=i',
     'dry',
     'wait=i',
     'junk',
+    'glyph',
     'space',
     'city',
     'lab',
@@ -84,6 +89,7 @@ use Exception::Class;
         push @skip_planets, $pname;
         next;
       }
+# Station and checking for resources needed.
       my ($sarr, $pending) = bstats($buildings, $station);
       my $seconds = $opts{wait} + 1;
       $seconds = $pending if ($pending > 0);
@@ -101,7 +107,7 @@ use Exception::Class;
           else {
             $reply = "upgrading";
             $bldstat = $bldpnt->upgrade();
-            $seconds = $bldstat->{building}->{pending_build}->{seconds_remaining} - 15;
+            $seconds = $bldstat->{building}->{pending_build}->{seconds_remaining};
           }
         };
         printf "%7d %10s l:%2d x:%2d y:%2d %s\n",
@@ -128,7 +134,7 @@ use Exception::Class;
     }
     if (keys %planets) {
       print "Clearing Queue for ",sec2str($short_time),".\n";
-      sleep $short_time;
+      sleep $short_time if $short_time > 0;
     }
     else {
       print "Nothing Else to do.\n";
@@ -268,6 +274,7 @@ sub bstats {
     if ($bhash->{$bid}->{name} eq "Development Ministry") {
       $dlevel = $bhash->{$bid}->{level};
     }
+    $dlevel = $opts{maxnum} if ( $opts{maxnum} < $dlevel );
     if ( defined($bhash->{$bid}->{pending_build})) {
       $bcnt++;
       $pending = $bhash->{$bid}->{pending_build}->{seconds_remaining} if ($bhash->{$bid}->{pending_build}->{seconds_remaining} > $pending);
@@ -291,32 +298,35 @@ sub bstats {
   if (scalar @sarr > ($dlevel + 1 - $bcnt)) {
     splice @sarr, ($dlevel + 1 - $bcnt);
   }
+  if (scalar @sarr > $opts{maxadd}) {
+    splice @sarr, $opts{maxadd};
+  }
   return (\@sarr, $pending);
 }
 
 sub check_type {
   my ($bld) = @_;
   
-  print "Checking $bld->{name} - ";
+  print "Checking $bld->{name} - " if ($opts{v});
   if ($opts{match}) {
     if (grep { $bld->{name} =~ /\Q$_\E/ } @{$opts{match}}) {
-      print "Match\n";
+      print "Match\n" if ($opts{v});
       return 1;
     }
     else {
-      print "No match\n";
+      print "No match\n" if ($opts{v});
       return 0;
     }
   }
   if ($opts{extra} and (grep { $bld->{name} =~ /\Q$_\E/ } @{$opts{extra}})) {
-    print "Extra\n";
+    print "Extra\n" if ($opts{v});
     return 1;
   }
   if ($opts{skip} and (grep { $bld->{name} =~ /\Q$_\E/ } @{$opts{skip}})) {
-    print "Skipping\n";
+    print "Skipping\n" if ($opts{v});
     return 0;
   }
-  print "Default\n";
+  print "Default\n" if ($opts{v});
   return 1;
 }
 
@@ -357,21 +367,23 @@ It will upgrade in order of level up to maxlevel.
 Options:
   --help             - This info.
   --verbose          - Print out more information
-  --config <file>    - Specify a GLC config file, normally lacuna.yml.
-  --planet <name>    - Specify planet
-  --dumpfile         - data dump for all the info we don't print
-  --maxlevel         - do not upgrade if this level has been achieved.
-  --wait             - Max number of seconds to wait to repeat loop.
-  --sleep            - Pause between RPC calls. Default 1.
-  --junk             - Upgrade Junk Buildings.
-  --glyph            - Upgrade Glyph Buildings.
-  --space            - Upgrade spaceports.
+  --config FILE      - Specify a GLC config file, normally lacuna.yml
+  --planet NAME      - Specify planet
+  --dumpfile FILE    - data dump for all the info we don't print
+  --maxlevel INT     - do not upgrade if this level has been achieved
+  --maxnum INT       - Use this if lower than dev ministry level
+  --maxadd INT       - Add at most INT buildings to the queue per pass
+  --wait   INT       - Max number of seconds to wait to repeat loop
+  --sleep  INT       - Pause between RPC calls. Default 1
+  --junk             - Upgrade Junk Buildings
+  --glyph            - Upgrade Glyph Buildings
+  --space            - Upgrade spaceports
   --city             - Upgrade LCOT
   --lab              - Upgrade labs
-  --match            - Only upgrade matching building names.
-  --skip             - Skip building names (multiple allowed).
-  --extra            - Add matching names to usual list to upgrade.
-  --dry              - Do not actually upgrade.
+  --match STRING     - Only upgrade matching building names
+  --skip  STRING     - Skip building names (multiple allowed)
+  --extra STRING     - Add matching names to usual list to upgrade
+  --dry              - Do not actually upgrade
   );
 END
   my $bld_names = bld_names();
