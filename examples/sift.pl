@@ -47,6 +47,7 @@ use utf8;
     'plan_match=s@',
     'p_num=i',
     'p_max=i',
+    'p_leave=i',
     'min_plus=i',
     'max_plus=i',
     'min_base=i',
@@ -60,8 +61,9 @@ use utf8;
     'p_all',
     
     'glyph_match=s@',
-    'g_num',
-    'g_max',
+    'g_num=i',
+    'g_max=i',
+    'g_leave=i',
     'g_all',
   );
 
@@ -412,6 +414,14 @@ sub grab_glyphs {
         next unless ( grep { $glyph->{name} =~ /$_/i } @{$opts->{glyph_match}});
       }
     }
+    if ($opts->{g_leave}) {
+      if ($glyph->{quantity} > $opts->{g_leave}) {
+        $glyph->{quantity} -= $opts->{g_leave};
+      }
+      else {
+        $glyph->{quantity} = 0;
+      }
+    }
     if ($opts->{g_num}) {
       $glyph->{quantity} = $opts->{g_num} if ($opts->{g_num} < $glyph->{quantity});
     }
@@ -446,6 +456,14 @@ sub grab_plans {
     unless ($opts->{p_all}) {
       if ($opts->{plan_match}) {
         next unless ( grep { $plan->{name} =~ /$_/i } @{$opts->{plan_match}});
+      }
+    }
+    if ($opts->{p_leave}) {
+      if ($plan->{quantity} > $opts->{p_leave}) {
+        $plan->{quantity} -= $opts->{p_leave};
+      }
+      else {
+        $plan->{quantity} = 0;
       }
     }
 #    print join(":",$plan->{name},$plan->{level}),"\n";
@@ -712,12 +730,14 @@ Plan Options
        --p_hall      Grab Hall Plans
        --p_standard  Grab all "standard" building plans
        --p_station   Grab Space Station Plans
+       --p_leave     Leave this number of each plan behind
 
 Glyph Options
        --glyph_match GLYPH NAME REGEX (Can be put in multiple times)
        --g_all       Grab all plans
        --g_num       Maximum number of each glyph to push
        --g_max       Maximum number of glyphs to push
+       --g_leave     Leave this number of each type of glyph behind
 
 Pushes plans and glyphs between your own planets.
 
