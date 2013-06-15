@@ -28,6 +28,8 @@ use utf8;
     max_plus     => 30,
     min_base     => 1,
     max_base     => 30,
+    fastest      => 1,
+    sleep        => 1,
   );
 
   my $ok = GetOptions(\%opts,
@@ -39,10 +41,14 @@ use utf8;
     'from=s',
     'to=s',
     'dump',
+    'sleep',
 
     'sname=s@',
     'stype=s@',
     'stay',
+    'fastest',
+    'largest' => sub { $opts{fastest} = 0 },
+    'snum=i',
 
     'plan_match=s@',
     'p_num=i',
@@ -93,6 +99,7 @@ use utf8;
 
   my $glc = Games::Lacuna::Client->new(
 	cfg_file => $opts{config},
+        rpc_sleep => $opts{sleep},
 	 #debug    => 1,
   );
 
@@ -147,68 +154,65 @@ use utf8;
     $send_glyphs = grab_glyphs(\@glyphs, \%opts);
   }
 
-  my @ships;
-  if ( $opts{sname} or $opts{stype} ) {
-    my $ships = $trade_min->get_trade_ships->{ships};
-    
-    for my $ship (@$ships) {
-      if ($opts{sname}) {
-        push @ships, $ship if ( grep { $ship->{name} =~ /\Q$_/i } @{$opts{sname}});
-      }
-      elsif ($opts{stype}) {
-        push @ships, $ship if ( grep { $ship->{type} =~ /\Q$_/i } @{$opts{stype}});
-      }
+# Get trade ships
+# Trim by name and type
+# Order by fast, largest
+# Start sending.
+  my @ships = @{$trade_min->get_trade_ships->{ships}};
+  if ($opts{sname}) {
+    my @tships;
+    for my $ship (@ships) {
+      push @tships, $ship if ( grep { $ship->{name} =~ /\Q$_\E/i } @{$opts{sname}});
     }
-    
-    unless ( @ships ) {
-      print "No ship matching \'";
-      if ($opts{sname}) { print join(":", @{$opts{sname}}); }
-      if ($opts{stype}) { print join(":", @{$opts{stype}}); }
-      print "\' found. Exiting\n";
-      exit;
+    @ships = @tships;
+  }
+  if ($opts{stype}) {
+    my @tships;
+    for my $ship (@ships) {
+      push @tships, $ship if ( grep { $ship->{type} =~ /^\Q$_\E$/i } @{$opts{stype}});
     }
+    @ships = @tships;
+  }
+  if ($opts{fastest}) {
+    @ships = sort { $b->{speed} <=> $a->{speed} || $b->{hold_size} <=> $a->{hold_size} } @ships;
   }
   else {
-#Pick fastest ship that can hold everything
+    @ships = sort { $b->{hold_size} <=> $a->{hold_size} || $b->{speed} <=> $a->{speed} } @ships;
   }
-
+  unless ( @ships ) {
+    print "No ship matching \'";
+    if ($opts{sname}) { print join(":", @{$opts{sname}}),":"; }
+    if ($opts{stype}) { print join(":", @{$opts{stype}}); }
+    print "\' found. Exiting\n";
+    exit;
+  }
   my $output;
-  if ($opts{sname} or $opts{stype}) {
-    for my $ship (sort {$a->{id} <=> $b->{id} } @ships) {
-      my $ship_id = $ship->{id};
-      my $ship_name = $ship->{name};
-      my $sent_plans;
-      my $sent_glyphs;
-      ($sent_plans, $send_plans, $sent_glyphs, $send_glyphs) =
-        send_ship($send_plans, $pcargo_each, $send_glyphs, $gcargo_each, $ship);
-      if ($sent_plans or $sent_glyphs) {
-        $output->{$ship_id} = {
-          id => $ship_id,
-          name => $ship_name,
-          plans => $sent_plans,
-          glyphs => $sent_glyphs,
-        };
-      }
-      else {
-        last;
-      }
-      last unless (scalar @{$send_plans} > 0 or scalar @{$send_glyphs} > 0);
-    }
-  }
-  else {
+  my $ships_used = 0;
+  for my $ship (@ships) {
+    my $ship_id = $ship->{id};
+    my $ship_name = $ship->{name};
     my $sent_plans;
     my $sent_glyphs;
     ($sent_plans, $send_plans, $sent_glyphs, $send_glyphs) =
-      send_ship($send_plans, $pcargo_each, $send_glyphs, $gcargo_each, 0);
-    my $ship_id = 0;
-    my $ship_name = "";
-    $output->{$ship_id} = {
-      id => $ship_id,
-      name => $ship_name,
-      plans => $sent_plans,
-      glyphs => $sent_glyphs,
-     };
+      send_ship($send_plans, $pcargo_each, $send_glyphs, $gcargo_each, $ship);
+    if ($sent_plans or $sent_glyphs) {
+      $output->{$ship_id} = {
+        id => $ship_id,
+        name => $ship_name,
+        plans => $sent_plans,
+        glyphs => $sent_glyphs,
+      };
+      $ships_used++;
+      if ($opts{snum}) {
+        last if ($ships_used >= $opts{snum});
+      }
+    }
+    else {
+      last;
+    }
+    last unless (scalar @{$send_plans} > 0 or scalar @{$send_glyphs} > 0);
   }
+
   if ($opts{dump}) {
     print $df $json->pretty->canonical->encode($output);
     close($df);
@@ -236,7 +240,13 @@ sub pack_cargo {
       $pcargo_req = $pnum * $pcargo_each;
     }
   }
+  else {
+    $sent_plans = $plans;
+  }
+
+#
 #  print "Now sending $pnum plans with $pcargo_req space needed.\n";
+#
   if ($pcargo_req + $gcargo_req > $hold_size) {
     my $fit = int( ($hold_size - $pcargo_req)/$gcargo_each);
     if ($fit < $gnum) {
@@ -244,6 +254,10 @@ sub pack_cargo {
       $gcargo_req = $gnum * $gcargo_each;
     }
   }
+  else {
+    $sent_glyphs = $glyphs;
+  }
+#
 #  print "Now sending $gnum glyphs with $gcargo_req space needed.\n";
 #  print "Total of ",$pcargo_req + $gcargo_req," needed for ";
 #  my $quan;
@@ -251,6 +265,7 @@ sub pack_cargo {
 #    $quan += $item->{quantity};
 #  }
 #  print $quan, " items.\n";
+#
   return ( $sent_plans, $left_plans, $sent_glyphs, $left_glyphs);
 }
 
@@ -294,7 +309,9 @@ sub send_ship {
     for my $glyph (@{$sent_glyphs}) {
       $gcargo_req += $glyph->{quantity} * $gcargo_each;
     }
-#    print "$pcargo_req plan space and $gcargo_req glyph space needed with $ship->{hold_size} hold size.\n";
+#
+    print "$pcargo_req plan space and $gcargo_req glyph space needed with $ship->{hold_size} hold size.\n";
+#
     if ( $ship->{hold_size} < $pcargo_req + $gcargo_req ) {
       ( $sent_plans, $left_plans, $sent_glyphs, $left_glyphs) =
         pack_cargo( $sent_plans,  $pcargo_each, $pcargo_req,
@@ -341,14 +358,14 @@ sub send_ship {
   my $popt = set_options($ship_id, $opts{stay});
   my $return = "";
   if ( $opts{dryrun} ) {
-    printf "Would of pushed %d plans and %d glyphs, leaving %d plans and %d glyphs.\n",
-           $pship, $gship, $pleft, $gleft;
+    printf "Would have pushed %d plans and %d glyphs, leaving %d plans and %d glyphs using %s:%s\n",
+           $pship, $gship, $pleft, $gleft, $ship->{type}, $ship->{id};
   }
   elsif ($pship + $gship == 0) {
     print "Nothing to ship!\n";
   }
   else {
-    my $return = eval{ $trade_min->push_items(
+    my $return = eval { $trade_min->push_items(
       $to_id,
       \@items,
       $popt ? $popt
@@ -358,8 +375,8 @@ sub send_ship {
       print "$@ error!\n";
     }
     else {
-      printf "Pushed %d plans and %d glyphs, leaving %d plans and %d glyphs.\n",
-           $pship, $gship, $pleft, $gleft;
+      printf "Pushed %d plans and %d glyphs, leaving %d plans and %d glyphs using %s:%s.\n",
+           $pship, $gship, $pleft, $gleft, $ship->{type}, $ship->{id};
       printf "Arriving %s\n", $return->{ship}{date_arrives};
     }
   }
@@ -713,8 +730,11 @@ Usage: $0 --to PLANET --from PLANET
 
 Ship Options
        --sname       SHIP NAME REGEX
-       --stype       SHIP TYPE REGEX
+       --stype       SHIP TYPE Exact_Match
        --stay        Have tradeship stay
+       --fastest     Grab fastest ships first (default)
+       --largest     Grab largest ships first
+       --snum        Use up to this number of ships
 
 Plan Options
        --plan_match  PLAN NAME REGEX (Can be multiple options)
