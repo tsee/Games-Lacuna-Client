@@ -151,9 +151,9 @@ use Games::Lacuna::Client;
       else {
         while ($build->{glyphs} > 0) {
           my $num_bld = 0;
-          if ($build->{glyphs} > 50) {
-            $num_bld = 50;
-            $build->{glyphs} -= 50;
+          if ($build->{glyphs} > 5000) {
+            $num_bld = 5000;
+            $build->{glyphs} -= 5000;
           }
           else {
             $num_bld = $build->{glyphs};
