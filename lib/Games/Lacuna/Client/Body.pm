@@ -20,6 +20,7 @@ sub api_methods {
     get_buildable       => { default_args => [qw(session_id body_id)] },
     rename              => { default_args => [qw(session_id body_id)] },
     abandon             => { default_args => [qw(session_id body_id)] },
+    repair_list         => { default_args => [qw(session_id body_id)] },
   };
 }
 
