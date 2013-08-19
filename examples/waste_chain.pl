@@ -33,6 +33,7 @@ use utf8;
     'view',
     'get',
     'sleep',
+    'type=s',
     'max',
   );
 
@@ -146,6 +147,9 @@ use utf8;
                         $a->{hold_size} <=> $b->{hold_size} ||
                         $a->{speed} <=> $b->{speed}
                            } @ships_chain) {
+          if ($opts{type}) {
+            next unless ($opts{type} eq $ship->{type});
+          }
           $tm->remove_waste_ship_from_fleet($ship->{id});
           last if ++$off >= $remove_ships;
         }
@@ -165,6 +169,9 @@ use utf8;
                         $b->{hold_size} <=> $a->{hold_size} ||
                         $b->{speed} <=> $a->{speed}
                            } @ships_avail) {
+          if ($opts{type}) {
+            next unless ($opts{type} eq $ship->{type});
+          }
           $tm->add_waste_ship_to_fleet($ship->{id});
           last if ++$add >= $add_ships;
         }
@@ -230,6 +237,7 @@ Usage: $0 CONFIG_FILE
        --get            Get all ships capable of waste chain duty. (on or off)
        --sleep          sleep between API calls.
        --max            Maximize current waste removal.
+       --type           Only use type listed with add or remove.  (scow_mega, scow_fast, scow_large, scow)
 END_USAGE
 
 }
