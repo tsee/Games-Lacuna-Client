@@ -211,8 +211,8 @@ use utf8;
     print $df $json->pretty->canonical->encode($output);
     close($df);
   }
-  print "$glc->{total_calls} api calls made.\n";
-  print "You have made $glc->{rpc_count} calls today\n";
+  print "$glc->{total_calls} api calls made.\n" if ($opts{v});
+  print "You have made $glc->{rpc_count} calls today\n" if ($opts{v});
 exit;
 
 sub pack_cargo {
@@ -356,9 +356,9 @@ sub send_ship {
       print "$@ error!\n";
     }
     else {
-      printf "Pushed %d plans and %d glyphs, leaving %d plans and %d glyphs.\n",
+      printf "$opts{from}: Pushed %d plans and %d glyphs, leaving %d plans and %d glyphs.\n",
            $pship, $gship, $pleft, $gleft;
-      printf "Arriving %s\n", $return->{ship}{date_arrives};
+      printf "Arriving %s\n", $return->{ship}{date_arrives} if ($opts{v});
     }
   }
   return ($sent_plans, $left_plans, $sent_glyphs, $left_glyphs);

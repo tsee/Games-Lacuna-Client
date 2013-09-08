@@ -133,9 +133,9 @@ sub build_halls {
 
     my $vrbansk = $client->building( type => 'HallsOfVrbansk' );
 
-    print "Building a Halls on $x,$y\n";
-
     my $status = $vrbansk->build( $planets{$planet_name}, $x, $y );
+
+    print "Building a Halls on $x,$y ($status)\n";
 
     # make sure we don't try building on the same plot later
     my $id = $status->{building}{id};

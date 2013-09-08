@@ -95,7 +95,7 @@ sub print_plans {
     my $types  = $status->{types};
 
     foreach my $plan ( @$types ) {
-        print "$plan->{name}\n";
+        print "$plan->{name} ($plan->{type})\n";
     }
 
     if ( my $making = $status->{making} ) {

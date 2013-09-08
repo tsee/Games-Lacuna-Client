@@ -53,6 +53,8 @@ for my $planet_name (keys %planets) {
     my $result    = $planet->get_buildings;
     my $buildings = $result->{buildings};
 
+                                 
+
     my $pcc = find_pcc($buildings);
     next unless $pcc;
 
@@ -67,7 +69,19 @@ for my $planet_name (keys %planets) {
         verbose("No Halls on $planet_name\n");
         next;
     }
+    my $hall_count = $halls[0]->{quantity};
 
+    # TODO: build queue should be a property of a planet object?
+    my $max_queue = 1;
+    my ($dev_ministry) = grep { $_->{name} eq 'Development Ministry' } values %$buildings;
+    if ($dev_ministry) {
+        $max_queue = $dev_ministry->{level} + 1;
+    }
+    my $current_queue = scalar grep { exists $_->{pending_build} } values %$buildings;
+    my $build_queue_remaining = $max_queue - $current_queue;
+
+    next unless ($build_queue_remaining);
+         
     # initialize plots
     my %plots;
     for my $x (-5..5) {
@@ -82,25 +96,33 @@ for my $planet_name (keys %planets) {
     my $max = $opts{max} || 1;
     for (1..$max) {
         last unless keys %plots;
-        last unless @halls;
+        last unless $hall_count;
+        last unless $build_queue_remaining;
         my ($plot) = shuffle(keys %plots);
         my ($x, $y) = $plot =~ /([\d-]+):([\d-]+)/;
         delete $plots{$plot};
-        pop @halls;
+        $hall_count--;
         if ($opts{'dry-run'}) {
             output("Would have placed Halls at $x, $y on $planet_name\n");
         } else {
             output("Placing Halls at $x, $y on $planet_name\n");
             $halls->build($planets{$planet_name}, $x, $y);
+            };
+            if ($@)
+            {
+                output($@);
+                last;
+            }
+            $build_queue_remaining--;
         }
 
         sleep $opts{delay} if $opts{delay};
     }
 }
 
-output("$glc->{total_calls} api calls made.\n");
-output("You have made $glc->{rpc_count} calls today\n");
-output(Dumper $glc->{call_stats});
+verbose("$glc->{total_calls} api calls made.\n");
+verbose("You have made $glc->{rpc_count} calls today\n");
+verbose(Dumper $glc->{call_stats});
 undef $glc;
 
 exit 0;

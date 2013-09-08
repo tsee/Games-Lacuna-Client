@@ -160,14 +160,14 @@ while (!$finished) {
         # case you get the "Session expired" error.
         $glc = Games::Lacuna::Client->new(
             cfg_file       => $opts{config} || "$FindBin::Bin/../lacuna.yml",
-            rpc_sleep      => 1.333, # 45 per minute, new default is 50 rpc/min
+    #        rpc_sleep      => 1.333, # 45 per minute, new default is 50 rpc/min
         );
 
         output("Starting up at " . localtime() . "\n");
         get_status();
         do_digs() if $opts{'do-digs'};
         send_excavators() if $opts{'send-excavators'} and $star_db;
-        report_status();
+        #report_status();
         output(pluralize($glc->{total_calls}, "api call") . " made.\n");
         output("You have made " . pluralize($glc->{rpc_count}, "call") . " today\n");
         return 1;
@@ -258,6 +258,11 @@ sub get_status {
             verbose("Found an archaeology ministry on $planet_name\n");
             $status->{archmin}{$planet_name}   = $arch;
             $status->{archlevel}{$planet_name} = $level;
+            if (defined $seconds_remaining && $seconds_remaining < 60 * 5) {
+                output("dig done in $seconds_remaining, waiting");
+                sleep($seconds_remaining+1);
+                $seconds_remaining = 0;
+            }
             if ($seconds_remaining) {
                 push @{$status->{digs}}, {
                     planet   => $planet_name,
@@ -271,7 +276,7 @@ sub get_status {
 
             my $glyphs = $arch->get_glyphs->{glyphs};
             for my $glyph (@$glyphs) {
-                $status->{glyphs}{$glyph->{type}}++;
+                $status->{glyphs}{$glyph->{type}} += $glyph->{quantity};
             }
         } else {
             verbose("No archaeology ministry on $planet_name\n");
@@ -392,12 +397,12 @@ sub report_status {
 
     # Ready to go now?
     if (my @planets = grep { scalar @{$status->{ready}{$_}} } keys %{$status->{ready}}) {
-        output(<<END);
-**** Notice! ****
-You have excavators ready to send.  Specify --send-excavators if you want to
-send them to the closest available destinations.
-*****************
-END
+#        output(<<END);
+#**** Notice! ****
+#You have excavators ready to send.  Specify --send-excavators if you want to
+#send them to the closest available destinations.
+#*****************
+#END
         for my $planet (sort @planets) {
             output("$planet has ", pluralize(scalar @{$status->{ready}{$planet}}, 'excavator')
                 , " ready to launch!\n");
@@ -440,8 +445,8 @@ END
                     ", last done in ", format_time($last->{finished}, $opts{'full-times'}), "\n");
 
             } elsif ($status->{not_building}{$planet}) {
-                output("$planet is not currently building any excavators!  It has "
-                    . pluralize($status->{open_docks}{$planet}, 'spot') . " currently available.\n");
+#                output("$planet is not currently building any excavators!  It has "
+#                    . pluralize($status->{open_docks}{$planet}, 'spot') . " currently available.\n");
             }
         }
         output("\n");
@@ -478,7 +483,7 @@ END
     output("\n");
     output("Summary: " . pluralize($flying_count, "excavator") . " in flight, " . pluralize($yard_count, "shipyard") . " building " . pluralize($building_count, "excavator") . ", " . pluralize($digging_count, "dig") . " ongoing\n\n");
     for my $planet (keys %{$status->{build_limits}}) {
-        output("$planet needs more $status->{build_limits}{$planet}{type}\n");
+        output("$planet needs more $status->{build_limits}{$planet}{type}\n") if (defined $status->{build_limits}{$planet}{type});
     }
 }
 

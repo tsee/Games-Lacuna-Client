@@ -47,6 +47,7 @@ sub run {
 
     my $do_keepalive = 1;
     my $start_time = time();
+    $self->{run_start_time} = $start_time;
 
     $self->load_cache();
 
@@ -89,6 +90,8 @@ sub run {
             message("Dry run complete.");
             return;
         }
+        use Data::Dumper;
+        
         my $next_action_in = min( grep { $_ > time } values %{ $self->{next_action} } ) - time;
         if ( defined $next_action_in && ( $next_action_in + time ) < ( $config->{keepalive} + $start_time ) ) {
             if ( $next_action_in <= 0 ) {
@@ -96,7 +99,7 @@ sub run {
             }
             else {
                 my $nat_time = ptime($next_action_in);
-                trace("Expecting to govern again in $nat_time or so, sleeping...") if ($self->{config}->{verbosity}->{trace});
+                warning("Expecting to govern again in $nat_time or so, sleeping..."); # if ($self->{config}->{verbosity}->{trace});
                 sleep( $next_action_in + 5 );
                 $do_keepalive = 1;
             }
@@ -124,8 +127,10 @@ sub govern {
     Games::Lacuna::Client::PrettyPrint::surface($surface_image,$details) if ($self->{config}->{verbosity}->{surface_map});
     $self->{cache}->{body}->{$pid} = $details;
     for my $bid (keys %{$self->{cache}->{body}->{$pid}}) {
+    eval {
         $self->{cache}->{body}->{$pid}->{$bid}->{pretty_type} =
             Games::Lacuna::Client::Buildings::type_from_url( $self->{cache}->{body}->{$pid}->{$bid}->{url} );
+            };
     }
 
     if ($self->{config}->{verbosity}->{production}) {
@@ -517,7 +522,30 @@ sub coordinate_push_mode {
 }
 
 sub repairs {
-    # Not yet implemented.
+    #foreach building if eff < 100, repair
+    # TODO:check if resources available?
+
+    my $self = shift;
+    my ($pid, $cfg) = @{$self->{current}}{qw(planet_id config)};
+
+    my $details = $self->{cache}->{body}->{$pid};
+
+    my @buildings; # = values %{$self->{cache}->{body}->{$pid}};
+    for my $bid (keys %{$self->{cache}->{body}->{$pid}}) {
+        my $details = $self->{cache}->{body}->{$pid}->{$bid};
+        my $pretty_type = $details->{pretty_type};
+        my $building = $self->{client}->building( id => $bid, type => $pretty_type );
+
+       # my $details = $self->building_details($pid,$bid);
+        if ($details->{efficiency} < 100)
+        {
+            action("repairing $details->{name} ($bid) on $self->{planet_names}->{$pid} ($pid)");
+            eval {
+                $building->repair(); 
+            };
+            warning($@) if ($@);
+        }
+    }
 }
 
 sub production_crisis {
@@ -736,6 +764,11 @@ sub attempt_other_upgrades {
      # - storage and production upgrades handle those cases anyway
     my @sorted_buildings = sort { $self->pertinence_sort(undef,$sort_type,undef,$a,$b) } @$buildings;
 
+    my $config = $self->{config};
+    my $keepalive = $config->{keepalive};
+    my $start_time = $self->{run_start_time};
+
+
     if ($self->{config}->{verbosity}->{trace}) {
         foreach my $building (@sorted_buildings)
         {
@@ -744,13 +777,27 @@ sub attempt_other_upgrades {
             trace("$planet: $building->{building_id}: $details->{pretty_type} @ $details->{level}                T: $details->{upgrade}->{cost}->{time} upgrade cost: " . sum_keys($costs)) if $self->{config}->{verbosity}->{trace};
         }
     }
- 
-    my $upgrade_succeeded = $self->attempt_upgrade(\@sorted_buildings, 0);
-    if ($upgrade_succeeded) {
-        my $details = $self->building_details(@{$self->{current}}{planet_id},$upgrade_succeeded);
-        action(sprintf("$planet: Upgraded %s, %s (Level %s)",$upgrade_succeeded,$details->{pretty_type},$details->{level}));
-    } else {
-        warning("$planet: Could not find any suitable buildings to upgrade") if $self->{config}->{verbosity}->{warning};
+
+    my $available_slots = $self->{current}->{build_queue_remaining} - $config->{reserve_build_queue};
+    my $remaining = $start_time + $keepalive - time;
+
+    while ($available_slots)
+    {
+     
+        my $upgrade_succeeded = $self->attempt_upgrade(\@sorted_buildings, 0);
+        if ($upgrade_succeeded) {
+            my $details = $self->building_details(@{$self->{current}}{planet_id},$upgrade_succeeded);
+            action(sprintf("$planet: Upgraded %s, %s (Level %s)",$upgrade_succeeded,$details->{pretty_type},$details->{level}));
+            my $cost   = $self->{cache}->{building}->{ $upgrade_succeeded }->{upgrade}->{cost}->{"time"};
+            trace("next build in $cost, have $remaining remaining");
+            last if ($remaining < $cost);
+            $available_slots--;
+            $remaining -= $cost;
+            @sorted_buildings = grep { $_->{building_id} != $upgrade_succeeded } @sorted_buildings;
+        } else {
+            warning("$planet: Could not find any suitable buildings to upgrade") if $self->{config}->{verbosity}->{warning};
+            last;
+        }
     }
 }
 
@@ -1001,8 +1048,16 @@ sub refresh_building_details {
         return;
     }
 
-    $self->{cache}->{building}->{$bldg_id} = $client->building( id => $bldg_id, type => $details->{$bldg_id}->{pretty_type} )->view()->{building};
+    my $building = $client->building( id => $bldg_id, type => $details->{$bldg_id}->{pretty_type} )->view()->{building};
+
+    delete $building->{'downgrade'};
+    delete $building->{'upgrade'}->{'production'};
+    delete $building->{'upgrade'}->{'image'};
+    delete $building->{'image'};
+
+    $self->{cache}->{building}->{$bldg_id} = $building;
     $self->{cache}->{building}->{$bldg_id}->{pretty_type} = $details->{$bldg_id}->{pretty_type};
+    $self->write_cache();
 }
 
 sub write_cache {
@@ -1061,10 +1116,10 @@ sub attempt_upgrade {
         if ($self->{config}->{verbosity}->{trace}) {
             my $details = $self->building_details($pid,$bid);
             if ($insuff_resources) {
-                trace(sprintf("Insufficient resources to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level}))
+                warning(sprintf("Insufficient resources to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level}))
             }
             if ($waste_overflow) {
-                trace(sprintf("Too much waste produced to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level}))
+                warning(sprintf("Too much waste produced to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level}))
             }
         }
         return (not $insuff_resources and not $waste_overflow)+0;
@@ -1110,6 +1165,7 @@ sub attempt_upgrade {
         else {
             $upgrade_succeeded = $upgrade->{building_id};
         }
+        #last UPGRADE if $self->{current}->{build_queue_remaining} < 2;
         last UPGRADE if $upgrade_succeeded;
     }
 
@@ -1182,8 +1238,15 @@ sub find_all_buildings {
             my $planet = $self->{status}{$pid}{name};
 
         for my $bid (keys %{$self->{cache}->{body}->{$pid}}) {
-        $self->{cache}->{body}->{$pid}->{$bid}->{pretty_type} = 
-            Games::Lacuna::Client::Buildings::type_from_url( $self->{cache}->{body}->{$pid}->{$bid}->{url} );
+            eval
+            {
+            $self->{cache}->{body}->{$pid}->{$bid}->{pretty_type} = 
+                Games::Lacuna::Client::Buildings::type_from_url( $self->{cache}->{body}->{$pid}->{$bid}->{url} );
+            };
+            if ($@)
+            {
+                warning("can't get type for $self->{cache}->{body}->{$pid}->{$bid}->{url} on $planet ($pid)" . $@);
+            }
         #    my $details = $self->building_details($pid,$bid);
             my $pretty_type = $self->{cache}->{body}->{$pid}->{$bid}->{pretty_type};
             push @retlist, $self->{client}->building( id => $bid, type => $pretty_type ) if $pretty_type eq $type;

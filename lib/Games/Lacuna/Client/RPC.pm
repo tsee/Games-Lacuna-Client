@@ -57,6 +57,28 @@ around call => sub {
   my $method = shift;
   my $params = shift;
 
+  use integer;
+  my $current_minute = time / 60;
+  $self->{minute} ||= $current_minute;
+  $self->{calls_this_minute} ||= 0;
+
+  if ($self->{minute} == $current_minute)
+  {
+    $self->{calls_this_minute} ++;
+    if ($self->{calls_this_minute} > 60)
+    {
+        my $sleep_for = ( ($current_minute + 1) * 60 - time);
+        warn "sleeping for $sleep_for";
+        sleep( ($current_minute + 1) * 60 - time);
+    }
+  }
+  else
+  {
+    $self->{calls_this_minute} = 0;
+    $self->{minute} = $current_minute;
+  }
+
+
 
     # Call the method.  If a Captcha error is returned, attempt to handle it
     # and re-call the method, up to 3 times
@@ -72,12 +94,25 @@ around call => sub {
         $res = $self->$orig($uri,$method,$params);
 
         # Throttle per 3.0 changes
-        sleep($self->{client}->rpc_sleep) if $self->{client}->rpc_sleep;
+        if ($self->{client}->rpc_sleep)
+        {
+        warn "rpc sleeping for: " . $self->{client}->rpc_sleep;
+        sleep($self->{client}->rpc_sleep);
+        }
 
         if ($res and $res->has_error
             and $res->error->code eq '-32603')
         {
-            warn "too many calls, sleeping";
+        warn "error sleeping for 60s";
+            sleep(60);
+            $trying = 1;
+        }
+        elsif ($res and $res->has_error
+            and $res->error->code eq '1010'
+            and $res->error->message =~ /Slow down/
+            )
+        {
+        warn "error sleeping for 60s";
             sleep(60);
             $trying = 1;
         }

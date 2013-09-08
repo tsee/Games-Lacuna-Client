@@ -38,7 +38,7 @@ use Games::Lacuna::Client;
 
   my $glc = Games::Lacuna::Client->new(
     cfg_file => $opts{config} || "lacuna.yml",
-    rpc_sleep => 1,
+    rpc_sleep => 0,
   );
 
   my $empire = $glc->empire->get_status->{empire};
@@ -52,6 +52,7 @@ use Games::Lacuna::Client;
     [qw/ kerogen   methane     sulfur        zircon    /],
     [qw/ monazite  fluorite    beryl         magnetite /],
     [qw/ rutile    chromite    chalcopyrite  galena    /],
+#    [qw/  methane        zircon         magnetite      beryl/],
   );
 
   my %build_types;

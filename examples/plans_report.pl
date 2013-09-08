@@ -85,7 +85,7 @@ foreach my $name ( sort keys %planets ) {
     my %plan_count;
 
     for my $plan ( sort { $a->{name} cmp $b->{name} } @$plans ) {
-        $plan_count{ $plan->{name} }{ $plan->{level} }{ $plan->{extra_build_level} } ++;
+        $plan_count{ $plan->{name} }{ $plan->{level} }{ $plan->{extra_build_level} } = $plan->{quantity};
     }
 
     my %tags;
@@ -113,11 +113,11 @@ foreach my $name ( sort keys %planets ) {
     }
 
     report_plans_tag( \@plans, { tags => ['space_station_module'] } );
-    report_plans_tag( \@plans, { type => 'glyph', tags => ['food', 'ore', 'water', 'energy', 'storage'], exclude => ['decoration'] } );
-    report_plans_tag( \@plans, { type => 'glyph', exclude => ['decoration'] } );
-    report_plans_tag( \@plans, { type => 'glyph' } );
-    report_plans_tag( \@plans, { tags => ['food', 'ore', 'water', 'energy', 'storage'] } );
-    report_plans_tag( \@plans );
+#    report_plans_tag( \@plans, { type => 'glyph', tags => ['food', 'ore', 'water', 'energy', 'storage'], exclude => ['decoration'] } );
+    report_plans_tag( \@plans, { type => 'glyph', exclude => ['decoration','food', 'ore', 'water', 'energy', 'storage' ] } );
+#    report_plans_tag( \@plans, { type => 'glyph' } );
+#    report_plans_tag( \@plans, { tags => ['food', 'ore', 'water', 'energy', 'storage'] } );
+#    report_plans_tag( \@plans );
 
     print "\n";
 }

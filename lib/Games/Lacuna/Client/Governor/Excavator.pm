@@ -43,7 +43,8 @@ use Hash::Merge qw(merge);
         }
 
         my $max_excavators = $details->{level} - 10;
-        my $active_excavators = scalar keys %{$archaeology->view_excavators()};
+        my $active_excavators = scalar @{$archaeology->view_excavators()->{excavators}} - 1;
+
         if ($active_excavators >= $max_excavators)
         {
             trace("Archaeology at $planet is at maximum excavators ($active_excavators >= $max_excavators), not trying to send more") if ($gov->{config}->{verbosity}->{trace});
@@ -56,6 +57,7 @@ use Hash::Merge qw(merge);
         unless ($observatory_stars)
         {
             my @observatories = $gov->find_all_buildings('Observatory');
+            warn @observatories . " obsevtrys";
             my @stars;
             foreach my $observatory (@observatories)
             {
@@ -71,8 +73,34 @@ use Hash::Merge qw(merge);
                     };
                 }
             }
-            #$observatory_stars = $gov->{cache}->{observatory_stars} = \@stars;
-            $observatory_stars = \@stars;
+
+
+            my @clean_stars;
+            foreach my $star (@stars)
+            {
+                my %clean_star;
+                $clean_star{name} = $star->{name};
+                $clean_star{x} = $star->{x};
+                $clean_star{y} = $star->{y};
+                $clean_star{id} = $star->{id};
+                my @bodies;
+
+                foreach my $planet ( @{$star->{bodies}})
+                {
+                    my %clean_planet;
+                    $clean_planet{id} = $planet->{id};
+                    $clean_planet{name} = $planet->{name};
+                    push @bodies, \%clean_planet;
+                }
+                $clean_star{bodies} = \@bodies;
+                push @clean_stars, \%clean_star;
+            }
+
+            @stars = @clean_stars;
+
+
+            $observatory_stars = $gov->{cache}->{observatory_stars} = \@stars;
+            #$observatory_stars = \@stars;
         }
 
         $gov->{_observatory_plugin}{stars}{$pid} = {
@@ -101,11 +129,15 @@ use Hash::Merge qw(merge);
         my $excavators_to_build = $build_excavators - scalar @all_excavators;
         my $total_excavators = $active_excavators + @all_excavators;
 
+        $excavators_to_build = $max_excavators - $total_excavators + 1;
+
         if ($total_excavators >= $max_excavators)
         {
             trace("Archaeology at $planet is at maximum excavators ($total_excavators > $max_excavators), not building more") if ($gov->{config}->{verbosity}->{trace});
             $excavators_to_build = 0;
         }
+
+
 
         trace(sprintf("$planet: Found %d excavators, configured to build if less than %d found.",scalar @all_excavators,$build_excavators)) if ($gov->{config}->{verbosity}->{trace});
         while ($excavators_to_build > 0) {
@@ -233,15 +265,24 @@ use Hash::Merge qw(merge);
 
 # TODO: we don't need find all observatories above, as this does the job, we just need to make
 # everything use the probed stars list
+        my $avoid = $gov->{config}{excavator}{avoid};
+        my %avoid = map { $_ => 1 } @$avoid;
+
+        use Data::Dumper;
+        warn Dumper(\%avoid);
+        warn Dumper(\$avoid);
+
         my %probed_stars;
         ### Identify all probed stars.
         for my $pid ( @pids ){
             for my $star ( @{$gov->{_observatory_plugin}{stars}{$pid}{stars}} ){
                 if( exists $probed_stars{$star->{name}} ){
+                next if exists($avoid{ $star->{name} });
                     my $planet_name = $gov->{planet_names}->{$pid};
         #            warning(sprintf "Star %s has multiple probes! duplicate probe from %s", $star->{name}, $planet_name);
                     next;
                 }
+                next if exists($avoid{ $star->{name} });
                 $probed_stars{$star->{name}} = $star;
             }
         }
@@ -256,6 +297,7 @@ use Hash::Merge qw(merge);
 
         ### Find all stars that are probed.
         my %valid_target_stars = %probed_stars;
+
 
         ### Determine star distances from Colonies.
         my (%planet_distances);
@@ -330,6 +372,8 @@ use Hash::Merge qw(merge);
             $_ => $docked;
         } keys %{$gov->{_observatory_plugin}{ports}};
 
+        my $avoid = $gov->{config}{excavator}{avoid};
+        my %avoid = map { $_ => 1 } @$avoid;
         my $dry_run = $gov->{config}{dry_run} ? "[DRYRUN]: " : '';
 
         ### Select our targets. Naively.
@@ -342,6 +386,7 @@ use Hash::Merge qw(merge);
             for my $star ( @{$furthest_stars} ){
                 trace("excavator already travelling to star $star") if $traveling_excavators{$star} && ($gov->{config}->{excavator}->{trace});
                 next STAR if $traveling_excavators{$star};
+                next if exists($avoid{ $star });
 #                trace("adding star $star") if ($gov->{config}->{excavator}->{trace});
 
                 my ($excavator_id) = keys %{$gov->{_observatory_plugin}{ports}{$pid}{excavator2port}};
@@ -357,14 +402,29 @@ use Hash::Merge qw(merge);
                 foreach my $target_planet (@{$star_data->{bodies}})
                 {
                     my $target_name = $target_planet->{name};
-                    my $last_attempt = $gov->{cache}->{excavator}->{planets}->{$pid}->{$target_planet->{id}} || 0;
+                    my $last_attempt = $gov->{cache}->{excavator}->{planets}->{$target_planet->{id}} || 0;
                     # don't excavate on occupied planets, it annoys people and they'll probable destroy the excavator anyway
-                    next if $target_planet->{empire};
-                    next if $target_planet->{station};
+                    #next if $target_planet->{empire};
+                 #   if ($target_planet->{station})
+                 #   {
+                 #       trace($target_planet->{name} . " is a station");
+                 #       next;
+                 #   }
                    # next if $target_planet->{alliance};
                    # next if $target_planet->{incoming_foreign_ships};
 #                    warning("sent to $target_name recently") if $last_attempt > (time - 30 * 24 * 60 * 60);
-                    next if $last_attempt > (time - 30 * 24 * 60 * 60);
+                    if ($last_attempt > (time - 30 * 24 * 60 * 60))
+                    {
+                        if ($last_attempt > time)
+                        {
+                        trace($target_planet->{name} . " blocked") if ($gov->{config}->{excavator}->{trace});
+                        }
+                        else
+                        {
+                        trace($target_planet->{name} . " visited this month") if ($gov->{config}->{excavator}->{trace});
+                        }
+                        next;
+                    }
 
                     trace($target_planet->{name} . " is viable") if ($gov->{config}->{excavator}->{trace});
 
@@ -374,21 +434,43 @@ use Hash::Merge qw(merge);
                         }
                     };
                     if( my $e = Exception::Class->caught ){
+                    
                         if( $e->isa('LacunaRPCException') and $e->code == 1009 ){
-                            warning("Unable to send excavator from $planet to $target_name. $e");
-                            if ($e =~ /Can only be sent to asteroids and habitable planets/)
+                            if ($e =~ /Can only be sent to asteroids and uninhabited planets/
+                                || $e =~ /Can only be sent to asteroids and habitable planets/)
                             {
-                                $gov->{cache}->{excavator}->{planets}->{$pid}->{$target_planet->{id}} = time;
+                                $gov->{cache}->{excavator}->{planets}->{$target_planet->{id}} = time + 365 * 24 * 60 * 60;
                           #      next STAR;
+                                warning("invalid target planet");
+                            }
+                            elsif ($e =~ /Max Excavators allowed at this Archaeology/)
+                            {
+                                warning("at archaelogy limit");
+                            }
+                            else
+                            {
+                            warning("Unable to send excavator from $planet to $target_name.\n$e");
                             }
                             next PLANET if ($e =~ /Max Excavators allowed at this Archaeology level is/);
 
                         #    next PLANET;
                         }
                         elsif( $e->isa('LacunaRPCException') and $e->code == 1010 ){
-                            $gov->{cache}->{excavator}->{planets}->{$pid}->{$target_planet->{id}} = time;
-                            warning("Sent excavator to $target_name recently") if ($gov->{config}->{excavator}->{trace});
-                            $gov->write_cache;
+                            if ($e =~ /Only .*  members can excavate bodies in the jurisdiction of the space station/)
+                            {
+                                $gov->{cache}->{excavator}->{planets}->{$target_planet->{id}} = time + 365 * 24 * 60 * 60;
+                            }
+                            elsif ($e =~ /That ship is busy/)
+                            {
+                                warning("busy ship");
+                                delete $gov->{_observatory_plugin}{ports}{$pid}{excavator2port}{$excavator_id};
+                                next STAR;
+                            }
+                            else
+                            {
+                                $gov->{cache}->{excavator}->{planets}->{$target_planet->{id}} = time;
+                                warning("Sent excavator to $target_name recently" .$e) if ($gov->{config}->{excavator}->{trace});
+                            }
                         }
                         else {
                             warning("Unable to send excavator[$excavator_id] from $planet to $target_name @ $star: $e");
@@ -397,9 +479,10 @@ use Hash::Merge qw(merge);
                     else {
                         action("${dry_run} excavator[$excavator_id] sent from $planet to $target_name @ $star");
                         delete $gov->{_observatory_plugin}{ports}{$pid}{excavator2port}{$excavator_id};
-                        $gov->{cache}->{excavator}->{planets}->{$pid}->{$target_planet->{id}} = time;
+                        $gov->{cache}->{excavator}->{planets}->{$target_planet->{id}} = time;
                         #next STAR;
                     }
+                    $gov->write_cache;
                 }
             }
         }
