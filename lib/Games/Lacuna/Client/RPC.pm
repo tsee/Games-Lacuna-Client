@@ -44,10 +44,12 @@ has client => (
   weak_ref => 1,
 );
 
-# was always called with ( id => "1" )
-has '+id_generator' => (
-  default => sub{sub{1}},
-);
+unless( eval{ JSON::RPC::LWP->VERSION(0.007); 1 } ){
+  # was always called with ( id => "1" )
+  has '+id_generator' => (
+    default => sub{sub{1}},
+  );
+}
 
 around call => sub {
   my $orig = shift;
