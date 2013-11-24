@@ -17,14 +17,18 @@ my @ignore;
 my @ignore_regex;
 my @pass;
 my $help;
+my $sleep;
+my $noterm;
 
 GetOptions(
-    'planet=s@'       => \@old_planet,
-    'station=s@'      => \@station,
-    'ignore=s@'       => \@ignore,
-	'ignore-regex=s@' => \@ignore_regex,
-    'pass=s@'         => \@pass,
-    'help|h'          => \$help,
+    'planet=s@'  => \@old_planet,
+    'station=s@' => \@station,
+    'ignore=s@'  => \@ignore,
+    'ignore-regex=s@'  => \@ignore_regex,
+    'pass=s@'    => \@pass,
+    'help|h'     => \$help,
+    'sleep=i'    => \$sleep,
+    'noterm'     => \$noterm,
 );
 
 usage() if $help;
@@ -48,15 +52,25 @@ unless ( $cfg_file and -e $cfg_file ) {
   }
 }
 
-my $is_interactive = is_interactive();
+my $is_interactive;
+if ($noterm) {
+  $is_interactive = 0;
+}
+else {
+  $is_interactive = is_interactive();
+}
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file  => $cfg_file,
-	rpc_sleep => 2,
+	rpc_sleep => $sleep,
 );
 
 # Load the planets
 my $empire  = $client->empire->get_status->{empire};
+
+my $rpc_cnt_beg = $client->{rpc_count};
+print "RPC Count of $rpc_cnt_beg\n";
+
 
 # reverse hash, to key by name instead of id
 my %planets = reverse %{ $empire->{planets} };
@@ -64,31 +78,31 @@ my %planets = reverse %{ $empire->{planets} };
 SS:
 for my $name ( sort keys %planets ) {
     next if @station && !grep { lc $name eq lc $_ } @station;
-
+    
     next if @ignore && first { lc $name eq lc $_ } @ignore;
 
-	next if @ignore_regex && first { $name =~ m/$_/i } @ignore_regex;
+    next if @ignore_regex && first { $name =~ m/$_/i } @ignore_regex;
 
     my $planet = $client->body( id => $planets{$name} );
-
+    
     my $result = $planet->get_buildings;
-
+    
     next if $result->{status}{body}{type} ne 'space station';
-
+    
     printf "Space Station: %s\n\n", $result->{status}{body}{name};
-
+    
     my $buildings = $result->{buildings};
-
+    
     my $parliament_id = first {
             $buildings->{$_}->{url} eq '/parliament'
         } keys %$buildings;
-
+    
     next if !defined $parliament_id;
-
+    
     my $parliament = $client->building( id => $parliament_id, type => 'Parliament' );
-
+    
     my $propositions;
-
+    
     try {
         $propositions = $parliament->view_propositions->{propositions};
     }
@@ -97,12 +111,12 @@ for my $name ( sort keys %planets ) {
         no warnings 'exiting';
         next SS;
     };
-
+    
     if ( ! @$propositions ) {
         print "No propositions\n\n\n";
         next;
     }
-
+    
     for my $prop ( @$propositions ) {
         printf "%s\n", $prop->{description};
         printf "Proposed by: %s\n", $prop->{proposed_by}{name};
@@ -111,15 +125,15 @@ for my $name ( sort keys %planets ) {
         printf "Votes so far: %d yes, %d no\n",
             $prop->{votes_yes},
             $prop->{votes_no};
-
+        
         if ( exists $prop->{my_vote} ) {
             printf "You have already voted: %s\n\n",
                 $prop->{my_vote} ? 'yes' : 'no';
             next;
         }
-
+        
         my $vote;
-
+        
         if ( @pass && first { $prop->{description} =~ /$_/i } @pass ) {
             print "AUTO-VOTED YES\n";
             $vote = 1;
@@ -128,7 +142,7 @@ for my $name ( sort keys %planets ) {
             while ( !defined $vote ) {
                 print "Vote yes or no: ";
                 my $input = <STDIN>;
-
+                
                 if ( $input =~ /y(es)?/i ) {
                     $vote = 1;
                 }
@@ -144,11 +158,14 @@ for my $name ( sort keys %planets ) {
             print "Non-interactive terminal - skipping proposition\n";
             next;
         }
-
+        
         $parliament->cast_vote( $prop->{id}, $vote );
         print "\n\n";
     }
+sleep $sleep;
 }
+my $rpc_cnt_end = $client->{rpc_count};
+print "RPC Count of $rpc_cnt_end\n";
 
 exit;
 
@@ -170,13 +187,19 @@ Save RPCs by specifying your planet names, so we don't have to get its status
 from the server to find that out.
 
     --ignore-regex REGEX
-Similar to --ignore above, but used as a case-insensitive regular expression,
-rather than an exact match.
+ Similar to --ignore above, but used as a case-insensitive regular expression,
+ rather than an exact match.
 
     --pass REGEX
 Multiple --pass opts may be provided - these are run as regexes against each
 proposition description - if it matches, the proposition is automatically
 voted 'yes'.
+
+    --sleep SLEEP
+How much of a pause between calls and planets to avoid hitting any RPC/min limits.
+
+    --noterm
+If used, will not test to see if session is interactive and will act as if it is not.
 
 Changes:
 The --planet opt has been renamed to --station.
