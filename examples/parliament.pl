@@ -17,7 +17,7 @@ my @ignore;
 my @ignore_regex;
 my @pass;
 my $help;
-my $sleep;
+my $sleep = 2;
 my $noterm;
 
 GetOptions(
