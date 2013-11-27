@@ -7,6 +7,8 @@ use lib "$FindBin::Bin/../lib";
 use List::Util            qw( max );
 use Games::Lacuna::Client ();
 
+my $rpcsleep = 2;
+
 my $cfg_file = shift(@ARGV) || 'lacuna.yml';
 unless ( $cfg_file and -e $cfg_file ) {
   $cfg_file = eval{
@@ -25,6 +27,8 @@ unless ( $cfg_file and -e $cfg_file ) {
 
 my $client = Games::Lacuna::Client->new(
 	cfg_file => $cfg_file,
+	rpc_sleep => $rpcsleep,
+	
 	# debug    => 1,
 );
 
