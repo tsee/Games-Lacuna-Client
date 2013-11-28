@@ -13,7 +13,9 @@ use Games::Lacuna::Client ();
 
 my @old_planet;
 my @station;
+my @id_station;
 my @ignore;
+my @id_ignore;
 my @ignore_regex;
 my @pass;
 my $help;
@@ -23,7 +25,9 @@ my $noterm;
 GetOptions(
     'planet=s@'  => \@old_planet,
     'station=s@' => \@station,
+    'id_station=i@' => \@id_station,
     'ignore=s@'  => \@ignore,
+    'id_ignore=i@'  => \@id_ignore,
     'ignore-regex=s@'  => \@ignore_regex,
     'pass=s@'    => \@pass,
     'help|h'     => \$help,
@@ -75,11 +79,20 @@ print "RPC Count of $rpc_cnt_beg\n";
 # reverse hash, to key by name instead of id
 my %planets = reverse %{ $empire->{planets} };
 
+for my $name (sort keys %planets) {
+  if (!grep { lc $name eq lc $_ } @station) {
+    next unless (@id_station && grep { $planets{$name} eq $_ } @id_station);
+    push @station, $name;
+  }
+}
+
 SS:
 for my $name ( sort keys %planets ) {
     next if @station && !grep { lc $name eq lc $_ } @station;
     
     next if @ignore && first { lc $name eq lc $_ } @ignore;
+
+    next if @id_ignore && first { lc $planets{$name} eq lc $_ } @id_ignore;
 
     next if @ignore_regex && first { $name =~ m/$_/i } @ignore_regex;
 
@@ -178,13 +191,16 @@ Prompts for vote on each proposition.
 
 Options:
     --station STATION NAME
+    --id_station STATION BODYID
 
-Multiple --station opts may be provided.
+Multiple --station and --id_station opts may be provided.
 If no --station opts are provided, will search for all allied space-stations.
 
     --ignore PLANET/STATION NAME
 Save RPCs by specifying your planet names, so we don't have to get its status
 from the server to find that out.
+    --id_ignore BODYID
+Save RPCs by specifying your planet ids
 
     --ignore-regex REGEX
  Similar to --ignore above, but used as a case-insensitive regular expression,
