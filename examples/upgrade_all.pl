@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Simple program for upgrading buildings
+# Add ability to define which planets not to do
 
 use strict;
 use warnings;
@@ -23,13 +23,14 @@ use Exception::Class;
         wait    => 8 * 60 * 60,
         sleep  => 1,
         extra  => [],
-        skip   => [],
+        noup   => [],
   );
 
-  GetOptions(\%opts,
+  my $ok = GetOptions(\%opts,
     'h|help',
     'v|verbose',
     'planet=s@',
+    'skip=s@',
     'config=s',
     'dumpfile=s',
     'maxadd=i',
@@ -43,12 +44,12 @@ use Exception::Class;
     'city',
     'lab',
     'match=s@',
-    'skip=s@',
+    'noup=s@',
     'extra=s@',
     'sleep=i',
   );
 
-  usage() if $opts{h};
+  usage() if (!$ok or $opts{h});
   
   set_items();
   my $glc = Games::Lacuna::Client->new(
@@ -71,12 +72,14 @@ use Exception::Class;
   $status->{planets} = \%planets;
   my $short_time = $opts{wait} + 1;
 
+  my @plist = planet_list(\%planets, \%opts);
+
   my $keep_going = 1;
   do {
     my $pname;
     my @skip_planets;
     for $pname (sort keys %planets) {
-      if ($opts{planet} and not (grep { $pname eq $_ } @{$opts{planet}})) {
+      unless (grep { $pname eq $_ } @plist) {
         push @skip_planets, $pname;
         next;
       }
@@ -128,7 +131,7 @@ use Exception::Class;
         $short_time = $seconds;
       }
     }
-    print "Done with: ",join(":", sort @skip_planets), "\n";
+    print "Done or skipping: ",join(":", sort @skip_planets), "\n";
     for $pname (@skip_planets) {
       delete $planets{$pname};
     }
@@ -147,6 +150,24 @@ use Exception::Class;
  print "Ending   RPC: $glc->{rpc_count}\n";
 
 exit;
+
+sub planet_list {
+  my ($phash, $opts) = @_;
+
+  my @good_planets;
+  for my $pname (sort keys %$phash) {
+    if ($opts->{skip}) {
+      next if (grep { $pname eq $_ } @{$opts->{skip}});
+    }
+    if ($opts->{planet}) {
+      push @good_planets, $pname if (grep { $pname eq $_ } @{$opts->{planet}});
+    }
+    else {
+      push @good_planets, $pname;
+    }
+  }
+  return @good_planets;
+}
 
 sub set_items {
   my $unless = [
@@ -231,36 +252,36 @@ sub set_items {
     push @{$opts{extra}}, @$junk;
   }
   else {
-    push @{$opts{skip}}, @$junk;
+    push @{$opts{noup}}, @$junk;
   }
   if ($opts{glyph}) {
     push @{$opts{extra}}, @$glyph;
   }
   else {
-    push @{$opts{skip}}, @$glyph;
+    push @{$opts{noup}}, @$glyph;
   }
   if ($opts{space}) {
     push @{$opts{extra}}, @$space;
   }
   else {
-    push @{$opts{skip}}, @$space;
+    push @{$opts{noup}}, @$space;
   }
   if ($opts{city}) {
     push @{$opts{extra}}, @$city;
   }
   else {
-    push @{$opts{skip}}, @$city;
+    push @{$opts{noup}}, @$city;
   }
   if ($opts{lab}) {
     push @{$opts{extra}}, @$lab;
   }
   else {
-    push @{$opts{skip}}, @$lab;
+    push @{$opts{noup}}, @$lab;
   }
-  push @{$opts{skip}}, @$unless;
+  push @{$opts{noup}}, @$unless;
 
 #  print "Extra: ",join(", ", @{$opts{extra}}), "\n";
-#  print "Skip : ",join(", ", @{$opts{skip}}), "\n";
+#  print "Skip : ",join(", ", @{$opts{noup}}), "\n";
 }
 
 sub bstats {
@@ -322,7 +343,7 @@ sub check_type {
     print "Extra\n" if ($opts{v});
     return 1;
   }
-  if ($opts{skip} and (grep { $bld->{name} =~ /\Q$_\E/ } @{$opts{skip}})) {
+  if ($opts{noup} and (grep { $bld->{name} =~ /\Q$_\E/ } @{$opts{noup}})) {
     print "Skipping\n" if ($opts{v});
     return 0;
   }
@@ -369,6 +390,7 @@ Options:
   --verbose          - Print out more information
   --config FILE      - Specify a GLC config file, normally lacuna.yml
   --planet NAME      - Specify planet
+  --skip  PLANET     - Do not process this planet
   --dumpfile FILE    - data dump for all the info we don't print
   --maxlevel INT     - do not upgrade if this level has been achieved
   --maxnum INT       - Use this if lower than dev ministry level
@@ -381,7 +403,7 @@ Options:
   --city             - Upgrade LCOT
   --lab              - Upgrade labs
   --match STRING     - Only upgrade matching building names
-  --skip  STRING     - Skip building names (multiple allowed)
+  --noup  STRING     - Skip building names (multiple allowed)
   --extra STRING     - Add matching names to usual list to upgrade
   --dry              - Do not actually upgrade
   );
