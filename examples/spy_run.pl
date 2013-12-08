@@ -24,12 +24,16 @@ use Date::Format;
   my $max_def = 10000;
   my $number  = 10000;
   my $random_bit = int rand 9999;
-  my $dumpfile = "log/spy_run_".time2str('%Y%m%dT%H%M%S%z', time).
-                      "_$random_bit.js";
+  my $dumpfile = "log/spy_run.js"; 
+#.time2str('%Y%m%dT%H%M%S%z', time)."_$random_bit.js";
   my $fail_break = 0;
   my $fail = 0;
   my $sleep = 1;
+  my $busy;
+  my $dryrun;
   my $cfg_file = "lacuna.yml";
+  my $help;
+  my $name;
 
   GetOptions(
     'from=s'       => \$planet_name,
@@ -39,15 +43,19 @@ use Date::Format;
     'target=s'     => \$target,
     'tid=i'        => \$tid,
     'task=s'       => \$task,
+    'name=s',      => \$name,
     'min_off=i'    => \$min_off,
     'min_def=i'    => \$min_def,
     'max_off=i'    => \$max_off,
     'max_def=i'    => \$max_def,
     'number=i'     => \$number,
+    'busy'         => \$busy,
     'sleep=i'      => \$sleep,
+    'dryrun'       => \$dryrun,
+    'help'         => \$help,
   );
 
-  usage() if !$planet_name || (!$target and !$tid) || !$task;
+  usage() if $help || !$planet_name || (!$target and !$tid) || !$task;
 
   my $tstr;
   my $tvar;
@@ -116,45 +124,44 @@ use Date::Format;
 
   my (@spies, $page, $done);
 
-  while(!$done) {
-    my $spies = $intel->view_spies(++$page);
-    my @trim_spies;
-    for my $spy (@{$spies->{spies}}) {
-      next if lc( $spy->{assigned_to}{$tstr} ) ne lc( $tvar );
-      next unless ($spy->{is_available});
-      next unless ($spy->{offense_rating} >= $min_off and
-                   $spy->{offense_rating} <= $max_off and
-                   $spy->{defense_rating} >= $min_def and
-                   $spy->{defense_rating} <= $max_def);
-      my @missions = grep {
-          $_->{task} =~ /^$task/i
-      } @{ $spy->{possible_assignments} };
-      next if !@missions;
-      if ( @missions > 1 ) {
-        warn "Supplied --task matches multiple possible tasks - skipping!\n";
-        for my $mission (@missions) {
-          warn sprintf "\tmatches: %s\n", $mission->{task};
-        }
-        last;
-      }
-      $task = $missions[0]->{task};
-      push @trim_spies, $spy;
+  my $spies = $intel->view_all_spies();
+  print scalar @{$spies->{spies}}," spies found from ministry!\n";
+  my @trim_spies;
+  for my $spy (@{$spies->{spies}}) {
+    next if lc( $spy->{assigned_to}{$tstr} ) ne lc( $tvar );
+    next unless ($spy->{is_available});
+    next if (!$busy and $spy->{assignment} ne 'Idle');
+    if ($name) {
+      print "Checking for \'$name\' against \'$spy->{name}\'\n";
+      next unless $spy->{name} =~ /$name/i;
     }
-    push @spies, @trim_spies;
-    $done = (30 * $page >= $spies->{spy_count} or @spies > $number);
+    next unless ($spy->{offense_rating} >= $min_off and
+                 $spy->{offense_rating} <= $max_off and
+                 $spy->{defense_rating} >= $min_def and
+                 $spy->{defense_rating} <= $max_def);
+    my @missions = grep {
+        $_->{task} =~ /^$task/i
+    } @{ $spy->{possible_assignments} };
+    next if !@missions;
+    if ( @missions > 1 ) {
+      warn "Supplied --task matches multiple possible tasks - skipping!\n";
+      for my $mission (@missions) {
+        warn sprintf "\tmatches: %s\n", $mission->{task};
+      }
+      last;
+    }
+    $task = $missions[0]->{task};
+    print "Pushing ".$spy->{name}." onto list.\n";
+    push @trim_spies, $spy;
   }
+  push @spies, @trim_spies;
 
-  print scalar @spies," spies found from $planet_name available.";
-  if (@spies >= $number) {
-    print " Only scanned thru first ",$page * 30, " spies.\n";
-  }
-  else {
-    print "\n";
-  }
+  print scalar @spies," spies found from $planet_name available.\n";
 
   print $df $json->pretty->canonical->encode(\@spies);
   close $df;
 
+  if ($dryrun) { die "bailing now"; }
   my $spy_run = 0;
   for my $spy (@spies) {
     my $return;
@@ -202,7 +209,12 @@ sub task_list {
 "Abduct Operatives",
 "Appropriate Technology",
 "Incite Rebellion",
-"Incite Insurrection"
+"Incite Insurrection",
+"Intel Training",
+"Mayhem Training",
+"Politics Training",
+"Theft Training",
+"Political Propaganda",
 ];
   return $possible;
 }
@@ -215,6 +227,7 @@ Usage: $0
     --target     PLANET
     --tid        BODY_ID (Use either tid or target, not both)
     --task       MISSION
+    --name       Match name of spy, partial allowed
     --min_def    Minimum Defense Rating
     --min_off    Minimum Offense Rating
     --max_def    Maximum Defense Rating
@@ -222,6 +235,10 @@ Usage: $0
     --number     Max Number of Agents to use
     --fail_break Number of fails before giving up
     --dumpfile   FILE json dumpfile
+    --busy       Use any available agents, otherwise will only use Idle
+    --sleep      RPC sleep interval
+    --dryrun     Do not actually run missions
+    --help       This message
 
 CONFIG_FILE  defaults to 'lacuna.yml'
 
