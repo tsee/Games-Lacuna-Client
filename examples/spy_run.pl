@@ -151,7 +151,7 @@ use Date::Format;
       last;
     }
     $task = $missions[0]->{task};
-    print "Pushing ".$spy->{name}." onto list.\n";
+#    print "Pushing ".$spy->{name}." onto list.\n";
     push @trim_spies, $spy;
   }
   push @spies, @trim_spies;
