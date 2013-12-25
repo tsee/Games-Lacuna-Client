@@ -13,6 +13,7 @@ sub api_methods {
   return {
     view       => { default_args => [qw(session_id building_id)] },
     view_plans => { default_args => [qw(session_id building_id)] },
+    view_incoming_supply_chains => { default_args => [qw(session_id building_id)] },
   };
 }
 

@@ -12,6 +12,7 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 sub api_methods {
   return {
     view_plans => { default_args => [qw(session_id building_id)] },
+    view_incoming_supply_chains => { default_args => [qw(session_id building_id)] },
   };
 }
 
