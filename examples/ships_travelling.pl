@@ -15,7 +15,8 @@ my @planets;
 my $ships_per_page = 25;
 my $rpc_sleep = 1;
 
-my $cfg_file = shift(@ARGV) || 'lacuna.yml' unless $ARGV[0] and $ARGV[0] =~ /^\-/;
+my $cfg_file = 'lacuna.yml';
+$cfg_file = shift(@ARGV) if @ARGV and $ARGV[0] !=~ /^\-/;
 GetOptions(
     'c|config=s'    => \$cfg_file,
     'planet=s'	    => \@planets,
