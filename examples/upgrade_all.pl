@@ -70,11 +70,12 @@ use Exception::Class;
 # Get planets
   my %planets = map { $empire->{planets}{$_}, $_ } keys %{$empire->{planets}};
   $status->{planets} = \%planets;
-  my $short_time = $opts{wait} + 1;
 
   my @plist = planet_list(\%planets, \%opts);
 
   my $keep_going = 1;
+  my $lowestqueuetimer = $opts{wait} -1;
+  my $currentqueuetimer;
   do {
     my $pname;
     my @skip_planets;
@@ -94,8 +95,7 @@ use Exception::Class;
       }
 # Station and checking for resources needed.
       my ($sarr, $pending) = bstats($buildings, $station);
-      my $seconds = $opts{wait} + 1;
-      $seconds = $pending if ($pending > 0);
+      $currentqueuetimer = $pending if ($pending > 0);
       for my $bld (@$sarr) {
         my $ok;
         my $bldstat = "Bad";
@@ -105,12 +105,12 @@ use Exception::Class;
           my $bldpnt = $glc->building( id => $bld->{id}, type => $type);
           if ($opts{dry}) {
             $reply = "dry run";
-            $seconds = $opts{wait} + 1;
+            $lowestqueuetimer = $opts{wait} - 1;
           }
           else {
             $reply = "upgrading";
             $bldstat = $bldpnt->upgrade();
-            $seconds = $bldstat->{building}->{pending_build}->{seconds_remaining};
+            $currentqueuetimer = $bldstat->{building}->{pending_build}->{seconds_remaining};
           }
         };
         printf "%7d %10s l:%2d x:%2d y:%2d %s\n",
@@ -121,14 +121,16 @@ use Exception::Class;
 #          sleep 60;
         }
       }
+      if ($lowestqueuetimer > $currentqueuetimer ) {
+        $lowestqueuetimer = $currentqueuetimer;
+        printf sec2str($lowestqueuetimer);
+        printf " new lowest sleep time.\n";
+      }  
       $status->{"$pname"} = $sarr;
-      if ($seconds > $opts{wait}) {
-        print "Queue of ", sec2str($seconds),
+      if ($currentqueuetimer > $opts{wait}) {
+        print "Queue of ", sec2str($currentqueuetimer),
               " is longer than wait period of ",sec2str($opts{wait}), ", taking $pname off of list.\n";
         push @skip_planets, $pname;
-      }
-      elsif ($seconds < $short_time) {
-        $short_time = $seconds;
       }
     }
     print "Done or skipping: ",join(":", sort @skip_planets), "\n";
@@ -136,8 +138,9 @@ use Exception::Class;
       delete $planets{$pname};
     }
     if (keys %planets) {
-      print "Clearing Queue for ",sec2str($short_time),".\n";
-      sleep $short_time if $short_time > 0;
+      print "Clearing Queue for ",sec2str($lowestqueuetimer),".\n";
+      sleep $lowestqueuetimer if $lowestqueuetimer > 0;
+      $lowestqueuetimer = $opts{wait} - 1;
     }
     else {
       print "Nothing Else to do.\n";

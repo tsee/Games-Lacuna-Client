@@ -21,6 +21,7 @@ sub api_methods {
     recall_all              => { default_args => [qw(session_id building_id)] },
     name_ship               => { default_args => [qw(session_id building_id)] },
     scuttle_ship            => { default_args => [qw(session_id building_id)] },
+    mass_scuttle_ship       => { default_args => [qw(session_id building_id)] },
     view_ships_travelling   => { default_args => [qw(session_id building_id)] },
     view_ships_orbiting     => { default_args => [qw(session_id building_id)] },
     prepare_send_spies      => { default_args => [qw(session_id)] },
