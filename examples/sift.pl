@@ -597,6 +597,7 @@ sub return_ptypes {
     "Denton Brambles",
     "Gas Giant Settlement Platform",
     "Geo Thermal Vent",
+    "Gratch's Gauntlet",
     "Great Ball of Junk",
     "Interdimensional Rift",
     "Junk Henge Sculpture",
