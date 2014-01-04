@@ -18,6 +18,7 @@ my @ignore;
 my @id_ignore;
 my @ignore_regex;
 my @pass;
+my @fail;
 my $help;
 my $sleep = 2;
 my $noterm;
@@ -29,6 +30,7 @@ GetOptions(
     'ignore=s@'  => \@ignore,
     'id_ignore=i@'  => \@id_ignore,
     'ignore-regex=s@'  => \@ignore_regex,
+    'fail=s@'    => \@fail,
     'pass=s@'    => \@pass,
     'help|h'     => \$help,
     'sleep=i'    => \$sleep,
@@ -151,6 +153,10 @@ for my $name ( sort keys %planets ) {
             print "AUTO-VOTED YES\n";
             $vote = 1;
         }
+        if ( @fail && first { $prop->{description} =~ /$_/i } @fail ) {
+            print "AUTO-VOTED NO\n";
+            $vote = 0;
+        }
         elsif ( $is_interactive ) {
             while ( !defined $vote ) {
                 print "Vote yes or no: ";
@@ -211,11 +217,19 @@ Multiple --pass opts may be provided - these are run as regexes against each
 proposition description - if it matches, the proposition is automatically
 voted 'yes'.
 
+    --fail REGEX
+Multiple --fail opts may be provided - these are run as regexes against each
+proposition description - if it matches, the proposition is automatically
+voted 'no'.
+
     --sleep SLEEP
 How much of a pause between calls and planets to avoid hitting any RPC/min limits.
 
     --noterm
 If used, will not test to see if session is interactive and will act as if it is not.
+
+Example pass/fail arguments:
+'^install', '^upgrade', '^demolish dent', '^seize', '^rename', '^repair', '^transfer', '^fire' , '^neutral', '^fire', '^repeal'
 
 Changes:
 The --planet opt has been renamed to --station.
