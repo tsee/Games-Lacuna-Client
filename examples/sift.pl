@@ -51,6 +51,7 @@ use utf8;
     'snum=i',
 
     'plan_match=s@',
+    'plan_exclude=s@',
     'p_num=i',
     'p_max=i',
     'p_leave=i',
@@ -67,6 +68,7 @@ use utf8;
     'p_all',
     
     'glyph_match=s@',
+    'glyph_exclude=s@',
     'g_num=i',
     'g_max=i',
     'g_leave=i',
@@ -431,6 +433,9 @@ sub grab_glyphs {
         next unless ( grep { $glyph->{name} =~ /$_/i } @{$opts->{glyph_match}});
       }
     }
+    if ($opts->{glyph_exclude}) {
+      next if ( grep { $glyph->{name} =~ /$_/i } @{$opts->{glyph_exclude}});
+    }
     if ($opts->{g_leave}) {
       if ($glyph->{quantity} > $opts->{g_leave}) {
         $glyph->{quantity} -= $opts->{g_leave};
@@ -474,6 +479,9 @@ sub grab_plans {
       if ($opts->{plan_match}) {
         next unless ( grep { $plan->{name} =~ /$_/i } @{$opts->{plan_match}});
       }
+    }
+    if ($opts->{plan_exclude}) {
+      next if ( grep { $plan->{name} =~ /$_/i } @{$opts->{plan_exclude}});
     }
     if ($opts->{p_leave}) {
       if ($plan->{quantity} > $opts->{p_leave}) {
@@ -738,27 +746,29 @@ Ship Options
        --snum        Use up to this number of ships
 
 Plan Options
-       --plan_match  PLAN NAME REGEX (Can be multiple options)
-       --p_num       Maximum number of each plan to push
-       --p_max       Maximum number of plans to push
-       --min_plus    Minimum Plus to plans to move (only base 1 plans looked at)
-       --max_plus    Maximum Plus to plans to move (only base 1 plans looked at)
-       --min_base    Minimum Base for plans to move
-       --max_base    Maximum Base for plans to move
-       --p_all       Grab All plans
-       --p_decor     Grab Decor plans
-       --p_glyph     Grab Glyph Plans (that are not decor or Halls) Note, they don't use a plot.
-       --p_hall      Grab Hall Plans
-       --p_standard  Grab all "standard" building plans
-       --p_station   Grab Space Station Plans
-       --p_leave     Leave this number of each plan behind
+       --plan_match    PLAN NAME REGEX (Can be multiple options)
+       --plan_exclude  PLAN NAME REGEX (Can be multiple options)
+       --p_num         Maximum number of each plan to push
+       --p_max         Maximum number of plans to push
+       --min_plus      Minimum Plus to plans to move (only base 1 plans looked at)
+       --max_plus      Maximum Plus to plans to move (only base 1 plans looked at)
+       --min_base      Minimum Base for plans to move
+       --max_base      Maximum Base for plans to move
+       --p_all         Grab All plans
+       --p_decor       Grab Decor plans
+       --p_glyph       Grab Glyph Plans (that are not decor or Halls) Note, they don't use a plot.
+       --p_hall        Grab Hall Plans
+       --p_standard    Grab all "standard" building plans
+       --p_station     Grab Space Station Plans
+       --p_leave       Leave this number of each plan behind
 
 Glyph Options
-       --glyph_match GLYPH NAME REGEX (Can be put in multiple times)
-       --g_all       Grab all plans
-       --g_num       Maximum number of each glyph to push
-       --g_max       Maximum number of glyphs to push
-       --g_leave     Leave this number of each type of glyph behind
+       --glyph_match   GLYPH NAME REGEX (Can be put in multiple times)
+       --glyph_exclude GLYPH NAME REGEX (Can be put in multiple times)
+       --g_all         Grab all plans
+       --g_num         Maximum number of each glyph to push
+       --g_max         Maximum number of glyphs to push
+       --g_leave       Leave this number of each type of glyph behind
 
 Pushes plans and glyphs between your own planets.
 
@@ -766,6 +776,7 @@ Examples:
   Send all 1+4 glyph plans     : $0 --to Planet --from Planet --p_glyph --max_base 1 --min_plus 4
   Send 10 gold & bauxite glyphs: $0 --to Planet --from Planet --glyph_match gold --glyph bauxite --g_num 10
   Send all plans & glyphs      : $0 --to Planet --from Planet --p_all --g_all
+  Send all plans, but Beaches  : $0 --to Planet --from Planet --p_all --plan_exclude Beach
 END_USAGE
 
 }
