@@ -74,8 +74,8 @@ use Exception::Class;
   my @plist = planet_list(\%planets, \%opts);
 
   my $keep_going = 1;
-  my $lowestqueuetimer = $opts{wait} -1;
-  my $currentqueuetimer;
+  my $lowestqueuetimer = $opts{wait} - 1;
+  my $currentqueuetimer = 0;
   do {
     my $pname;
     my @skip_planets;
@@ -95,7 +95,12 @@ use Exception::Class;
       }
 # Station and checking for resources needed.
       my ($sarr, $pending) = bstats($buildings, $station);
-      $currentqueuetimer = $pending if ($pending > 0);
+      if ($pending > 0) {
+        $currentqueuetimer = $pending;
+      }
+      elsif (scalar @$sarr == 0) {
+        $currentqueuetimer = $opts{wait} + 1;
+      }
       for my $bld (@$sarr) {
         my $ok;
         my $bldstat = "Bad";
