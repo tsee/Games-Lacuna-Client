@@ -76,6 +76,7 @@ use Exception::Class;
   my $keep_going = 1;
   my $lowestqueuetimer = $opts{wait} - 1;
   my $currentqueuetimer = 0;
+  my %build_err;
   do {
     my $pname;
     my @skip_planets;
@@ -94,11 +95,12 @@ use Exception::Class;
         next;
       }
 # Station and checking for resources needed.
-      my ($sarr, $pending) = bstats($buildings, $station);
+      my ($sarr, $pending) = bstats($buildings, \%build_err, $station);
       if ($pending > 0) {
         $currentqueuetimer = $pending;
       }
       elsif (scalar @$sarr == 0) {
+        print "No buildings to upgrade on $pname\n";
         $currentqueuetimer = $opts{wait} + 1;
       }
       for my $bld (@$sarr) {
@@ -122,8 +124,8 @@ use Exception::Class;
                  $bld->{id}, $bld->{name},
                  $bld->{level}, $bld->{x}, $bld->{y}, $reply;
         unless ($ok) {
-          print "$@ Error; sleeping 60\n";
-#          sleep 60;
+          print "$@ Error; Placing building on skip list\n";
+          $build_err{$bld->{id}} = $@;
         }
       }
       if ($lowestqueuetimer > $currentqueuetimer ) {
@@ -293,7 +295,7 @@ sub set_items {
 }
 
 sub bstats {
-  my ($bhash, $station) = @_;
+  my ($bhash, $berr, $station) = @_;
 
   my $bcnt = 0;
   my $dlevel = $station ? 121 : 0;
@@ -306,10 +308,12 @@ sub bstats {
     $dlevel = $opts{maxnum} if ( $opts{maxnum} < $dlevel );
     if ( defined($bhash->{$bid}->{pending_build})) {
       $bcnt++;
-      $pending = $bhash->{$bid}->{pending_build}->{seconds_remaining} if ($bhash->{$bid}->{pending_build}->{seconds_remaining} > $pending);
+      $pending = $bhash->{$bid}->{pending_build}->{seconds_remaining}
+          if ($bhash->{$bid}->{pending_build}->{seconds_remaining} > $pending);
     }
     else {
       my $doit = check_type($bhash->{$bid});
+      $doit = 0 if ($berr->{$bid});
       if ($doit) {
 #        print "Doing $bhash->{$bid}->{name}\n";
         my $ref = $bhash->{$bid};
