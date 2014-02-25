@@ -264,6 +264,7 @@ sub set_items {
   my $standard = [
   "Algae Cropper",
   "Amalgus Meadow",
+  "Archaeology Ministry",
   "Atmospheric Evaporator",
   "Amalgus Bean Plantation",
   "Beeldeban Herder",
