@@ -5,7 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use List::Util            qw(min max);
-use List::MoreUtils       qw( uniq );
+use List::MoreUtils       qw(all uniq);
 use Getopt::Long          qw(GetOptions);
 use Games::Lacuna::Client ();
 use JSON;
@@ -17,7 +17,7 @@ $opts{data} = "log/docked_ships.js";
 
 GetOptions(
     \%opts,
-    'planet=s',
+    'planet=s@',
     'data=s',
     @specs,
     'travelling',
@@ -69,7 +69,7 @@ my $ship_hash = {};
 # Scan each planet
 foreach my $name ( sort keys %planets ) {
 
-    next if defined $opts{planet} && lc $opts{planet} ne lc $name;
+    next if defined $opts{planet} && all { lc $_ ne lc $name } @{$opts{planet}};
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );
