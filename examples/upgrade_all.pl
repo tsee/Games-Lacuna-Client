@@ -486,7 +486,7 @@ sub usage {
     diag(<<END);
 Usage: $0 [options]
 
-This program upgrades planets on your planet. Faster than clicking each port.
+This program upgrades buildings on your planet. Faster than clicking each building.
 It will upgrade in order of level up to maxlevel.
 
 Options:
