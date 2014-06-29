@@ -149,7 +149,7 @@ use Exception::Class;
       delete $planets{$pname};
     }
     if (keys %planets) {
-      print "Clearing Queue for ",sec2str($lowestqueuetimer),".\n\n";
+      print "Sleeping for ",sec2str($lowestqueuetimer),".\n\n";
       sleep $lowestqueuetimer if $lowestqueuetimer > 0;
       $lowestqueuetimer = $opts{wait} - 1;
     }
