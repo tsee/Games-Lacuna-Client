@@ -85,7 +85,10 @@ use Exception::Class;
     my @skip_planets;
     for $pname (sort keys %planets) {
       unless (grep { $pname eq $_ } @plist) {
-        next if $pname =~ /$opts{skipSS}/;
+        if ($pname =~ /$opts{skipSS}/) {
+          delete $planets{$pname};
+          next;
+          }
         push @skip_planets, $pname;
         next;
       }
