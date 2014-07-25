@@ -124,7 +124,7 @@ use Exception::Class;
             $currentqueuetimer = $bldstat->{building}->{pending_build}->{seconds_remaining};
           }
         };
-        printf "%7d %10s l:%2d x:%2d y:%2d %s\n",
+        printf "%7d %10s level:%2d x:%2d y:%2d %s\n",
                  $bld->{id}, $bld->{name},
                  $bld->{level}, $bld->{x}, $bld->{y}, $reply;
         unless ($ok) {
