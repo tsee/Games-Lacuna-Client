@@ -13,6 +13,7 @@ sub api_methods {
   return {
     view                  => { default_args => [qw(session_id building_id)] },
     subsidize_build_queue => { default_args => [qw(session_id building_id)] },
+    cancel_build => { default_args => [qw(session_id building_id)] },
   };
 }
 
