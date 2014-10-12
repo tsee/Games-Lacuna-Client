@@ -673,7 +673,6 @@ sub return_ptypes {
     "Shipyard",
     "Singularity Energy Plant",
     "Space Port",
-    "Station Command Center",
     "Supply Pod",
     "Trade Ministry",
     "Waste Digester",
