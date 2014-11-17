@@ -17,6 +17,7 @@ sub api_methods {
     abandon_platform        => { default_args => [qw(session_id building_id)] },
     add_cargo_ship_to_fleet => { default_args => [qw(session_id building_id)] },
     remove_cargo_ship_from_fleet => { default_args => [qw(session_id building_id)] },
+    mass_abandon_platform   => { default_args => [qw(session_id building_id)] },
   };
 }
 

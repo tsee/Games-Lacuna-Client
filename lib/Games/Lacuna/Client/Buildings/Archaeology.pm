@@ -19,6 +19,7 @@ sub api_methods {
     get_ores_available_for_processing => { default_args => [qw(session_id building_id)] },
     view_excavators     => { default_args => [qw(session_id building_id)] },
     abandon_excavator   => { default_args => [qw(session_id building_id)] },
+    mass_abandon_excavator => { default_args => [qw(session_id building_id)] },
   };
 }
 

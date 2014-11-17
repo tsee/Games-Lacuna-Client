@@ -23,6 +23,7 @@ sub api_methods {
         archive_messages
         trash_messages
         send_message
+        trash_messages_where
       )
     ),
   };
