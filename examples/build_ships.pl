@@ -282,7 +282,7 @@ while ($not_done) {
         $not_done = 0;
     }
 }
-print "$glc->{rpc_count} RPC\n";
+print "$glc->{rpc_count} RPC\n" if defined($glc->{rpc_count});
 undef $glc;
 exit;
 
@@ -291,8 +291,8 @@ sub setup_yhash {
 
     my $planet;
     my $yhash;
-    my $rpc_cnt;
-    my $rpc_lmt;
+    my $rpc_cnt = 0;
+    my $rpc_lmt = 0;
     for $planet ( sort @$planets ) {
         $yhash->{"$planet"}->{keels}   = 0;
         $yhash->{"$planet"}->{reserve} = 0;
@@ -478,8 +478,11 @@ sub ship_types {
           spy_pod
           spy_shuttle
           stake
+          supply_pod
           supply_pod2
+          supply_pod3
           supply_pod4
+          supply_pod5
           surveyor
           sweeper
           terraforming_platform_ship
