@@ -60,10 +60,10 @@ my $result = $body->get_buildings;
 my $buildings = $result->{buildings};
 
 # Find the ThemePark
-my $themepark_id = first {
-        $buildings->{$_}->{url} eq '/themepark'
-} keys %$buildings;
+my @themepark_ids = grep { $buildings->{$_}->{url} eq '/themepark' } keys %$buildings;
 
+foreach my $themepark_id (@themepark_ids)
+{
 die "No Theme Park on this planet\n"
 	if !$themepark_id;
 
@@ -71,19 +71,22 @@ my $themepark = $client->building( id => $themepark_id, type => 'ThemePark' );
 
 if ( $operate ) {
     for ( 1 .. $count ) {
-        my $return = $themepark->operate->{themepark};
-
-        print "Success\n";
+        my $return;
+        eval 
+        {
+        $return = $themepark->operate->{themepark};
+        };
 
         if ( $return->{can_operate} ) {
             my $food_count = $return->{food_type_count};
 
-            print "Can operate the Theme Park again\n";
-            printf "We have the %d foods required\n", $food_count;
+#            print "Can operate the Theme Park again\n";
+#            printf "We have the %d foods required\n", $food_count;
         }
         else {
-            print "Cannot operate again:\n";
-            printf "%s\n", $return->{reason}[1];
+#            print "Cannot operate again:\n";
+#            printf "%s\n", $return->{reason}[1] if $return;
+            last;
         }
     }
 }
@@ -100,6 +103,7 @@ else {
         print "Cannot operate the Theme Park:\n";
         printf "%s\n", $return->{reason}[1];
     }
+}
 }
 
 exit;

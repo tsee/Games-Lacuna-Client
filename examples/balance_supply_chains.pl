@@ -68,7 +68,7 @@ foreach my $planet_id ( sort keys %$planets ) {
 
 my $tiers =
 {
-    "station"   => { lower => 20000, upper => 22000, },
+    "station"   => { lower => 1020000, upper => 1022000, },
     "low"       => { lower => 400000, upper => 500000, },
     "high"      => { lower => 26000000, upper => 27000000, },
     "default"   => { lower => 50000000, upper => 60000000, },

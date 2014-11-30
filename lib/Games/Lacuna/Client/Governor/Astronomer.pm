@@ -261,6 +261,7 @@ use Hash::Merge qw(merge);
             keys %stars;
 
         ### Determine star distances from Colonies.
+        warning("determine distances");
         my (%planet_distances);
         my %pid_loc = map { $_ => [@{$gov->{status}{$_}}{qw(x y)}]; } keys %{$gov->{status}{empire}{planets}};
         PLANET:
@@ -353,6 +354,7 @@ use Hash::Merge qw(merge);
             my $closest_stars = $distances_by_planet->{$pid};
             STAR:
             for my $star ( @{$closest_stars} ){
+            warning("checking $star");
                 next PLANET if not $probe_cnt{$pid};
                 next STAR if $traveling_probes{$star} or $closest_launch{$star};
                 next STAR if (exists $gov->{cache}{renamed_stars}{$star} && $gov->{cache}{renamed_stars}{$star} eq "unknown");

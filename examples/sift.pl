@@ -91,7 +91,7 @@ use utf8;
 
   my $glc = Games::Lacuna::Client->new(
 	cfg_file => $opts{config},
-	 #debug    => 1,
+	#debug    => 1,
   );
 
   my $json = JSON->new->utf8(1);
@@ -137,12 +137,12 @@ use utf8;
   my $send_glyphs;
 # Will whittle down via match, type args, number of each, and max number
   if ($gorp eq "both" or $gorp eq "plan") {
-    $send_plans = grab_plans(\@plans, $plan_types, \%opts);
+    $send_plans = grab_plans(\@plans, $plan_types, \%opts) || 0;
   }
 
 # Will whittle down via match, number of each, and max number
   if ($gorp eq "both" or $gorp eq "glyph") {
-    $send_glyphs = grab_glyphs(\@glyphs, \%opts);
+    $send_glyphs = grab_glyphs(\@glyphs, \%opts) || 0;
   }
 
   my @ships;
@@ -279,7 +279,7 @@ sub max_num_of {
 sub send_ship {
   my ($sent_plans, $pcargo_each, $sent_glyphs, $gcargo_each, $ship) = @_;
 
-  return (0,0) unless (scalar $sent_plans > 0 or scalar $sent_glyphs > 0);
+  return (0,0) unless ((defined $sent_plans and scalar $sent_plans > 0) or  (defined $sent_glyphs and $sent_glyphs > 0));
   my $left_plans; my $left_glyphs;
 
   my $ship_id;
@@ -292,7 +292,7 @@ sub send_ship {
     for my $glyph (@{$sent_glyphs}) {
       $gcargo_req += $glyph->{quantity} * $gcargo_each;
     }
-#    print "$pcargo_req plan space and $gcargo_req glyph space needed with $ship->{hold_size} hold size.\n";
+    print "$pcargo_req plan space and $gcargo_req glyph space needed with $ship->{hold_size} hold size.\n";
     if ( $ship->{hold_size} < $pcargo_req + $gcargo_req ) {
       ( $sent_plans, $left_plans, $sent_glyphs, $left_glyphs) =
         pack_cargo( $sent_plans,  $pcargo_each, $pcargo_req,

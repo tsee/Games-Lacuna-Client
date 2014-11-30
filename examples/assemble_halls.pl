@@ -52,7 +52,7 @@ use Games::Lacuna::Client;
     [qw/ kerogen   methane     sulfur        zircon    /],
     [qw/ monazite  fluorite    beryl         magnetite /],
     [qw/ rutile    chromite    chalcopyrite  galena    /],
-#    [qw/  methane        zircon         magnetite      beryl/],
+#    [qw/ methane   zircon      magnetite     beryl/], # terraforming platform
   );
 
   my %build_types;
@@ -98,7 +98,7 @@ use Games::Lacuna::Client;
 
     for my $glyph (@$glyphs_aref) {
       $glyph->{quantity}-- unless $opts{'use-last'};
-      verbose( "Found $glyph->{quantity} of $glyph->{name} on $planet_name.\n");
+      #verbose( "Found $glyph->{quantity} of $glyph->{name} on $planet_name.\n");
       if ($glyph->{quantity}) {
         $glyphs_h{$planet_name}->{$glyph->{name}} = $glyph->{quantity};
       }
@@ -118,7 +118,7 @@ use Games::Lacuna::Client;
         map { $glyphs_h{$planet}{$_} ? $glyphs_h{$planet}{$_} : 0 } @{$recipes[$i]}
       );
 
-      output("$planet can build $can_build_here Halls #$type\n")
+      verbose("$planet can build $can_build_here Halls #$type\n")
         if $can_build_here;
       if ($opts{max}) {
         if ($all_possible + $can_build_here > $opts{max}) {
@@ -141,7 +141,7 @@ use Games::Lacuna::Client;
   }
 
 # Do builds
-  verbose("Planning to build $all_possible Halls\n");
+  #verbose("Planning to build $all_possible Halls\n");
 
   my $total_built;
   for my $type ( sort keys %possible_builds) {
@@ -160,7 +160,7 @@ use Games::Lacuna::Client;
             $num_bld = $build->{glyphs};
             $build->{glyphs} = 0;
           }
-          output("Building a $num_bld Halls #$build->{type} on $build->{planet}\n");
+          verbose("Building a $num_bld Halls #$build->{type} on $build->{planet}\n");
           my $ok = eval {
             $build->{arch}->assemble_glyphs($build->{recipe}, $num_bld);
           };

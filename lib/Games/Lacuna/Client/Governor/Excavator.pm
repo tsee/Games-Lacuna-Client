@@ -268,10 +268,6 @@ use Hash::Merge qw(merge);
         my $avoid = $gov->{config}{excavator}{avoid};
         my %avoid = map { $_ => 1 } @$avoid;
 
-        use Data::Dumper;
-        warn Dumper(\%avoid);
-        warn Dumper(\$avoid);
-
         my %probed_stars;
         ### Identify all probed stars.
         for my $pid ( @pids ){
@@ -289,11 +285,11 @@ use Hash::Merge qw(merge);
         $gov->{_observatory_plugin}{probed_stars} = \%probed_stars;
 
         ### Grab static star data...
-        my %stars = %{ $class->stars($gov) || {} };
-        if( not scalar keys %stars ){
-            warning("Stars map is empty, this is *highly* unlikely.");
-            return;
-        }
+#        my %stars = %{ $class->stars($gov) || {} };
+#        if( not scalar keys %stars ){
+#            warning("Stars map is empty, this is *highly* unlikely.");
+#            return;
+#        }
 
         ### Find all stars that are probed.
         my %valid_target_stars = %probed_stars;
@@ -341,6 +337,8 @@ use Hash::Merge qw(merge);
 
             $distances_by_planet{$pid} = \@distances;
         }
+
+        #trace( Dumper(\%distances_by_planet) );
 
         ### Launch ze Excavators!
         $class->search_and_scan($gov, \%planet_distances, \%distances_by_planet);

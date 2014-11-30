@@ -50,8 +50,8 @@ foreach my $name ( sort keys %planets ) {
 
     push @results, {
         name      => $name,
-        happy     => format_number( $body->{happiness} ),
-        happyhour => format_number( $body->{happiness_hour} ),
+        happy     => $body->{happiness},
+        happyhour => $body->{happiness_hour},
     };
 }
 

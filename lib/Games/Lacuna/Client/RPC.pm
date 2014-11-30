@@ -68,7 +68,7 @@ around call => sub {
     if ($self->{calls_this_minute} > 60)
     {
         my $sleep_for = ( ($current_minute + 1) * 60 - time);
-        warn "sleeping for $sleep_for";
+#        warn "sleeping for $sleep_for";
         sleep( ($current_minute + 1) * 60 - time);
     }
   }
@@ -96,7 +96,7 @@ around call => sub {
         # Throttle per 3.0 changes
         if ($self->{client}->rpc_sleep)
         {
-        warn "rpc sleeping for: " . $self->{client}->rpc_sleep;
+        #warn "rpc sleeping for: " . $self->{client}->rpc_sleep;
         sleep($self->{client}->rpc_sleep);
         }
 
@@ -115,6 +115,21 @@ around call => sub {
         warn "error sleeping for 60s";
             sleep(60);
             $trying = 1;
+        }
+        elsif ($res and $res->has_error
+            and $res->error->code eq '1010'
+            and $res->error->message =~ /maximum number of requests/
+            )
+        {
+            warn "exceeded daily request limit";
+            exit;
+        }
+        elsif ($res and $res->has_error
+            and $res->error->code eq '1012'
+            and $res->error->message =~ /You do not have a sufficient supply/
+            )
+        {
+            warn $res->error->message;
         }
         elsif ($res and $res->has_error
             and $res->error->code eq '1016'

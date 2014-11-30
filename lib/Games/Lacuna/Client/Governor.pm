@@ -90,16 +90,17 @@ sub run {
             message("Dry run complete.");
             return;
         }
-        use Data::Dumper;
         
-        my $next_action_in = min( grep { $_ > time } values %{ $self->{next_action} } ) - time;
+        #my $next_action_in = min( grep { $_ > time } values %{ $self->{next_action} } ) - time;
+        my $next_action_in = min( values %{ $self->{next_action} } ) - time;
         if ( defined $next_action_in && ( $next_action_in + time ) < ( $config->{keepalive} + $start_time ) ) {
             if ( $next_action_in <= 0 ) {
-                $do_keepalive = 0;
+                $do_keepalive = 1;
+                warning("Past Expecting to govern again time") if ($self->{config}->{verbosity}->{trace});
             }
             else {
                 my $nat_time = ptime($next_action_in);
-                warning("Expecting to govern again in $nat_time or so, sleeping..."); # if ($self->{config}->{verbosity}->{trace});
+                warning("Expecting to govern again in $nat_time or so, sleeping...") if ($self->{config}->{verbosity}->{trace});
                 sleep( $next_action_in + 5 );
                 $do_keepalive = 1;
             }
@@ -179,10 +180,8 @@ sub govern {
         } grep { exists $details->{$_}->{pending_build} } keys %$details
     ];
     $self->{current}->{build_queue_remaining} = $max_queue - $current_queue;
-    $self->{next_action}->{$pid} = max(map { $_->{pending_build}->{seconds_remaining} + time } values %$details);
-    if ($current_queue == $max_queue) {
-        warning("Build queue is full on ".$self->{current}->{status}->{name}) if ($self->{config}->{verbosity}->{warning});
-    }
+    my $next_action_time = max(map { $_->{pending_build}->{seconds_remaining} } values %$details) + time;
+    $self->{next_action}->{$pid} = max($next_action_time, $self->{next_action}->{$pid});
 
     for my $priority (@{$cfg->{priorities}}) {
         $self->do_priority($priority);
@@ -192,7 +191,7 @@ sub govern {
         ### If we have a build queue, sleep till the waste queue empties or the building
         ### queue empties, whichever is first.
         my $next_build = max(map { $_->{seconds_remaining} } @{$dev_ministry->view->{build_queue}});
-        $self->set_next_action_if_sooner( $next_build + time() );
+        $self->set_next_action_if_sooner( $next_build + time()) if ($next_build);
     }
 }
 
@@ -709,6 +708,12 @@ sub other_upgrades {
     my $planet = $self->{planet_names}->{$self->{current}->{planet_id}};
     my $colony_config = merge( $self->{config}->{colony}->{ $self->{current}->{planet_id} } || {}, $self->{config}->{colony}->{_default_} );
 
+    if ($self->{current}->{status}->{type} eq 'space station') {
+        warning("$planet: Aborting, space station");
+        $self->{next_action}->{$self->{current}->{planet_id}} = $self->{config}->{keepalive} + time();
+        return;
+    }
+
     # Stop without processing if the build queue is full.
     if((defined $self->{current}->{build_queue_remaining}) &&
         ($self->{current}->{build_queue_remaining} <= $config->{reserve_build_queue})) {
@@ -747,6 +752,25 @@ sub other_upgrades {
             }
         }
     }
+    if (scalar @buildings == 0)
+    {
+        if (@{$self->{current}->{build_queue}} > 0)
+        {
+           my @buildings;
+           foreach my $entry (@{$self->{current}->{build_queue}})
+           {
+             push @buildings, $self->building_details($self->{current}->{planet_id},$entry->{building_id})->{name};
+           }
+        warning("$planet: upgrading last building " . join ", ", @buildings);
+        }
+        else
+        {
+            warning("$planet: no buildings left to upgrade");
+            my $pid = $self->{current}->{planet_id};
+            $self->{next_action}->{$pid} = 4 * 60 * 60 + time();
+        }
+        return;
+    }
 
     # using pertinence_sort, but sort categories dependent on resource capacity will error out
     # - storage and production upgrades handle those cases anyway
@@ -781,8 +805,8 @@ sub attempt_other_upgrades {
     my $available_slots = $self->{current}->{build_queue_remaining} - $config->{reserve_build_queue};
     my $remaining = $start_time + $keepalive - time;
 
-    while ($available_slots)
-    {
+#    while ($available_slots)
+#    {
      
         my $upgrade_succeeded = $self->attempt_upgrade(\@sorted_buildings, 0);
         if ($upgrade_succeeded) {
@@ -790,15 +814,25 @@ sub attempt_other_upgrades {
             action(sprintf("$planet: Upgraded %s, %s (Level %s)",$upgrade_succeeded,$details->{pretty_type},$details->{level}));
             my $cost   = $self->{cache}->{building}->{ $upgrade_succeeded }->{upgrade}->{cost}->{"time"};
             trace("next build in $cost, have $remaining remaining");
-            last if ($remaining < $cost);
-            $available_slots--;
-            $remaining -= $cost;
-            @sorted_buildings = grep { $_->{building_id} != $upgrade_succeeded } @sorted_buildings;
+            $self->set_next_action_if_sooner( $cost + time() );
+#            last if ($remaining < $cost);
+#            $available_slots--;
+#            $remaining -= $cost;
+#            @sorted_buildings = grep
+#            {
+#            $_->{building_id} != $upgrade_succeeded && $_->{type} == $details->{type}
+#            } @sorted_buildings;
+#            # don't start another building if it won't fit in this timeslice, may want to upgrade the same building again.
+#            if (@sorted_buildings && $sorted_buildings[0])
+#            {
+#                my $cost   = $self->{cache}->{building}->{ $sorted_buildings[0] }->{upgrade}->{cost}->{"time"};
+#                last if ($remaining < $cost);
+#            }
         } else {
             warning("$planet: Could not find any suitable buildings to upgrade") if $self->{config}->{verbosity}->{warning};
-            last;
+#            last;
         }
-    }
+#    }
 }
 
 sub ship_report {
@@ -1160,7 +1194,9 @@ sub attempt_upgrade {
         }
         elsif( $e = Exception::Class->caught ){
             my $planet = $self->{planet_names}->{$self->{current}->{planet_id}};
-            warning("$planet: $details->{pretty_type} @ $details->{level} Upgrade failed: $e");
+            if( $e->isa('LacunaRPCException') and $e->code == 1013 and $e =~ /enough Halls/)
+            { warning("$planet: $details->{pretty_type} @ $details->{level} : not enough Halls"); }
+            else { warning("$planet: $details->{pretty_type} @ $details->{level} Upgrade failed: $e"); }
         }
         else {
             $upgrade_succeeded = $upgrade->{building_id};
