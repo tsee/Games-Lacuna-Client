@@ -15,7 +15,7 @@ use Class::XSAccessor {
 sub api_methods {
   return {
     find         => { default_args => [qw(session_id)] },
-    view_profile => { default_args => [qw(session_id alliance_id)] },
+    view_profile => { default_args => [qw(session_id)] },
   };
 }
 

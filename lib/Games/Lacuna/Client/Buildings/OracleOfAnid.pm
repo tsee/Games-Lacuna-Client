@@ -12,6 +12,7 @@ our @ISA = qw(Games::Lacuna::Client::Buildings);
 sub api_methods {
   return {
     get_star => { default_args => [qw(session_id building_id)] },
+    get_probed_stars => {},
   };
 }
 

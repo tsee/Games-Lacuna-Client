@@ -205,6 +205,8 @@ sub task_list {
 "Appropriate Resources",
 "Assassinate Operatives",
 "Sabotage Infrastructure",
+"Sabotage Defenses",
+"Sabotage BHG",
 "Incite Mutiny",
 "Abduct Operatives",
 "Appropriate Technology",
@@ -215,6 +217,7 @@ sub task_list {
 "Politics Training",
 "Theft Training",
 "Political Propaganda",
+"Bugout",
 ];
   return $possible;
 }

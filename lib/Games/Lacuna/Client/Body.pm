@@ -21,6 +21,7 @@ sub api_methods {
     rename              => { default_args => [qw(session_id body_id)] },
     abandon             => { default_args => [qw(session_id body_id)] },
     repair_list         => { default_args => [qw(session_id body_id)] },
+    view_laws           => { default_args => [qw(session_id body_id)] },
   };
 }
 
