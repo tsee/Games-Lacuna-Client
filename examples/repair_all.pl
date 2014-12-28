@@ -53,8 +53,15 @@ use Exception::Class;
   print "Starting RPC: $glc->{rpc_count}\n";
 
 # Get planets
-  my %planets = map { $empire->{planets}{$_}, $_ } keys %{$empire->{planets}};
-  $status->{planets} = \%planets;
+  my %planets;
+  if ($opts{station}) {
+      %planets = map { $empire->{planets}{$_}, $_ } keys %{$empire->{planets}};
+      $status->{planets} = \%planets;
+  }
+  else {
+      %planets = map { $empire->{colonies}{$_}, $_ } keys %{$empire->{colonies}};
+      $status->{planets} = \%planets;
+  }
 
   my $keep_going = 1;
   do {

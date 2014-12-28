@@ -5,7 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use List::Util            qw(min max);
-use List::MoreUtils       qw(all uniq);
+use List::MoreUtils       qw( uniq );
 use Getopt::Long          qw(GetOptions);
 use Games::Lacuna::Client ();
 use JSON;
@@ -53,7 +53,7 @@ my $client = Games::Lacuna::Client->new(
 my $empire  = $client->empire->get_status->{empire};
 
 # reverse hash, to key by name instead of id
-my %planets = map { $empire->{planets}{$_}, $_ } keys %{ $empire->{planets} };
+my %planets = map { $empire->{colonies}{$_}, $_ } keys %{ $empire->{colonies} };
 
 my $total_str     = 'Total Docks';
 my $mining_str    = 'Ships Mining';
@@ -69,7 +69,7 @@ my $ship_hash = {};
 # Scan each planet
 foreach my $name ( sort keys %planets ) {
 
-    next if defined $opts{planet} && all { lc $_ ne lc $name } @{$opts{planet}};
+    next if ($opts{planet} and not (grep { $name eq $_ } @{$opts{planet}}));
 
     # Load planet data
     my $planet    = $client->body( id => $planets{$name} );

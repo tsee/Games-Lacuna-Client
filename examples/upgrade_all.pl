@@ -18,7 +18,6 @@ use Exception::Class;
         maxnum => 31,
         config => "lacuna.yml",
         dumpfile => "log/all_builds.js",
-        station => 0,
         maxadd  => 31,
         wait    => 8 * 60 * 60,
         sleep  => 1,
@@ -43,6 +42,7 @@ use Exception::Class;
     'space',
     'city',
     'lab',
+    'module',
     'nostandard',
     'match=s@',
     'noup=s@',
@@ -50,9 +50,9 @@ use Exception::Class;
     'sleep=i',
   );
 
-  usage() if (!$ok or $opts{h});
+  my $bld_names = set_items();
+  usage($bld_names) if (!$ok or $opts{h});
   
-  set_items();
   my $glc = Games::Lacuna::Client->new(
     cfg_file => $opts{config} || "lacuna.yml",
     rpc_sleep => $opts{sleep},
@@ -69,8 +69,15 @@ use Exception::Class;
   print "Starting RPC: $glc->{rpc_count}\n";
 
 # Get planets
-  my %planets = map { $empire->{planets}{$_}, $_ } keys %{$empire->{planets}};
-  $status->{planets} = \%planets;
+  my %planets;
+  if ($opts{module}) {
+    %planets = map { $empire->{planets}{$_}, $_ } keys %{$empire->{planets}};
+    $status->{planets} = \%planets;
+  }
+  else {
+    %planets = map { $empire->{colonies}{$_}, $_ } keys %{$empire->{colonies}};
+    $status->{planets} = \%planets;
+  }
 
   my @plist = planet_list(\%planets, \%opts);
 
@@ -91,7 +98,7 @@ use Exception::Class;
       my $result    = $planet->get_buildings;
       my $buildings = $result->{buildings};
       my $station = $result->{status}{body}{type} eq 'space station' ? 1 : 0;
-      if ($station) {
+      if ($station and not $opts{module}) {
         push @skip_planets, $pname;
         next;
       }
@@ -181,6 +188,7 @@ sub planet_list {
 }
 
 sub set_items {
+  my @bld_names;
   my $unless = [
   "Beach [1]",
   "Beach [10]",
@@ -204,9 +212,8 @@ sub set_items {
   "Lake",
   "Rocky Outcropping",
   "Patch of Sand",
-  "Subspace Supply Depot",
   "Supply Pod",
-  "The Dillon Forge",
+  "Terraforming Platform",
   ];
   my $junk = [
     "Great Ball of Junk",
@@ -261,85 +268,95 @@ sub set_items {
     "Gas Giant Lab",
     "Terraforming Lab",
   ];
+  my $module = [
+    "Art Museum",
+    "Culinary Institute",
+    "Interstellar Broadcast System",
+    "Opera House",
+    "Parliament",
+    "Police Station",
+    "Station Command Center",
+    "Warehouse",
+  ];
   my $standard = [
-  "Algae Cropper",
-  "Amalgus Meadow",
-  "Archaeology Ministry",
-  "Atmospheric Evaporator",
-  "Amalgus Bean Plantation",
-  "Beeldeban Herder",
-  "Bread Bakery",
-  "Malcud Burger Packer",
-  "Capitol",
-  "Cheese Maker",
-  "Denton Root Chip Frier",
-  "Apple Cider Bottler",
-  "Cloaking Lab",
-  "Corn Plantation",
-  "Corn Meal Grinder",
-  "Dairy Farm",
-  "Denton Root Patch",
-  "Development Ministry",
-  "Distribution Center",
-  "Embassy",
-  "Energy Reserve",
-  "Entertainment District",
-  "Espionage Ministry",
-  "Fission Reactor",
-  "Food Reserve",
-  "Fusion Reactor",
-  "Genetics Lab",
-  "Geo Energy Plant",
-  "Hydrocarbon Energy Plant",
-  "Intel Training",
-  "Intelligence Ministry",
-  "Lapis Orchard",
-  "Luxury Housing",
-  "Malcud Fungus Farm",
-  "Mayhem Training",
-  "Mercenaries Guild",
-  "Mine",
-  "Mining Ministry",
-  "Mission Command",
-  "Munitions Lab",
-  "Network 19 Affiliate",
-  "Observatory",
-  "Ore Refinery",
-  "Ore Storage Tanks",
-  "Oversight Ministry",
-  "Potato Pancake Factory",
-  "Park",
-  "Lapis Pie Bakery",
-  "Pilot Training Facility",
-  "Planetary Command Center",
-  "Politics Training",
-  "Potato Pancake Factory",
-  "Propulsion System Factory",
-  "Shield Against Weapons",
-  "Security Ministry",
-  "Beeldeban Protein Shake Factory",
-  "Shipyard",
-  "Singularity Energy Plant",
-  "Amalgus Bean Soup Cannery",
-  "Stockpile",
-  "Subspace Supply Depot",
-  "Algae Syrup Bottler",
-  "Theft Training",
-  "Theme Park",
-  "Trade Ministry",
-  "Subspace Transporter",
-  "University",
-  "Waste Digester",
-  "Waste Energy Plant",
-  "Waste Exchanger",
-  "Waste Recycling Center",
-  "Waste Sequestration Well",
-  "Waste Treatment Center",
-  "Water Production Plant",
-  "Water Purification Plant",
-  "Water Reclamation Facility",
-  "Water Storage Tank",
-  "Wheat Farm",
+    "Algae Cropper",
+    "Apple Orchard",
+    "Archaeology Ministry",
+    "Atmospheric Evaporator",
+    "Amalgus Bean Plantation",
+    "Beeldeban Herder",
+    "Bread Bakery",
+    "Malcud Burger Packer",
+    "Capitol",
+    "Cheese Maker",
+    "Denton Root Chip Frier",
+    "Apple Cider Bottler",
+    "Cloaking Lab",
+    "Corn Plantation",
+    "Corn Meal Grinder",
+    "Dairy Farm",
+    "Denton Root Patch",
+    "Development Ministry",
+    "Distribution Center",
+    "Embassy",
+    "Energy Reserve",
+    "Entertainment District",
+    "Espionage Ministry",
+    "Fission Reactor",
+    "Food Reserve",
+    "Fusion Reactor",
+    "Genetics Lab",
+    "Geo Energy Plant",
+    "Hydrocarbon Energy Plant",
+    "Intel Training",
+    "Intelligence Ministry",
+    "Lapis Orchard",
+    "Luxury Housing",
+    "Malcud Fungus Farm",
+    "Mayhem Training",
+    "Mercenaries Guild",
+    "Mine",
+    "Mining Ministry",
+    "Mission Command",
+    "Munitions Lab",
+    "Network 19 Affiliate",
+    "Observatory",
+    "Ore Refinery",
+    "Ore Storage Tanks",
+    "Oversight Ministry",
+    "Potato Pancake Factory",
+    "Park",
+    "Lapis Pie Bakery",
+    "Pilot Training Facility",
+    "Planetary Command Center",
+    "Politics Training",
+    "Potato Pancake Factory",
+    "Propulsion System Factory",
+    "Shield Against Weapons",
+    "Security Ministry",
+    "Beeldeban Protein Shake Factory",
+    "Shipyard",
+    "Singularity Energy Plant",
+    "Amalgus Bean Soup Cannery",
+    "Stockpile",
+    "Subspace Supply Depot",
+    "Algae Syrup Bottler",
+    "Theft Training",
+    "Theme Park",
+    "Trade Ministry",
+    "Subspace Transporter",
+    "University",
+    "Waste Digester",
+    "Waste Energy Plant",
+    "Waste Exchanger",
+    "Waste Recycling Center",
+    "Waste Sequestration Well",
+    "Waste Treatment Center",
+    "Water Production Plant",
+    "Water Purification Plant",
+    "Water Reclamation Facility",
+    "Water Storage Tank",
+    "Wheat Farm",
   ];
   if ($opts{nostandard}) {
     push @{$opts{noup}}, @$standard;
@@ -374,8 +391,17 @@ sub set_items {
   else {
     push @{$opts{noup}}, @$lab;
   }
+  if ($opts{module}) {
+    push @{$opts{extra}}, @$module;
+  }
+  else {
+    push @{$opts{noup}}, @$module;
+  }
   push @{$opts{noup}}, @$unless;
 
+  push @bld_names, sort @$unless, @$junk, @$glyph, @$space, @$city, @$lab,
+                         @$module, @$standard;
+  return \@bld_names;
 #  print "Extra: ",join(", ", @{$opts{extra}}), "\n";
 #  print "Skip : ",join(", ", @{$opts{noup}}), "\n";
 }
@@ -477,6 +503,7 @@ sub get_type_from_url {
 }
 
 sub usage {
+    my ($bld_names) = @_;
     diag(<<END);
 Usage: $0 [options]
 
@@ -505,9 +532,7 @@ Options:
   --noup  STRING     - Skip building names (multiple allowed)
   --extra STRING     - Add matching names to usual list to upgrade
   --dry              - Do not actually upgrade
-  );
 END
-  my $bld_names = bld_names();
   print "\nBuilding Names: ",join(", ", sort @$bld_names ),"\n";
   exit 1;
 }
@@ -533,166 +558,4 @@ sub normalize_planet {
     $planet_name =~ s/\W//g;
     $planet_name = lc($planet_name);
     return $planet_name;
-}
-
-sub bld_names {
-  my $bld_names = [
-  "Algae Cropper",
-  "Algae Pond",
-  "Amalgus Meadow",
-  "Apple Orchard",
-  "Archaeology Ministry",
-  "Art Museum",
-  "Atmospheric Evaporator",
-  "Beach [1]",
-  "Beach [10]",
-  "Beach [11]",
-  "Beach [12]",
-  "Beach [13]",
-  "Beach [2]",
-  "Beach [3]",
-  "Beach [4]",
-  "Beach [5]",
-  "Beach [6]",
-  "Beach [7]",
-  "Beach [8]",
-  "Beach [9]",
-  "Amalgus Bean Plantation",
-  "Beeldeban Herder",
-  "Beeldeban Nest",
-  "Black Hole Generator",
-  "Bread Bakery",
-  "Malcud Burger Packer",
-  "Capitol",
-  "Cheese Maker",
-  "Denton Root Chip Frier",
-  "Apple Cider Bottler",
-  "Citadel of Knope",
-  "Cloaking Lab",
-  "Corn Plantation",
-  "Corn Meal Grinder",
-  "Crashed Ship Site",
-  "Crater",
-  "Culinary Institute",
-  "Dairy Farm",
-  "Denton Root Patch",
-  "Denton Brambles",
-  "Deployed Bleeder",
-  "Development Ministry",
-  "Distribution Center",
-  "Embassy",
-  "Energy Reserve",
-  "Entertainment District",
-  "Espionage Ministry",
-  "Essentia Vein",
-  "Fission Reactor",
-  "Fissure",
-  "Food Reserve",
-  "Fusion Reactor",
-  "Gas Giant Lab",
-  "Gas Giant Settlement Platform",
-  "Genetics Lab",
-  "Geo Energy Plant",
-  "Geo Thermal Vent",
-  "Gratch's Gauntlet",
-  "Great Ball of Junk",
-  "Grove of Trees",
-  "Halls of Vrbansk",
-  "Hydrocarbon Energy Plant",
-  "Interstellar Broadcast System",
-  "Intel Training",
-  "Intelligence Ministry",
-  "Interdimensional Rift",
-  "Junk Henge Sculpture",
-  "Kalavian Ruins",
-  "Kastern's Keep",
-  "Lost City of Tyleon (A)",
-  "Lost City of Tyleon (B)",
-  "Lost City of Tyleon (C)",
-  "Lost City of Tyleon (D)",
-  "Lost City of Tyleon (E)",
-  "Lost City of Tyleon (F)",
-  "Lost City of Tyleon (G)",
-  "Lost City of Tyleon (H)",
-  "Lost City of Tyleon (I)",
-  "Lagoon",
-  "Lake",
-  "Lapis Orchard",
-  "Lapis Forest",
-  "Library of Jith",
-  "Luxury Housing",
-  "Malcud Fungus Farm",
-  "Malcud Field",
-  "Massad's Henge",
-  "Mayhem Training",
-  "Mercenaries Guild",
-  "Metal Junk Arches",
-  "Mine",
-  "Mining Ministry",
-  "Mission Command",
-  "Munitions Lab",
-  "Natural Spring",
-  "Network 19 Affiliate",
-  "Observatory",
-  "Opera House",
-  "Oracle of Anid",
-  "Ore Refinery",
-  "Ore Storage Tanks",
-  "Oversight Ministry",
-  "Potato Pancake Factory",
-  "Pantheon of Hagness",
-  "Park",
-  "Parliament",
-  "Lapis Pie Bakery",
-  "Pilot Training Facility",
-  "Planetary Command Center",
-  "Police Station",
-  "Politics Training",
-  "Potato Pancake Factory",
-  "Propulsion System Factory",
-  "Pyramid Junk Sculpture",
-  "Ravine",
-  "Rocky Outcropping",
-  "Shield Against Weapons",
-  "Space Station Lab (A)",
-  "Space Station Lab (B)",
-  "Space Station Lab (C)",
-  "Space Station Lab (D)",
-  "Patch of Sand",
-  "Security Ministry",
-  "Beeldeban Protein Shake Factory",
-  "Shipyard",
-  "Singularity Energy Plant",
-  "Amalgus Bean Soup Cannery",
-  "Space Junk Park",
-  "Space Port",
-  "Station Command Center",
-  "Stockpile",
-  "Subspace Supply Depot",
-  "Supply Pod",
-  "Algae Syrup Bottler",
-  "Temple of the Drajilites",
-  "Terraforming Lab",
-  "Terraforming Platform",
-  "The Dillon Forge",
-  "Theft Training",
-  "Theme Park",
-  "Trade Ministry",
-  "Subspace Transporter",
-  "University",
-  "Volcano",
-  "Warehouse",
-  "Waste Digester",
-  "Waste Energy Plant",
-  "Waste Exchanger",
-  "Waste Recycling Center",
-  "Waste Sequestration Well",
-  "Waste Treatment Center",
-  "Water Production Plant",
-  "Water Purification Plant",
-  "Water Reclamation Facility",
-  "Water Storage Tank",
-  "Wheat Farm",
-  ];
-  return $bld_names;
 }
