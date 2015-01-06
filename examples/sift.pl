@@ -41,7 +41,7 @@ use utf8;
     'from=s',
     'to=s',
     'dump',
-    'sleep',
+    'sleep=i',
 
     'sname=s@',
     'stype=s@',
@@ -583,6 +583,7 @@ sub return_ptypes {
     "Space Junk Park",
     "Subspace Supply Depot",
     "Temple of the Drajilites"
+    "Terraforming Platform",
    ];
 
   $plan_types{plus} = [
@@ -620,7 +621,7 @@ sub return_ptypes {
     "Pyramid Junk Sculpture",
     "Ravine",
     "Space Junk Park",
-    "Temple of the Drajilites",
+    "Terraforming Platform",
     "Volcano",
    ];
   $plan_types{station} = [
