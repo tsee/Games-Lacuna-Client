@@ -582,7 +582,7 @@ sub return_ptypes {
     "Pyramid Junk Sculpture",
     "Space Junk Park",
     "Subspace Supply Depot",
-    "Temple of the Drajilites"
+    "Temple of the Drajilites",
     "Terraforming Platform",
    ];
 
