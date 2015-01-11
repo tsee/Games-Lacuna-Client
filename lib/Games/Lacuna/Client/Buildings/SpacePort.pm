@@ -15,6 +15,7 @@ sub api_methods {
     view_all_ships          => { default_args => [qw(session_id building_id)] },
     view_foreign_ships      => { default_args => [qw(session_id building_id)] },
     get_ships_for           => { default_args => [qw(session_id)] },
+    get_fleet_for           => { default_args => [qw(session_id)] },
     send_ship               => { default_args => [qw(session_id)] },
     send_fleet              => { default_args => [qw(session_id)] },
     recall_ship             => { default_args => [qw(session_id building_id)] },
