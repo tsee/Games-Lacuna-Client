@@ -79,7 +79,7 @@ print "RPC Count of $rpc_cnt_beg\n";
 
 
 # reverse hash, to key by name instead of id
-my %planets = reverse %{ $empire->{planets} };
+my %planets = reverse %{ $empire->{stations} };
 
 for my $name (sort keys %planets) {
   if (!grep { lc $name eq lc $_ } @station) {
@@ -153,7 +153,7 @@ for my $name ( sort keys %planets ) {
             print "AUTO-VOTED YES\n";
             $vote = 1;
         }
-        if ( @fail && first { $prop->{description} =~ /$_/i } @fail ) {
+        elsif ( @fail && first { $prop->{description} =~ /$_/i } @fail ) {
             print "AUTO-VOTED NO\n";
             $vote = 0;
         }
@@ -174,7 +174,7 @@ for my $name ( sort keys %planets ) {
             }
         }
         else {
-            print "Non-interactive terminal - skipping proposition\n";
+            print "Non-interactive terminal - skipping proposition\n\n";
             next;
         }
         
