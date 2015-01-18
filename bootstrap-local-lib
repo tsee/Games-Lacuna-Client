@@ -1,6 +1,8 @@
-wget http://search.cpan.org/CPAN/authors/id/A/AP/APEIRON/local-lib-1.008004.tar.gz
-tar zxf local-lib-1.008004.tar.gz 
-cd local-lib-1.008004/  \
+VERSION=2.000015
+#wget http://search.cpan.org/CPAN/authors/id/A/AP/APEIRON/local-lib-$VERSION.tar.gz
+wget http://search.cpan.org/CPAN/authors/id/H/HA/HAARG/local-lib-2.000015.tar.gz
+tar zxf local-lib-$VERSION.tar.gz 
+cd local-lib-$VERSION/  \
     && perl Makefile.PL --bootstrap=`pwd`/../local-lib/ \
     && make && make test && make install  \
     && cd .. \
@@ -13,7 +15,7 @@ cd local-lib-1.008004/  \
     && perl Makefile.PL  \
     && make && make install \
     && cd .. \
-    && rm -rf local-lib-1.008004.tar.gz local-lib-1.008004 App-cpanminus-1.4008.tar.gz App-cpanminus-1.4008 \
+    && rm -rf local-lib-$VERSION.tar.gz local-lib-1.008004 App-cpanminus-1.4008.tar.gz App-cpanminus-1.4008 \
     && cpanm -L local-lib JSON::RPC::LWP Text::CSV IO::Interactive \
     && mkdir cache
 
