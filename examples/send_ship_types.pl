@@ -196,7 +196,7 @@ FLEET: for my $fleet ( @$fleets ) {
       next FLEET if ($tcnt{$fleet->{type}} && $tcnt{$fleet->{type}} >= $opts{max});
       if ($fleet->{estimated_travel_time} > $arrival->{trip_time}) {
         unless ($skip{"$key"}) {
-          print $key," would take ",$fleet->{estimated_travel_time}," and we scheduled ", $arrival->{trip_time},".\n";
+          print $fleet->{quantity}," of ",$key," would take ",$fleet->{estimated_travel_time}," and we scheduled ", $arrival->{trip_time},".\n";
           $skip{"$key"} = 1;
         }
         next FLEET;
@@ -218,23 +218,24 @@ FLEET: for my $fleet ( @$fleets ) {
         $fleet{"$key"}->{stealth} = $fleet->{stealth};
         $fleet{"$key"}->{hold_size} = $fleet->{hold_size};
         $fleet{"$key"}->{name} = $fleet->{name};
-        $fleet{"$key"}->{quantity} = $fleet->{quantity}
+        $fleet{"$key"}->{quantity} = $fleet->{quantity};
+        $fleet{"$key"}->{estimated_travel_time} = $fleet->{estimated_travel_time};
       }
     }
     if ($use_count < 1) {
       print "No ships to send from $pname\n";
       next;
     }
-    print "Total of $use_count ships from $pname being sent.\n";
-    for my $key (sort keys %fleet) {
+    print "Total of $use_count ships from $pname can be sent.\n";
+    for my $key (sort {$fleet{"$a"}->{speed} <=> $fleet{"$b"}->{speed} } keys %fleet) { # sort slowest to fastest being sent
       if ($opts{max}) {
         $fleet{"$key"}->{quantity} = $fleet{"$key"}->{quantity} > $opts{max} ? $opts{max} : $fleet{"$key"}->{quantity};
       }
       if ($opts{dry}) {
-        print $pname, " would send ", $fleet{"$key"}->{quantity}," of ",$key,".\n";
+        printf "%s would send %4d of %s. Fastest time: %d seconds.\n", $pname, $fleet{"$key"}->{quantity},$key, $fleet{"$key"}->{estimated_travel_time};
         next;
       }
-      print $pname, " sending ",$fleet{"$key"}->{quantity}," of ",$key,".\n";
+      printf "%s sending %4d of %s. Fastest time: %d seconds.\n", $pname, $fleet{"$key"}->{quantity},$key, $fleet{"$key"}->{estimated_travel_time};
       do {
         my $send_q;
         if ($fleet{"$key"}->{quantity} > $ships_per_fleet) {
@@ -251,6 +252,7 @@ FLEET: for my $fleet ( @$fleets ) {
                          speed => $fleet{"$key"}->{speed},
                          stealth => $fleet{"$key"}->{stealth},
                          combat => $fleet{"$key"}->{combat},
+                         name     => $fleet{"$key"}->{name},
                          quantity => $send_q,
                        } ];
         my $ok = eval {
