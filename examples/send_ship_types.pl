@@ -23,6 +23,7 @@ use Games::Lacuna::Client ();
     dump         => 0,
     outfile      => 'log/send_ship_type.js',
     sleep        => 1,
+    arrival      => "Earliest",
   );
 
   my $ok = GetOptions(\%opts,
@@ -79,7 +80,7 @@ use Games::Lacuna::Client ();
          $opts{arrival},
          $arrival->{trip_time};
 
-  die "Arrival time can not be set before Current time\n" if ($cstr ge $astr);
+  die "Arrival time can not be set before Current time\n" if ($cstr ge $astr and $arrival->{earliest} == 0);
 
   usage() if ((!$opts{name} && !$opts{type}) or
              (!$opts{from} && !$opts{fid}) or
@@ -194,7 +195,7 @@ FLEET: for my $fleet ( @$fleets ) {
                         $fleet->{hold_size},
                         $fleet->{name});
       next FLEET if ($tcnt{$fleet->{type}} && $tcnt{$fleet->{type}} >= $opts{max});
-      if ($fleet->{estimated_travel_time} > $arrival->{trip_time}) {
+      if ($arrival->{earliest} != 1 and $fleet->{estimated_travel_time} > $arrival->{trip_time}) {
         unless ($skip{"$key"}) {
           print $fleet->{quantity}," of ",$key," would take ",$fleet->{estimated_travel_time}," and we scheduled ", $arrival->{trip_time},".\n";
           $skip{"$key"} = 1;
@@ -222,11 +223,14 @@ FLEET: for my $fleet ( @$fleets ) {
         $fleet{"$key"}->{estimated_travel_time} = $fleet->{estimated_travel_time};
       }
     }
+#End FLEET:
     if ($use_count < 1) {
       print "No ships to send from $pname\n";
       next;
     }
     print "Total of $use_count ships from $pname can be sent.\n";
+#TODO
+# Instead of grouping by $fleet, keep adding to a fleet array to send multiples thru server call
     for my $key (sort {$fleet{"$a"}->{speed} <=> $fleet{"$b"}->{speed} } keys %fleet) { # sort slowest to fastest being sent
       if ($opts{max}) {
         $fleet{"$key"}->{quantity} = $fleet{"$key"}->{quantity} > $opts{max} ? $opts{max} : $fleet{"$key"}->{quantity};
@@ -286,7 +290,13 @@ sub parse_time {
     hour   => $hour,
     minute => $min,
     second => $sec,
+    trip_time => 0,
   };
+
+  if ($entry eq "Earliest") {
+    $current->{earliest} = 1;
+    return ($current, $current);
+  }
 
   my @time_bits = split(":", $entry);
 
@@ -313,6 +323,7 @@ sub parse_time {
   );
 
   $arrival->{trip_time} = $arrival_time->subtract_datetime_absolute(DateTime->now)->seconds;
+  $arrival->{earliest} = 0;
 
   return ($arrival, $current);
 }
@@ -321,12 +332,12 @@ sub parse_time {
 sub usage {
   die <<"END_USAGE";
 Usage: $0 lacuna.yml
+       --from        NAME  (required, Multiples possible)
        --name   NAME
        --type        TYPE
        --arrival     YYYY:MM:DD:HH:MM (defaults to current Year, Month, Day, Hour, if not entered)
        --max         MAX Number of each type to send per planet
        --leave       LEAVE Number to leave of each type on each planet
-       --from        NAME  (required, Multiples possible)
        --x           Target COORDINATE
        --y           Target COORDINATE
        --star        Target NAME
