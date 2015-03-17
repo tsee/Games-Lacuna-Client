@@ -194,7 +194,7 @@ FLEET: for my $fleet ( @$fleets ) {
                         $fleet->{stealth},
                         $fleet->{hold_size},
                         $fleet->{name});
-      next FLEET if ($tcnt{$fleet->{type}} && $tcnt{$fleet->{type}} >= $opts{max});
+      next FLEET if ($opts{max} and $tcnt{$fleet->{type}} && $tcnt{$fleet->{type}} >= $opts{max});
       if ($arrival->{earliest} != 1 and $fleet->{estimated_travel_time} > $arrival->{trip_time}) {
         unless ($skip{"$key"}) {
           print $fleet->{quantity}," of ",$key," would take ",$fleet->{estimated_travel_time}," and we scheduled ", $arrival->{trip_time},".\n";
@@ -231,6 +231,9 @@ FLEET: for my $fleet ( @$fleets ) {
     print "Total of $use_count ships from $pname can be sent.\n";
 #TODO
 # Instead of grouping by $fleet, keep adding to a fleet array to send multiples thru server call
+    my @batch_arr;
+    my $batch_q = 0;
+    my $send_arr = [];
     for my $key (sort {$fleet{"$a"}->{speed} <=> $fleet{"$b"}->{speed} } keys %fleet) { # sort slowest to fastest being sent
       if ($opts{max}) {
         $fleet{"$key"}->{quantity} = $fleet{"$key"}->{quantity} > $opts{max} ? $opts{max} : $fleet{"$key"}->{quantity};
@@ -242,34 +245,44 @@ FLEET: for my $fleet ( @$fleets ) {
       printf "%s sending %4d of %s. Fastest time: %d seconds.\n", $pname, $fleet{"$key"}->{quantity},$key, $fleet{"$key"}->{estimated_travel_time};
       do {
         my $send_q;
-        if ($fleet{"$key"}->{quantity} > $ships_per_fleet) {
-          $send_q = $ships_per_fleet;
-          $fleet{"$key"}->{quantity} -= $ships_per_fleet;
+        if ($fleet{"$key"}->{quantity} + $batch_q > $ships_per_fleet) {
+          $send_q = $ships_per_fleet - $batch_q;
+          $fleet{"$key"}->{quantity} -= ($ships_per_fleet - $batch_q);
+          $batch_q += $send_q;
         }
         else {
           $send_q = $fleet{"$key"}->{quantity};
           $fleet{"$key"}->{quantity} = 0;
+          $batch_q += $send_q;
         }
-        my $sent;
-        my $send_arr = [ {
+        my $send_h = {
                          type => $fleet{"$key"}->{type},
                          speed => $fleet{"$key"}->{speed},
                          stealth => $fleet{"$key"}->{stealth},
                          combat => $fleet{"$key"}->{combat},
                          name     => $fleet{"$key"}->{name},
                          quantity => $send_q,
-                       } ];
-        my $ok = eval {
-          $sent = $space_port->send_ship_types( $colonies{$pname}, $target, $send_arr, $arrival );
-        };
-        if ($ok) {
-          push @{$output->{$pname}->{ships}}, $send_arr;
-        }
-        else {
-          my $error = $@;
-          print "$error\n";
+                     };
+        push @$send_arr, $send_h;
+        if ($batch_q >= $ships_per_fleet) {
+          push @batch_arr, $send_arr;
+          $send_arr = [];
+          $batch_q = 0;
         }
       } while ($fleet{"$key"}->{quantity} > 0);
+    }
+    for my $fleet (@batch_arr) {
+      my $sent;
+      my $ok = eval {
+        $sent = $space_port->send_ship_types( $colonies{$pname}, $target, $fleet, $arrival );
+      };
+      if ($ok) {
+        push @{$output->{$pname}->{ships}}, $send_arr;
+      }
+      else {
+        my $error = $@;
+        print "$error\n";
+      }
     }
   }
   if ($opts{dump}) {
