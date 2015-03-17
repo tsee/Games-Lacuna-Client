@@ -271,6 +271,7 @@ FLEET: for my $fleet ( @$fleets ) {
         }
       } while ($fleet{"$key"}->{quantity} > 0);
     }
+    push @batch_arr, $send_arr if (scalar @$send_arr > 0);
     for my $fleet (@batch_arr) {
       my $sent;
       my $ok = eval {
