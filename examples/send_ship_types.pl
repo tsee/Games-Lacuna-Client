@@ -157,7 +157,7 @@ use Games::Lacuna::Client ();
   my $output;
   $output->{target} = $target;
   $output->{arrival} = $arrival;
-  for my $pname (@{$opts{from}}) {
+PLANETS: for my $pname (@{$opts{from}}) {
     print "Inspecting $pname $colonies{$pname}\n";
     my $body = $glc->body( id => $colonies{"$pname"});
     die "no body!" unless $body;
@@ -175,7 +175,13 @@ use Games::Lacuna::Client ();
 
     my $fleets = $space_port->get_fleet_for($colonies{$pname}, $target)->{ships};
 
-    print "Total of ", scalar @$fleets, " fleets found.\n";
+    if (defined($fleets) and scalar @$fleets) {
+      print "Total of ", scalar @$fleets, " fleets found.\n";
+    }
+    else {
+      print "No fleets found on $pname!\n";
+      next PLANETS;
+    }
     my %fleet;
     my $use_count = 0;
     my %skip;
@@ -229,8 +235,6 @@ FLEET: for my $fleet ( @$fleets ) {
       next;
     }
     print "Total of $use_count ships from $pname can be sent.\n";
-#TODO
-# Instead of grouping by $fleet, keep adding to a fleet array to send multiples thru server call
     my @batch_arr;
     my $batch_q = 0;
     my $send_arr = [];
