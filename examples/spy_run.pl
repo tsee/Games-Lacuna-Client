@@ -34,6 +34,7 @@ use Date::Format;
   my $cfg_file = "lacuna.yml";
   my $help;
   my $name;
+  my $flip = 0;
 
   GetOptions(
     'from=s'       => \$planet_name,
@@ -52,10 +53,11 @@ use Date::Format;
     'busy'         => \$busy,
     'sleep=i'      => \$sleep,
     'dryrun'       => \$dryrun,
+    'flip=i'         => \$flip,
     'help'         => \$help,
   );
 
-  usage() if $help || !$planet_name || (!$target and !$tid) || !$task;
+  usage() if $help || !$planet_name || (!$target and !$tid) || !($task or $flip) || ($task and $flip);
 
   my $tstr;
   my $tvar;
@@ -66,6 +68,9 @@ use Date::Format;
   else {
     $tvar = $target;
     $tstr = "name";
+  }
+  if ($flip > 0) {
+    $task = "Incite Rebellion";
   }
 
   my $task_list = task_list();
@@ -103,12 +108,13 @@ use Date::Format;
 
 # Load the planets
   my $empire  = $glc->empire->get_status->{empire};
+  my $insurrect_value = $empire->{insurrect_value} ? 400_000_000_000_000_000 : $empire->{insurrect_value};
 
   my $rpc_cnt_beg = $glc->{rpc_count};
   print "RPC Count of $rpc_cnt_beg\n";
 
 # reverse hash, to key by name instead of id
-  my %planets = reverse %{ $empire->{planets} };
+  my %planets = reverse %{ $empire->{colonies} };
 
   my $body      = $glc->body( id => $planets{$planet_name} );
   my $buildings = $body->get_buildings->{buildings};
@@ -132,7 +138,7 @@ use Date::Format;
     next unless ($spy->{is_available});
     next if (!$busy and $spy->{assignment} ne 'Idle');
     if ($name) {
-      print "Checking for \'$name\' against \'$spy->{name}\'\n";
+#      print "Checking for \'$name\' against \'$spy->{name}\'\n";
       next unless $spy->{name} =~ /$name/i;
     }
     next unless ($spy->{offense_rating} >= $min_off and
@@ -174,13 +180,72 @@ use Date::Format;
       next;
     }
     
+    my $msg_text = "";
+    my $message;
+    if ($return->{mission}{message_id}) {
+      $message = get_message_info($glc, $return->{mission}{message_id})->{message};
+    }
+    if ($message) {
+      $msg_text = $message->{body};
+    }
+    else {
+      $message = {
+                   body => "No Message",
+                   subject => "No Subject",
+                 };
+    }
+    $msg_text = "No Contact" if ($message->{subject} eq "No Contact");
+    if ($flip or $task eq "Incite Insurrection") {
+      my $chance = 0;
+      if ($task eq "Incite Rebellion") {
+        if ($message->{subject} eq "Created Disturbance" or $message->{subject} eq "Rebellion Started") {
+          $msg_text =~ / them ([0-9,-]+) happiness, leaving them with ([0-9,-]+)./;
+          $msg_text = "Cost: $1 ; Remain: $2";
+          my $happy = $2;
+          $happy =~ s/,//g;
+          my $chance = int(abs($happy) * 100/$insurrect_value);
+          $msg_text = $msg_text."; $chance%";
+          if ($chance >= $flip) {
+            $msg_text = $msg_text." Starting Insurrections";
+            $task = "Incite Insurrection";
+          }
+        }
+        else {
+          $msg_text =~ tr/\n/_/s;
+        }
+      }
+      elsif ( $message->{subject} eq "Insurrection Failed" ) {
+        $msg_text =~ / them at ([0-9,-]+) unhappiness and with our chances based off of ([0-9,-]+) giving us a ([0-9-]+)%/;
+        $msg_text = "U: $1; I: $2; $3%";
+        $return->{mission}{result} = "Almost";
+      }
+      elsif ( $message->{subject} eq "Insurrection Complete") {
+        $msg_text = "Done!";
+        $number = 0;
+      }
+      else {
+        $msg_text =~ tr/\n/_/s;
+      }
+    }
+    else {
+      if ($return->{mission}{result} eq "Accepted") {
+        $msg_text = "Running: $task";
+      }
+      else {
+        $msg_text =~ tr/\n/_/s;
+      }
+    }
     $spy_run++;
-    printf "%3d %s %s %s\n",
+    if ($return->{mission}{result} eq "Failure") {
+      $fail++;
+      $msg_text = $message->{subject};
+    }
+    printf "%3d %s %s %s %s\n",
         $spy_run,
         $spy->{name},
         $return->{mission}{result},
-        $return->{mission}{reason};
-    $fail++ if $return->{mission}{result} eq 'Failure';
+        $return->{mission}{reason},
+        $msg_text;
     last if $fail_break && $fail >= $fail_break;
     last if $spy_run >= $number;
   }
@@ -189,6 +254,18 @@ use Date::Format;
   print "RPC Count final: $rpc_cnt_end\n";
   undef $glc;
 exit;
+
+sub get_message_info {
+  my ($glc, $msg_id) = @_;
+
+  return $glc->inbox->read_message($msg_id);
+}
+
+sub get_chance {
+  my $message = shift;
+
+  
+}
 
 sub task_list {
   my $possible = [
@@ -230,6 +307,7 @@ Usage: $0
     --target     PLANET
     --tid        BODY_ID (Use either tid or target, not both)
     --task       MISSION
+    --flip       NUM  Will run Incite Rebellion until NUM % chance of insurrection happens, and then runs Insurrection
     --name       Match name of spy, partial allowed
     --min_def    Minimum Defense Rating
     --min_off    Minimum Offense Rating
