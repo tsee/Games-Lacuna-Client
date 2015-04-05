@@ -31,6 +31,7 @@ sub api_methods {
     propose_members_only_excavation                   => { default_args => [qw(session_id building_id)] },
     propose_evict_mining_platform                     => { default_args => [qw(session_id building_id)] },
     propose_fire_bfg                                  => { default_args => [qw(session_id building_id)] },
+    allow_bhg_by_alliance                             => { default_args => [qw(session_id building_id)] },
   };
 }
 
