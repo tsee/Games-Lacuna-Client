@@ -28,6 +28,8 @@ sub api_methods {
     view_stash             => { default_args => [qw(session_id building_id)] },
     donate_to_stash        => { default_args => [qw(session_id building_id)] },
     exchange_with_stash    => { default_args => [qw(session_id building_id)] },
+    view_propositions      => { default_args => [qw(session_id building_id)] },
+    cast_vote              => { default_args => [qw(session_id building_id)] },
 
   };
 }
