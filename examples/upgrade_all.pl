@@ -32,6 +32,7 @@ use Exception::Class;
     'skip=s@',
     'config=s',
     'dumpfile=s',
+    'id=i@',
     'maxadd=i',
     'maxlevel=i',
     'maxnum=i',
@@ -48,6 +49,7 @@ use Exception::Class;
     'noup=s@',
     'extra=s@',
     'sleep=i',
+    'noloop',
   );
 
   my $bld_names = set_items();
@@ -68,6 +70,10 @@ use Exception::Class;
   my $empire = $glc->empire->get_status->{empire};
   print "Starting RPC: $glc->{rpc_count}\n";
 
+# If ids are specified, then we will upgrade regardless of type options
+  if (@{$opts{id}}) {
+    $opts{junk} = $opts{glyph} = $opts{space} = $opts{city} = $opts{lab} = $opts{module} = 1;
+  }
 # Get planets
   my %planets;
   if ($opts{module}) {
@@ -152,7 +158,10 @@ use Exception::Class;
     for $pname (@skip_planets) {
       delete $planets{$pname};
     }
-    if (keys %planets) {
+    if ($opts{noloop}) {
+      $keep_going = 0;
+    }
+    elsif (keys %planets) {
       print "Clearing Queue for ",sec2str($lowestqueuetimer),".\n";
       sleep $lowestqueuetimer if $lowestqueuetimer > 0;
       $lowestqueuetimer = $opts{wait} - 1;
@@ -414,6 +423,7 @@ sub bstats {
   my @sarr;
   my $pending = 0;
   for my $bid (keys %$bhash) {
+    next unless (grep { $bid eq $_ } @{$opts{id}});
     if ($bhash->{$bid}->{name} eq "Development Ministry") {
       $dlevel = $bhash->{$bid}->{level};
     }
@@ -514,12 +524,13 @@ Options:
   --help             - This info.
   --verbose          - Print out more information
   --config FILE      - Specify a GLC config file, normally lacuna.yml
-  --planet NAME      - Specify planet
-  --skip  PLANET     - Do not process this planet
+  --planet NAME      - Specify planet, multiple done by --planet P1 --planet P2
+  --skip  PLANET     - Do not process this planet. Multiple as planet
   --dumpfile FILE    - data dump for all the info we don't print
   --maxlevel INT     - do not upgrade if this level has been achieved
   --maxnum INT       - Use this if lower than dev ministry level
   --maxadd INT       - Add at most INT buildings to the queue per pass
+  --id INT           - Upgrade specific building id. Multiple as planet
   --wait   INT       - Max number of seconds to wait to repeat loop
   --sleep  INT       - Pause between RPC calls. Default 1
   --junk             - Upgrade Junk Buildings
@@ -527,6 +538,7 @@ Options:
   --space            - Upgrade spaceports
   --city             - Upgrade LCOT
   --lab              - Upgrade labs
+  --noloop           - Do not try to loop, just quit after upgrading
   --nostandard       - Do not upgrade anything that is not in the other catagories
   --match STRING     - Only upgrade matching building names
   --noup  STRING     - Skip building names (multiple allowed)
