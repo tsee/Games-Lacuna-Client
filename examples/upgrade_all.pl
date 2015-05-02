@@ -422,7 +422,6 @@ sub bstats {
   my @sarr;
   my $pending = 0;
   for my $bid (keys %$bhash) {
-    next unless (scalar @{$opts{id}} == 0 or grep { $bid eq $_ } @{$opts{id}});
     if ($bhash->{$bid}->{name} eq "Development Ministry") {
       $dlevel = $bhash->{$bid}->{level};
     }
@@ -433,6 +432,7 @@ sub bstats {
           if ($bhash->{$bid}->{pending_build}->{seconds_remaining} > $pending);
     }
     else {
+      next unless (scalar @{$opts{id}} == 0 or grep { $bid eq $_ } @{$opts{id}});
       my $doit = check_type($bhash->{$bid});
       $doit = 0 if ($berr->{$bid});
       if ($doit) {
