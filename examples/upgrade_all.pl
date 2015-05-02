@@ -23,6 +23,7 @@ use Exception::Class;
         sleep  => 1,
         extra  => [],
         noup   => [],
+        id     => [],
   );
 
   my $ok = GetOptions(\%opts,
@@ -71,7 +72,7 @@ use Exception::Class;
   print "Starting RPC: $glc->{rpc_count}\n";
 
 # If ids are specified, then we will upgrade regardless of type options
-  if (@{$opts{id}}) {
+  if (scalar @{$opts{id}} > 0) {
     $opts{junk} = $opts{glyph} = $opts{space} = $opts{city} = $opts{lab} = $opts{module} = 1;
   }
 # Get planets
@@ -411,8 +412,6 @@ sub set_items {
   push @bld_names, sort @$unless, @$junk, @$glyph, @$space, @$city, @$lab,
                          @$module, @$standard;
   return \@bld_names;
-#  print "Extra: ",join(", ", @{$opts{extra}}), "\n";
-#  print "Skip : ",join(", ", @{$opts{noup}}), "\n";
 }
 
 sub bstats {
@@ -423,7 +422,7 @@ sub bstats {
   my @sarr;
   my $pending = 0;
   for my $bid (keys %$bhash) {
-    next unless (grep { $bid eq $_ } @{$opts{id}});
+    next unless (scalar @{$opts{id}} == 0 or grep { $bid eq $_ } @{$opts{id}});
     if ($bhash->{$bid}->{name} eq "Development Ministry") {
       $dlevel = $bhash->{$bid}->{level};
     }
