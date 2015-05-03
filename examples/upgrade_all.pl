@@ -33,6 +33,7 @@ use Exception::Class;
     'skip=s@',
     'config=s',
     'dumpfile=s',
+    'unhappy',
     'id=i@',
     'maxadd=i',
     'maxlevel=i',
@@ -105,6 +106,12 @@ use Exception::Class;
       my $result    = $planet->get_buildings;
       my $buildings = $result->{buildings};
       my $station = $result->{status}{body}{type} eq 'space station' ? 1 : 0;
+      my $happiness = $result->{status}{body}{happiness};
+      if ($happiness < 0 and !$opts{unhappy}) {
+        print "$pname is unhappy and is being skipped\n";
+        push @skip_planets, $pname;
+        next;
+      }
       if ($station and not $opts{module}) {
         push @skip_planets, $pname;
         next;
@@ -542,6 +549,7 @@ Options:
   --match STRING     - Only upgrade matching building names
   --noup  STRING     - Skip building names (multiple allowed)
   --extra STRING     - Add matching names to usual list to upgrade
+  --unhappy          - Skip planets that are unhappy unless this flag is set
   --dry              - Do not actually upgrade
 END
   print "\nBuilding Names: ",join(", ", sort @$bld_names ),"\n";
