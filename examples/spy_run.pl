@@ -108,7 +108,7 @@ use Date::Format;
 
 # Load the planets
   my $empire  = $glc->empire->get_status->{empire};
-  my $insurrect_value = $empire->{insurrect_value} ? 400_000_000_000_000_000 : $empire->{insurrect_value};
+  my $insurrect_value = $empire->{insurrect_value} ? $empire->{insurrect_value} : 400_000_000_000_000_000;
 
   my $rpc_cnt_beg = $glc->{rpc_count};
   print "RPC Count of $rpc_cnt_beg\n";
