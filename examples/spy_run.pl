@@ -204,7 +204,7 @@ use Date::Format;
           my $happy = $2;
           $happy =~ s/,//g;
           my $chance = int(abs($happy) * 100/$insurrect_value);
-          $msg_text = $msg_text."; $chance%";
+          $msg_text = $msg_text."; $chance% 100% at $insurrect_value";
           if ($chance >= $flip) {
             $msg_text = $msg_text." Starting Insurrections";
             $task = "Incite Insurrection";
