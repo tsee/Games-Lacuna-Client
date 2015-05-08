@@ -664,7 +664,50 @@ sub select_resource {
 }
 
 sub other_upgrades {
-    # Not yet implemented.
+    my ($self, $type) =  @_;
+    my ($status, $config) = @{$self->{current}}{qw(status config)};
+
+    # Stop without processing if the build queue is full.
+    if((defined $self->{current}->{build_queue_remaining}) &&
+        ($self->{current}->{build_queue_remaining} <= $config->{reserve_build_queue})) {
+        warning(sprintf("Aborting, %s slots in build queue <= %s reserve slots specified",
+            $self->{current}->{build_queue_remaining},
+            $config->{reserve_build_queue})) if $self->{config}->{verbosity}->{warning};
+        return;
+    }
+
+    my @types = @{$config->{other_upgrades}->{types}};
+
+    my @buildings;
+    foreach my $type (@types) {
+        my $label = building_label($type);
+        unless ($label) {
+            warning("unrecognised building type $type") if $self->{config}->{verbosity}->{warning};
+            next;
+        }
+
+        my $level_limit = $config->{other_upgrades}->{$type}->{max_level} || $config->{other_upgrades}->{_default}->{max_level};
+        my @type_buildings = $self->find_buildings($type);
+        foreach my $building (@type_buildings) {
+            my $details = $self->building_details($self->{current}->{planet_id},$building->{building_id});
+            if ($details->{level} < $level_limit) {
+                push @buildings, $building;
+                trace("adding a $label ($type, $building->{building_id} @ $details->{level}) to upgrade queue")
+                    if ($self->{config}->{verbosity}->{trace});
+            }
+            else {
+                trace("$label ($type, $building->{building_id} @ $details->{level}) ($type) already reached $level_limit")
+                    if ($self->{config}->{verbosity}->{trace});
+            }
+        }
+    }
+
+    # using pertinence_sort, but sort categories dependent on resource capacity will error out
+    # - storage and production upgrades handle those cases anyway
+    my $sort_type = $config->{other_upgrades}->{upgrade_selection} || $config->{upgrade_selection};
+    my @sorted_buildings = sort { $self->pertinence_sort(undef,$sort_type,undef,$a,$b) } @buildings;
+
+    $self->attempt_upgrade(\@sorted_buildings, 0);
 }
 
 sub ship_report {
@@ -967,6 +1010,15 @@ sub attempt_upgrade {
         my $waste_overflow =
             ($status->{waste_stored} + $self->building_details($pid,$bid)->{upgrade}->{cost}->{waste})
                 > $status->{waste_capacity};
+        if ($self->{config}->{verbosity}->{trace}) {
+            my $details = $self->building_details($pid,$bid);
+            if ($insuff_resources) {
+                trace(sprintf("Insufficient resources to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level}))
+            }
+            if ($waste_overflow) {
+                trace(sprintf("Too much waste produced to upgrade %s, %s (Level %s)",$details->{id},$details->{pretty_type},$details->{level}))
+            }
+        }
         return (not $insuff_resources and not $waste_overflow)+0;
     } @all_options;
 
@@ -1062,6 +1114,16 @@ sub find_buildings {
         push @retlist, $self->{client}->building( id => $bid, type => $pretty_type ) if $pretty_type eq $type;
     }
     return @retlist;
+}
+sub sum_keys {
+    my ($hash) = shift;
+    my $total = 0;
+
+    foreach my $value (values %$hash)
+    {
+        $total += $value;
+    }
+    return $total;
 }
 
 sub pertinence_sort {
@@ -1309,7 +1371,7 @@ Note: resource_upgrades performs both a production_upgrades and storage_upgrades
 
 To be implemented are:
 
-repairs, construction, other_upgrades
+repairs, construction,
 
 B<Note: See the Games::Lacuna::Governor namespace for plugins.> Most plugins can be activated
 by simply including their names in the priority list.
@@ -1502,6 +1564,35 @@ Pick whichever we have the least in storage
 
 Pick whichever we produce least of
 
+=head1 OTHER UPGRADES CONFIGURATION
+
+=head2 other_upgrades
+
+This is the main tag
+
+=head3 types
+
+Specify an array of which types you want to check for upgrades. Must be the API type name, not the display label (eg. SAW not ShieldAgainstWeapons).
+
+=head3 upgrade_selection
+
+Same as for resource/storage upgrades (and defaults to the main value) but lets you specify a different selection method for other_upgrades
+
+=head3 sample config
+
+  PlanetName:
+    other_upgrades:
+      types:
+        - Development
+        - Oversight
+        - Archaeology
+        - SAW
+      Development:
+        max_level: 5
+      _default:
+        max_level: 10
+      upgrade_selection: least_expensive
+
 =head1 SEE ALSO
 
 L<Games::Lacuna::Client>, by Steffen Mueller on which this module is dependent.
@@ -1513,9 +1604,10 @@ L<Games::Lacuna::Client::PrettyPrint> for output.
 
 Also, in F<examples>, you've got the example config file in governor.yml, and the example script in governor.pl.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Adam Bellaire, E<lt>bellaire@ufl.eduE<gt>
+Malcolm Harwood, E<lt>mjh-lacuna@liminalflux.netE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
