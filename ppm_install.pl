@@ -32,6 +32,7 @@ LWP::UserAgent
 Math::Round
 MIME::Lite
 Moose
+Net::SSLeay
 Number::Format
 Scalar::Util
 Time::HiRes

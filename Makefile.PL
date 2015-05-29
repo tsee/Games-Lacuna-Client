@@ -39,6 +39,7 @@ my %WriteMakefileArgs = (
     "LWP::UserAgent" => 0,
     "MIME::Lite" => 0,
     "Moose" => 0,
+    "Net::SSLeay" => 0,
     "Number::Format" => 0,
     "Scalar::Util" => 0,
     "Time::HiRes" => 0,
