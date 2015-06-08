@@ -12,7 +12,7 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Games::Lacuna::Client ();
 
-  my $ships_per_fleet = 500;
+  my $ships_per_fleet = 600;
   my $login_attempts  = 5;
   my $reattempt_wait  = 0.1;
 
@@ -33,8 +33,9 @@ use Games::Lacuna::Client ();
       'sleep=i',
       'name=s@',
       'type=s@',
-      'leave=i',
-      'max=i',
+#      'leave=i',
+      'each=i',
+      'total=i',
       'from=s@',
       'fid=s@',
       'x=i',
@@ -157,7 +158,21 @@ use Games::Lacuna::Client ();
   my $output;
   $output->{target} = $target;
   $output->{arrival} = $arrival;
+  my %tcnt;
+  if ($opts{type}) {
+    for my $type (@{$opts{type}}) {
+      $tcnt{$type} = 0;
+    }
+  }
 PLANETS: for my $pname (@{$opts{from}}) {
+
+    if ($opts{total} && $opts{type}) {
+      my $gotenough = 1;
+      for my $type (@{$opts{type}}) {
+        $gotenough = 0 if ($tcnt{$type} < $opts{total});
+      }
+      last PLANETS if $gotenough;
+    }
     print "Inspecting $pname $colonies{$pname}\n";
     my $body = $glc->body( id => $colonies{"$pname"});
     die "no body!" unless $body;
@@ -185,7 +200,7 @@ PLANETS: for my $pname (@{$opts{from}}) {
     my %fleet;
     my $use_count = 0;
     my %skip;
-    my %tcnt;
+    my %pcnt;
 
 FLEET: for my $fleet ( @$fleets ) {
       next FLEET if $opts{name} && !grep { $fleet->{name} eq $_ } @{$opts{name}};
@@ -200,7 +215,8 @@ FLEET: for my $fleet ( @$fleets ) {
                         $fleet->{stealth},
                         $fleet->{hold_size},
                         $fleet->{name});
-      next FLEET if ($opts{max} and $tcnt{$fleet->{type}} && $tcnt{$fleet->{type}} >= $opts{max});
+      next FLEET if ($opts{each} and $pcnt{$fleet->{type}} && $pcnt{$fleet->{type}} >= $opts{each});
+      next FLEET if ($opts{total} and $tcnt{$fleet->{type}} && $tcnt{$fleet->{type}} >= $opts{total});
       if ($arrival->{earliest} != 1 and $fleet->{estimated_travel_time} > $arrival->{trip_time}) {
         unless ($skip{"$key"}) {
           print $fleet->{quantity}," of ",$key," would take ",$fleet->{estimated_travel_time}," and we scheduled ", $arrival->{trip_time},".\n";
@@ -208,13 +224,28 @@ FLEET: for my $fleet ( @$fleets ) {
         }
         next FLEET;
       }
+      unless ($tcnt{$fleet->{type}}) {
+        $tcnt{$fleet->{type}} = 0;
+      }
+      if ($opts{total} and $opts{total} < $tcnt{$fleet->{type}} + $fleet->{quantity}) {
+        $fleet->{quantity} = $opts{total} - $tcnt{$fleet->{type}};
+        $fleet->{quantity} = 0 if $fleet->{quantity} < 0;
+      }
+      print "$fleet->{type} : $fleet->{quantity} added to $tcnt{$fleet->{type}}\n";
       $use_count += $fleet->{quantity};
+      if ($pcnt{$fleet->{type}}) {
+        $pcnt{$fleet->{type}} += $fleet->{quantity};
+      }
+      else {
+        $pcnt{$fleet->{type}} = $fleet->{quantity};
+      }
       if ($tcnt{$fleet->{type}}) {
         $tcnt{$fleet->{type}} += $fleet->{quantity};
       }
       else {
-        $tcnt{$fleet->{type}} = $fleet->{quantity}
+        $tcnt{$fleet->{type}} = $fleet->{quantity};
       }
+
       if ($fleet{"$key"}) {
         $fleet{"$key"}->{quantity} += $fleet->{quantity};
       }
@@ -239,8 +270,9 @@ FLEET: for my $fleet ( @$fleets ) {
     my $batch_q = 0;
     my $send_arr = [];
     for my $key (sort {$fleet{"$a"}->{speed} <=> $fleet{"$b"}->{speed} } keys %fleet) { # sort slowest to fastest being sent
-      if ($opts{max}) {
-        $fleet{"$key"}->{quantity} = $fleet{"$key"}->{quantity} > $opts{max} ? $opts{max} : $fleet{"$key"}->{quantity};
+      next if ($fleet{"$key"}->{quantity} == 0);
+      if ($opts{each}) {
+        $fleet{"$key"}->{quantity} = $fleet{"$key"}->{quantity} > $opts{each} ? $opts{each} : $fleet{"$key"}->{quantity};
       }
       if ($opts{dry}) {
         printf "%s would send %4d of %s. Fastest time: %d seconds.\n", $pname, $fleet{"$key"}->{quantity},$key, $fleet{"$key"}->{estimated_travel_time};
@@ -348,20 +380,29 @@ sub parse_time {
   
 
 sub usage {
+#       --leave       LEAVE Number to leave of each type on each planet
+# If --leave is set, each planet will keep this number of ships of each type.
+
   die <<"END_USAGE";
 Usage: $0 lacuna.yml
        --from        NAME  (required, Multiples possible)
-       --name   NAME
-       --type        TYPE
+       --fid         ID    (required, Multiples possible)
+       --name        Ship NAME (Multiples possible)
+       --type        Ship TYPE (Multiples possible)
+       --combat      NUM Minimum combat
+       --speed       NUM Minimum speed
+       --stealth     NUM Minimum stealth
        --arrival     YYYY:MM:DD:HH:MM (defaults to current Year, Month, Day, Hour, if not entered)
-       --max         MAX Number of each type to send per planet
-       --leave       LEAVE Number to leave of each type on each planet
+       --earliest    Fastest time chosen.  (Per planet)
+       --each        max of each Number of each type to send per planet
+       --total       total number of each type to send from all planets
        --x           Target COORDINATE
        --y           Target COORDINATE
        --star        Target NAME
+       --star_id     Target Star ID
        --planet      Target NAME
+       --planet_id   Target Body ID
        --own-star
-       --sleep       SECONDS
        --dryrun
 
 Either of --name or --type is required.
@@ -371,8 +412,11 @@ Either of --name or --type is required.
 --type can be passed multiple times.
 It must match the ship's "type", not "type_human", e.g. "scanner", "spy_pod".
 
-If --max is set, this is the maximum number of matching ships that will be
-sent. Default behaviour is to send all matching ships.
+If --each is set, this is the maximum number of matching ships that will be
+sent from each planet. Default behaviour is to send all matching ships.
+
+If --total is set, this is the maximum number of matching ships that will be
+sent from all sending planets. Default behaviour is to send all matching ships.
 
 --from is the colony from which the ships should be sent, multiple possible.
 
@@ -380,9 +424,6 @@ At least one of --star or --planet or --own-star or both --x and --y are
 required.
 
 --own-star and --planet cannot be used together.
-
-If --sleep is specified, will wait that number of seconds before sending ships.
-Ignored if --seconds is set.
 
 If --dryrun is provided, nothing will be sent, but all actions that WOULD
 happen are reported
