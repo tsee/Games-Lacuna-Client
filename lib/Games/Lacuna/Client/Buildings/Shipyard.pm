@@ -15,6 +15,7 @@ sub api_methods {
     subsidize_build_queue => { default_args => [qw(session_id building_id)] },
     get_buildable         => { default_args => [qw(session_id building_id)] },
     build_ship            => { default_args => [qw(session_id building_id)] },
+    build_ships           => { default_args => [qw(session_id)] },
   };
 }
 
