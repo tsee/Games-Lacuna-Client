@@ -52,14 +52,56 @@ unless( eval{ JSON::RPC::LWP->VERSION(0.007); 1 } ){
 }
 
 around call => sub {
-  my $orig = shift;
-  my $self = shift;
-  my $uri = shift;
-  my $method = shift;
-  my $params = shift;
+    my $orig   = shift;
+    my $self   = shift;
+    my $uri    = shift;
+    my $method = shift;
+    my $params = shift;
 
+    my $response = send_request($self, $uri, $method, $params, $orig);
+	 
+	if ($response->error) {
+		# If the error is the click limit, it's not worth killing everything.
+		if ($response->error->message =~ m/no more than \d+ requests per minute/i) { # \d+ in case the limit changes.
+			for (my $i = 0; $i < 4; $i++) {
+				croak("Too much RPC activity.") if ($i == 4);
+			
+				print "Hit the RPC limit - sleeping.\n";
+				sleep(30); # A total of 1.5 minutes should be enough.
+			
+				# Retry this request.
+				$response = send_request($self, $uri, $method, $params, $orig);
+				
+				# If there's an error butit isn't the RPC/min limit.
+				last if ($response->error and $response->error->message !~ m/no more than \d+ requests per minute/i);
+				last if (not defined $response->error); # Also, move on if there isn't an error.
+				
+				
+				# Otherwise, go again. :D
+			}
+		}
+		if ($response->error and $response->error->message !~ m/no more than \d+ requests per minute/i) {
+			LacunaRPCException->throw(
+				error   => "RPC Error (" . $response->error->code . "): " . $response->error->message,
+				code    => $response->error->code,
+				## Note we don't use the key 'message'. Exception::Class stringifies based
+				## on "message or error" attribute. For backwards compatiblity we don't
+				## want to change how this object will stringify.
+				text    => $response->error->message
+			);
+		}
+	}
+	return $response->deflate;
+};
 
-    # Call the method.  If a Captcha error is returned, attempt to handle it
+sub send_request {
+	my $self    = shift;
+    my $uri     = shift;
+    my $method  = shift;
+    my $params  = shift;
+	my $pointer = shift;
+
+	# Call the method.  If a Captcha error is returned, attempt to handle it
     # and re-call the method, up to 3 times
     my $trying           = 1;
     my $is_interactive   = is_interactive();
@@ -70,7 +112,7 @@ around call => sub {
     while ($trying) {
         $trying = 0;
 
-        $res = $self->$orig($uri,$method,$params);
+        $res = $self->$pointer($uri,$method,$params);
 
         # Throttle per 3.0 changes
         sleep($self->{client}->rpc_sleep) if $self->{client}->rpc_sleep;
@@ -106,18 +148,9 @@ around call => sub {
      }
      $self->{client}->{total_calls}++;
      $self->{client}{call_stats}{$method}++;
-
-     LacunaRPCException->throw(
-         error   => "RPC Error (" . $res->error->code . "): " . $res->error->message,
-         code    => $res->error->code,
-         ## Note we don't use the key 'message'. Exception::Class stringifies based
-         ## on "message or error" attribute. For backwards compatiblity we don't
-         ## want to change how this object will stringify.
-         text    => $res->error->message,
-     ) if $res->error;
-
-     return $res->deflate;
-};
+	 
+	 return $res;
+}
 
 
 no Moose;
