@@ -179,8 +179,7 @@ sub usage {
     diag(<<END);
 Usage: $0 [options]
 
-This program upgrades spaceports on your planet. Faster than clicking each port.
-It will upgrade in order of level up to maxlevel.
+This program repairs damaged buildings on your planet. Faster than clicking each one.
 
 Options:
   --help             - This info.
