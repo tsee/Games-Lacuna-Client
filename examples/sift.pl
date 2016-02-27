@@ -143,6 +143,10 @@ PLANET:  for my $pkey (@{$opts{from}}) {
       next PLANET;
     }
   }
+  if ($fid == $to_id) {
+    print "Skipping destination equal to origin. \n";
+    next PLANET;
+  }
 
 # Load planet data
     my $body      = $glc->body( id => $fid );
@@ -798,6 +802,7 @@ Plan Options
        --min_base      Minimum Base for plans to move
        --max_base      Maximum Base for plans to move
        --p_all         Grab All plans
+       --p_city        Grab Lost City of Tyleon plans
        --p_decor       Grab Decor plans
        --p_glyph       Grab Glyph Plans (that are not decor or Halls) Note, they don't use a plot.
        --p_hall        Grab Hall Plans
@@ -817,7 +822,7 @@ Pushes plans and glyphs between your own planets.
 
 Examples:
   Send all 1+4 glyph plans     : $0 --to Planet --from Planet --p_glyph --max_base 1 --min_plus 4
-  Send 10 gold & bauxite glyphs: $0 --to Planet --from Planet --glyph_match gold --glyph bauxite --g_num 10
+  Send 10 gold & bauxite glyphs: $0 --to Planet --from Planet --glyph_match gold --glyph_match bauxite --g_num 10
   Send all plans & glyphs      : $0 --to Planet --from Planet --p_all --g_all
   Send all plans, but Beaches  : $0 --to Planet --from Planet --p_all --plan_exclude Beach
 END_USAGE

@@ -24,7 +24,7 @@ use utf8;
     dump         => 0,
     outfile      => $log_dir . '/topoff_ships.js',
     minlevel     => 30,
-    maxqueue     => 50,
+    maxqueue     => 600,
     sleep        => 1,
   );
 
@@ -144,6 +144,11 @@ use utf8;
     my $return = eval {
                   $ship_list = $sp_pt->view_all_ships($paging, $filter);
               };
+    
+    my $maintain = 0;
+    if (defined($opts{maintain})) {
+      $maintain = $opts{maintain};
+    }
     if ($@) {
       print "$@ error!\n";
       next PLANET;
@@ -153,18 +158,18 @@ use utf8;
       $output->{"$pname"}->{ship_list} = $return;
       printf("%4d ships of type %s found on planet %s.\n", $return->{number_of_ships}, $ship_build, $pname);
       if ($opts{number}) {
-        if ($opts{maintain}) {
-          if ($opts{maintain} > $return->{number_of_ships} + $opts{number}) {
-            $opts{maintain} = $return->{number_of_ships} + $opts{number};
+        if ($maintain) {
+          if ($maintain > $return->{number_of_ships} + $opts{number}) {
+            $maintain = $return->{number_of_ships} + $opts{number};
           }
         }
         else {
-          $opts{maintain} = $return->{number_of_ships} + $opts{number};
+          $maintain = $return->{number_of_ships} + $opts{number};
         }
       }
     }
-    if ($opts{maintain} > $return->{number_of_ships}) {
-      my $build_num = $opts{maintain} - $return->{number_of_ships};
+    if ($maintain > $return->{number_of_ships}) {
+      my $build_num = $maintain - $return->{number_of_ships};
       print "Will try building $build_num on $pname\n";
       my @sy_id = grep { $buildings->{$_}->{name} eq 'Shipyard' and
                        $buildings->{$_}->{level} >= $opts{minlevel} and
@@ -175,6 +180,7 @@ use utf8;
         next PLANET;
       }
       my $buildables;
+      my $buildq;
       my $queued_ships = 0;
       SHIPYARD:
       for my $sy_id ( sort {$buildings->{$b}->{level} <=> $buildings->{$a}->{level} } @sy_id) {
@@ -188,18 +194,31 @@ use utf8;
         }
         $output->{"$pname"}->{buildables}->{$sy_id} = $return;
         unless ($buildables->{buildable}->{$ship_build}->{can} == 1) {
-          printf("Can not build %s at Shipyard: %s skipping planet!\n", $ship_build, $sy_id);
+          printf("Can not build %s at Shipyard: %s skipping planet!\n%s\n", $ship_build, $sy_id, 
+                 join(":",@{$buildables->{buildable}->{$ship_build}->{reason}}));
           next PLANET;
         }
+        $return = eval {
+                    $buildq = $sy_pt->view_build_queue();
+        };
+        if ($@) {
+          print "$@ error!\n"; #Better error handling needed.
+          next SHIPYARD;
+        }
+        $output->{"$pname"}->{buildq}->{$sy_id} = $return;
         my $ships_to_queue = $build_num - $queued_ships;
+        my $maxqueue = $buildables->{build_queue_max} - $buildables->{build_queue_used};
         if ($ships_to_queue > $buildables->{docks_available}) {
           $ships_to_queue = $buildables->{docks_available};
         }
         if ($ships_to_queue > $opts{maxqueue}) {
           $ships_to_queue = $opts{maxqueue};
         }
-        if ($ships_to_queue > $buildables->{build_queue_max} - $buildables->{build_queue_used}) {
-          $ships_to_queue = $buildables->{build_queue_max} - $buildables->{build_queue_used};
+        if ($ships_to_queue > $opts{maxqueue} - $buildq->{number_of_ships_building}) {
+          $ships_to_queue = $opts{maxqueue} - $buildq->{number_of_ships_building};
+        }
+        if ($ships_to_queue > $maxqueue) {
+          $ships_to_queue = $maxqueue;
         }
         if ($ships_to_queue > 0) {
           my $built;
@@ -225,7 +244,7 @@ use utf8;
       printf "Queued %3d %s ships on %s\n",$queued_ships, $ship_build, $pname;
     }
     else {
-      print "Already at needed number\n";
+      print "Already at $return->{number_of_ships} $ship_build on $pname\n";
     }
   }
   if ($opts{dump}) {
