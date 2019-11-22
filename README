@@ -24,10 +24,9 @@ SYNOPSIS
 DESCRIPTION
     This module implements the Lacuna Expanse API as of 10.10.2010.
 
-    You will need to have a basic familiarity with the Lacuna RPC API
-    itself, so check out <http://gameserver.lacunaexpanse.com/api/> where
-    "gameserver" is the server you intend to use it on. As of this writing,
-    the only server is "us1".
+    You should be familiar with the Lacuna RPC API. 
+    You will use the game server <http://gameserver.lacunaexpanse.com/api/>. 
+    For this writing, the server is “us1”. 
 
     The different API *modules* are available by calling the respective
     module name as a method on the client object. The returned object then
